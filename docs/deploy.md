@@ -4,16 +4,16 @@ Ancient Lens отдаётся **статикой на Cloudflare Pages** (Worker
 
 **Статус:** код готов к Pages. Публичный сайт — после Connect Git, билда и привязки `ancientlens.info`.
 
-| Параметр          | Значение                                                            |
-| ----------------- | ------------------------------------------------------------------- |
-| Хостинг           | [Cloudflare Pages](https://pages.cloudflare.com/), бесплатный тариф |
-| Сборка            | `npm run generate` → `.output/public`                               |
-| Config            | `wrangler.toml` (`pages_build_output_dir`), Nitro preset `static`   |
-| Продакшен-домен   | `ancientlens.info` (+ опционально `www.ancientlens.info`)           |
-| Целевой URL       | `https://ancientlens.info`                                          |
-| Env               | `NUXT_PUBLIC_SITE_URL` и `NUXT_SITE_URL` = этот HTTPS URL           |
-| Репозиторий       | `git@github.com:RodyaFront/ancient-lens.git`                        |
-| Production branch | `main` (squash-merge; агент в `main` не пушит)                      |
+| Параметр          | Значение                                                              |
+| ----------------- | --------------------------------------------------------------------- |
+| Хостинг           | [Cloudflare Pages](https://pages.cloudflare.com/), бесплатный тариф   |
+| Сборка            | `npm run generate` → `.output/public`                                 |
+| Config            | `wrangler.toml` (`[assets]` → `.output/public`), Nitro `static` на CI |
+| Продакшен-домен   | `ancientlens.info` (+ опционально `www.ancientlens.info`)             |
+| Целевой URL       | `https://ancientlens.info`                                            |
+| Env               | `NUXT_PUBLIC_SITE_URL` и `NUXT_SITE_URL` = этот HTTPS URL             |
+| Репозиторий       | `git@github.com:RodyaFront/ancient-lens.git`                          |
+| Production branch | `main` (squash-merge; агент в `main` не пушит)                        |
 
 Секреты (`CLOUDFLARE_API_TOKEN` и т.п.) **не** класть в git. Локальный `.cursor/mcp.json` тоже не коммитить.
 
@@ -42,13 +42,17 @@ Ancient Lens отдаётся **статикой на Cloudflare Pages** (Worker
 3. Production branch: пока `main` без этого кода — временно укажи `chore/cloudflare-pages` для первой выкладки, после merge в `main` верни `main`.
 4. Build settings:
 
-   | Поле                   | Значение                                   |
-   | ---------------------- | ------------------------------------------ |
-   | Framework preset       | Nuxt или None                              |
-   | Build command          | `npm run generate`                         |
-   | Deploy command         | `npx wrangler pages deploy .output/public` |
-   | Build output directory | `.output/public`                           |
-   | Node version           | `22`                                       |
+   | Поле                   | Значение                      |
+   | ---------------------- | ----------------------------- |
+   | Framework preset       | Nuxt или None                 |
+   | Build command          | `npm run generate`            |
+   | Deploy command         | `npx wrangler deploy`         |
+   | Build output directory | `.output/public` (в wrangler) |
+   | Node version           | `22`                          |
+
+   **Важно для Workers Builds:** не используй `npx wrangler pages deploy …`. Токен Builds умеет Workers Scripts, не Cloudflare Pages API — будет `Authentication error [code: 10000]`. Нужен `npx wrangler deploy`. В `wrangler.toml` — `[assets] directory = ".output/public"`, не `pages_build_output_dir`.
+
+   На CI Nitro берёт `static` через `WORKERS_CI` / `CF_PAGES` (иначе из‑за wrangler снова возможен `cloudflare-module` + reserved `ASSETS`).
 
 5. Environment variables (Production и Preview) — после привязки домена:
 
@@ -57,11 +61,9 @@ Ancient Lens отдаётся **статикой на Cloudflare Pages** (Worker
    NUXT_SITE_URL=https://ancientlens.info
    ```
 
-   До появления кастомного домена можно временно поставить `https://<project>.pages.dev` из шага 6, затем сменить на `ancientlens.info` и Redeploy.
+   До появления кастомного домена можно временно поставить `https://ancient-lens.<subdomain>.workers.dev` из шага 6, затем сменить на `ancientlens.info` и Redeploy.
 
-6. Save and Deploy. Запомнить URL вида `https://ancient-lens.pages.dev`.
-
-Проверка: открыть `pages.dev`, snapshot и live-матч с OpenDota.
+6. Save and Deploy. Запомнить URL вида `https://ancient-lens.<subdomain>.workers.dev` (или preview URL из лога билда). Классический `*.pages.dev` появляется только у старых Pages-проектов.
 
 ### 2. Домен `ancientlens.info` (Custom Domains + DNS)
 
@@ -69,10 +71,11 @@ Ancient Lens отдаётся **статикой на Cloudflare Pages** (Worker
 
 #### Если nameservers указывают на Cloudflare (полный setup)
 
-1. Workers & Pages → `ancient-lens` → **Custom domains** (или Settings → Domains & Routes) → Add → `ancientlens.info`.
-2. Cloudflare сам создаст DNS-запись на apex (обычно CNAME/уплощённый alias на `*.pages.dev`). Сертификат выпустится сам.
-3. Опционально добавь `www.ancientlens.info` тем же способом.
-4. Чтобы `www` и apex вели себя одинаково: [Redirect Rule](https://developers.cloudflare.com/rules/url-forwarding/examples/redirect-www-to-root/) `www` → `https://ancientlens.info` (или наоборот). Для hostname, с которого редиректишь, нужна proxied DNS-запись (часто placeholder A `192.0.2.1` / AAAA `100::`, если Custom Domain только на одном имени).
+1. Добавь зону `ancientlens.info` в Cloudflare (Domains → Onboard), если ещё нет.
+2. Workers & Pages → `ancient-lens` → **Settings** → **Domains & Routes** → **Add** → **Custom Domain** → `ancientlens.info` (и при желании `www.ancientlens.info`).
+3. Cloudflare сам создаст DNS-запись в зоне и выпустит сертификат. Не создавай вручную конфликтующий CNAME на тот же hostname до Add Custom Domain.
+4. Apex (`ancientlens.info`) требует, чтобы домен был зоной Cloudflare (nameservers на CF). Subdomain без зоны CF возможен через CNAME на `*.workers.dev` / target из дашборда, но для брендового apex — full setup.
+5. `www` ↔ apex: [Redirect Rule](https://developers.cloudflare.com/rules/url-forwarding/examples/redirect-www-to-root/) + proxied placeholder A `192.0.2.1` / AAAA `100::` на hostname, с которого редиректишь (если Custom Domain только на одном имени).
 
 У регистратора после full setup обычно **только** nameservers Cloudflare — A/CNAME для сайта правишь в Cloudflare DNS, не у регистратора.
 
@@ -86,11 +89,10 @@ Ancient Lens отдаётся **статикой на Cloudflare Pages** (Worker
 
 #### Временный fallback (DuckDNS)
 
-`ancientlens.duckdns.org` можно оставить как запасной CNAME на `<project>.pages.dev`, пока бренд-домен не готов. В `NUXT_*SITE_URL` для продакшена уже `https://ancientlens.info`.
+`ancientlens.duckdns.org` можно оставить как запасной CNAME на workers.dev / pages target, пока бренд-домен не готов. В `NUXT_*SITE_URL` для продакшена уже `https://ancientlens.info`.
 
 ```bash
 curl -I https://ancientlens.info
-curl -I https://ancient-lens.pages.dev
 ```
 
 Ожидание: HTTP 200 и валидный TLS. Затем в браузере: поиск матча, reveal счёта, огонь только у победителя.
@@ -122,7 +124,7 @@ Oracle Always Free / Docker / Nginx — только если Pages принци
 
 ## Проверки после выкладки
 
-- [ ] `https://ancientlens.info` открывается (или пока `pages.dev`).
+- [ ] `https://ancientlens.info` открывается (или пока workers.dev URL из билда).
 - [ ] Snapshot и live ID с OpenDota.
 - [ ] Иконки Steam CDN, VFX счёта, fire только на стороне победителя.
 - [ ] `prefers-reduced-motion`: без WebGL.

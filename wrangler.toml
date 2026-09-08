@@ -1,10 +1,13 @@
-# Cloudflare Pages static output. No account id or API token here —
-# connect the GitHub repo in the Pages dashboard, or set
-# CLOUDFLARE_API_TOKEN + CLOUDFLARE_ACCOUNT_ID in GitHub to use workflow_dispatch.
+# Cloudflare Workers static site (Workers Builds).
+# No account id or API token here — connect the GitHub repo in the
+# dashboard. Deploy with `npx wrangler deploy` (not `pages deploy`:
+# Builds API tokens have Workers Scripts edit, not Pages Edit).
 
 name = "ancient-lens"
 compatibility_date = "2025-07-15"
-pages_build_output_dir = ".output/public"
+
+[assets]
+directory = ".output/public"
 
 [vars]
 NUXT_PUBLIC_SITE_URL = "https://ancientlens.info"
