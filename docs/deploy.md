@@ -40,12 +40,15 @@ Ancient Lens отдаётся **статикой на Cloudflare Pages**. Сво
 3. Production branch: `main` (пока `main` без этого кода — можно временно указать `chore/cloudflare-pages` для первой выкладки, потом вернуть `main`).
 4. Build settings:
 
-   | Поле                   | Значение           |
-   | ---------------------- | ------------------ |
-   | Framework preset       | Nuxt или None      |
-   | Build command          | `npm run generate` |
-   | Build output directory | `.output/public`   |
-   | Node version           | `22`               |
+   | Поле                   | Значение                                   |
+   | ---------------------- | ------------------------------------------ |
+   | Framework preset       | Nuxt или None                              |
+   | Build command          | `npm run generate`                         |
+   | Deploy command         | `npx wrangler pages deploy .output/public` |
+   | Build output directory | `.output/public`                           |
+   | Node version           | `22`                                       |
+
+   Если CI сам ставит Nitro preset `cloudflare-module` и деплой падает на `ASSETS is reserved`, в репо уже зафиксирован `nitro.preset: 'static'`. Не подставляй `npx wrangler deploy` без `--cwd .output`.
 
 5. Environment variables (Production и Preview):
 

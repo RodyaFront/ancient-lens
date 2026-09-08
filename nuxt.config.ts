@@ -72,6 +72,9 @@ export default defineNuxtConfig({
   },
 
   nitro: {
+    // Workers Builds sees wrangler.toml and would otherwise pick
+    // cloudflare-module, then `wrangler pages deploy` fails on ASSETS.
+    preset: 'static',
     compressPublicAssets: true,
     prerender: {
       crawlLinks: true,
