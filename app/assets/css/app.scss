@@ -1,0 +1,10 @@
+@use 'variables' as *;
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background-color: $surface;
+  color: $ink;
+}
