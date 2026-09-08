@@ -32,7 +32,7 @@ npm run verify
 
 Copy `.env.example` to `.env` and set `NUXT_PUBLIC_SITE_URL` for production.
 
-Public hosting (Cloudflare Pages, temporary DuckDNS `ancientlens.duckdns.org`) is in [docs/deploy.md](docs/deploy.md).
+Public hosting (Cloudflare Pages, production `https://ancientlens.info`) is in [docs/deploy.md](docs/deploy.md).
 
 ## Data
 
