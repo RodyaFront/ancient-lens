@@ -31,6 +31,8 @@ npm run verify
 
 Copy `.env.example` to `.env` and set `NUXT_PUBLIC_SITE_URL` for production.
 
+Public hosting (Cloudflare Pages, temporary DuckDNS `ancientlens.duckdns.org`) is in [docs/deploy.md](docs/deploy.md).
+
 ## Data
 
 - Live GET requests go from the browser to `https://api.opendota.com/api/matches/{id}`. No credentials.
