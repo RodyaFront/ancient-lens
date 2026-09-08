@@ -12,6 +12,7 @@ import {
 const store = useMatchStore()
 const audio = useScoreAudio()
 const card = ref<HTMLElement | null>(null)
+const vfx = ref<{ play: () => Promise<void> | void } | null>(null)
 
 const match = computed(() => store.match)
 const winner = computed(() => {
@@ -39,13 +40,6 @@ const direScore = computed(() => {
     ? match.value.dire_score
     : total(store.direPlayers, 'kills')
 })
-const particles = Array.from({ length: 18 }, (_, index) => ({
-  i: index,
-  x: `${(index * 37) % 100}%`,
-  y: `${18 + ((index * 29) % 66)}%`,
-  dx: `${-85 + ((index * 47) % 170)}px`,
-  dy: `${-70 + ((index * 31) % 140)}px`,
-}))
 
 function sortedDraft(players: MatchPlayer[]) {
   return [...players].sort(
@@ -73,6 +67,7 @@ function startReveal(withSound = false) {
   el.classList.remove('score-reveal')
   void el.offsetWidth
   el.classList.add('score-reveal')
+  void vfx.value?.play()
   if (withSound) {
     audio.play(winner.value)
   }
@@ -186,24 +181,9 @@ onMounted(() => {
       :data-winner="winner || ''"
       @animationend="onAnimationEnd"
     >
+      <MatchScoreEmbers :winner="winner" />
       <div class="score-fx" aria-hidden="true">
-        <div class="fx-field fx-radiant" />
-        <div class="fx-field fx-dire" />
-        <div class="fx-scan" />
-        <div class="fx-impact" />
-        <div class="fx-particles">
-          <i
-            v-for="particle in particles"
-            :key="particle.i"
-            :style="{
-              '--i': particle.i,
-              '--x': particle.x,
-              '--y': particle.y,
-              '--dx': particle.dx,
-              '--dy': particle.dy,
-            }"
-          />
-        </div>
+        <MatchScoreVfx ref="vfx" :winner="winner" />
         <div v-if="winner" class="fx-verdict">
           <span>ПЕРЕМОЖЕЦЬ МАТЧУ</span>
           <strong>{{ winner.toUpperCase() }}</strong>

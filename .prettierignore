@@ -6,3 +6,5 @@ package-lock.json
 coverage
 playwright-report
 test-results
+.agents/skills
+.cursor/skills
