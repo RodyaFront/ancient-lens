@@ -356,6 +356,16 @@ h1 {
   position: relative;
   z-index: 1;
 }
+.score-embers-canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  mix-blend-mode: screen;
+}
 .score-fx {
   position: absolute;
   inset: 0;
@@ -364,67 +374,19 @@ h1 {
   pointer-events: none;
   overflow: hidden;
 }
-.fx-field {
+.score-vfx-canvas {
   position: absolute;
-  inset: -25%;
-  opacity: 0;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
   mix-blend-mode: screen;
-}
-.fx-radiant {
-  background:
-    radial-gradient(
-      ellipse at 75% 50%,
-      #e8ffc0d9 0 2%,
-      #9ccb5e80 12%,
-      transparent 52%
-    ),
-    linear-gradient(90deg, #6f983000, #9ccb5e99 65%, #e8ffc0d9);
-  clip-path: polygon(0 0, 76% 0, 100% 50%, 76% 100%, 0 100%);
-}
-.fx-dire {
-  background:
-    radial-gradient(
-      ellipse at 25% 50%,
-      #ffd6cad9 0 2%,
-      #d74d3780 12%,
-      transparent 52%
-    ),
-    linear-gradient(270deg, #a12e2200, #d74d3799 65%, #ffd6cad9);
-  clip-path: polygon(24% 0, 100% 0, 100% 100%, 24% 100%, 0 50%);
-}
-.fx-scan {
-  position: absolute;
-  left: 50%;
-  top: -40%;
-  width: 2px;
-  height: 180%;
-  opacity: 0;
-  background: #fff;
-  box-shadow:
-    0 0 12px #fff,
-    0 0 38px var(--gold),
-    0 0 90px #e9d49280;
-  transform: rotate(11deg);
-}
-.fx-impact {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 22px;
-  aspect-ratio: 1;
-  border: 1px solid #fff9d9;
-  border-radius: 50%;
-  opacity: 0;
-  background: #fff;
-  box-shadow:
-    0 0 35px #fff,
-    0 0 100px var(--gold);
-  transform: translate(-50%, -50%) scale(0.1);
 }
 .fx-verdict {
   position: absolute;
   left: 50%;
   top: 50%;
+  z-index: 2;
   display: grid;
   justify-items: center;
   width: min(92%, 560px);
@@ -456,30 +418,6 @@ h1 {
     0 2px 0 #0a0c0a,
     0 0 28px currentColor;
 }
-.fx-particles {
-  position: absolute;
-  inset: 0;
-}
-.fx-particles i {
-  --tone: var(--green);
-  position: absolute;
-  left: var(--x);
-  top: var(--y);
-  width: 3px;
-  height: 18px;
-  opacity: 0;
-  background: var(--tone);
-  box-shadow: 0 0 8px var(--tone);
-  transform: rotate(42deg) scaleY(0.1);
-}
-.score-card[data-winner='dire'] .fx-particles i {
-  --tone: var(--red);
-}
-.fx-particles i:nth-child(3n) {
-  --tone: var(--gold);
-  width: 2px;
-  height: 10px;
-}
 .score-reveal {
   animation: score-shell 0.78s cubic-bezier(0.16, 0.8, 0.18, 1) both;
 }
@@ -487,25 +425,9 @@ h1 {
   visibility: visible;
   animation: fx-clear 2.5s ease-out both;
 }
-.score-reveal .fx-radiant {
-  animation: radiant-surge 1.25s cubic-bezier(0.15, 0.75, 0.15, 1) both;
-}
-.score-reveal .fx-dire {
-  animation: dire-surge 1.25s cubic-bezier(0.15, 0.75, 0.15, 1) both;
-}
-.score-reveal .fx-scan {
-  animation: scan-strike 0.72s 0.18s cubic-bezier(0.1, 0.8, 0.2, 1) both;
-}
-.score-reveal .fx-impact {
-  animation: impact-ring 0.82s 0.24s cubic-bezier(0.1, 0.75, 0.2, 1) both;
-}
 .score-reveal .fx-verdict {
   animation: verdict-in var(--verdict-duration) var(--verdict-delay)
     cubic-bezier(0.13, 0.82, 0.16, 1) both;
-}
-.score-reveal .fx-particles i {
-  animation: particle-burst 0.82s calc(0.28s + var(--i) * 0.018s)
-    cubic-bezier(0.1, 0.7, 0.2, 1) both;
 }
 .score-reveal .team-intro.radiant {
   animation: team-in-left 0.72s var(--score-content-delay)
@@ -554,70 +476,6 @@ h1 {
     opacity: 0;
   }
 }
-@keyframes radiant-surge {
-  0% {
-    opacity: 0;
-    transform: translateX(-78%) skewX(-10deg);
-  }
-  24% {
-    opacity: 0.95;
-  }
-  58% {
-    opacity: 0.85;
-    transform: translateX(-7%) skewX(-10deg);
-  }
-  100% {
-    opacity: 0;
-    transform: translateX(36%) skewX(-10deg);
-  }
-}
-@keyframes dire-surge {
-  0% {
-    opacity: 0;
-    transform: translateX(78%) skewX(10deg);
-  }
-  24% {
-    opacity: 0.95;
-  }
-  58% {
-    opacity: 0.85;
-    transform: translateX(7%) skewX(10deg);
-  }
-  100% {
-    opacity: 0;
-    transform: translateX(-36%) skewX(10deg);
-  }
-}
-@keyframes scan-strike {
-  0% {
-    opacity: 0;
-    transform: translateX(-70px) rotate(11deg) scaleY(0.25);
-  }
-  38% {
-    opacity: 1;
-  }
-  72% {
-    opacity: 0.85;
-    transform: translateX(0) rotate(11deg) scaleY(1);
-  }
-  100% {
-    opacity: 0;
-    transform: translateX(18px) rotate(11deg) scaleY(1.1);
-  }
-}
-@keyframes impact-ring {
-  0% {
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(0.08);
-  }
-  22% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(16);
-  }
-}
 @keyframes verdict-in {
   0% {
     opacity: 0;
@@ -634,19 +492,6 @@ h1 {
     opacity: 0;
     filter: blur(3px);
     transform: translate(-50%, -64%) scale(1.04);
-  }
-}
-@keyframes particle-burst {
-  0% {
-    opacity: 0;
-    transform: translate(0, 0) rotate(42deg) scaleY(0.1);
-  }
-  22% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-    transform: translate(var(--dx), var(--dy)) rotate(42deg) scaleY(1);
   }
 }
 @keyframes team-in-left {
