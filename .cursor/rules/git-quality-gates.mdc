@@ -1,0 +1,19 @@
+---
+description: Local quality gates before claiming done or pushing a branch
+alwaysApply: true
+---
+
+# Quality gates
+
+Не считать работу готовой к git и не пушить, пока не зелёные:
+
+```bash
+npm run verify
+```
+
+Это `format:check` → `lint` → `typecheck` → `test` → `build`. Падения чинить, не обходить хуки.
+
+- Husky **pre-push** дополнительно гоняет `npm run build`. Не использовать `--no-verify`.
+- Перед push: `git fetch origin` и `git merge origin/main` в feature-ветку; если merge затронул код — снова `verify`.
+- CI job `ci` на PR должен быть зелёным до merge в `main`.
+- Не предлагать merge при красном CI.

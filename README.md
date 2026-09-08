@@ -33,3 +33,14 @@ npm run build
 ```
 
 Copy `.env.example` to `.env` and set `NUXT_PUBLIC_SITE_URL` for production.
+
+## How we ship
+
+GitHub Flow. `main` is always releasable; the agent never pushes it.
+
+1. Branch from `origin/main`: `feat|fix|chore|refactor|docs|hotfix/<short-name>`
+2. One branch / PR ≈ one topic
+3. Before push: `npm run verify` (format, lint, typecheck, test, build)
+4. Push the **feature branch only**, open a PR into `main`, squash-merge when CI `ci` is green
+
+If the current branch already has work and a new topic starts: **commit and ship that branch first**, then create a new branch. Do not stash. Do not pile unrelated work onto the same branch.
