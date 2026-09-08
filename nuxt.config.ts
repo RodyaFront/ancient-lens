@@ -16,7 +16,11 @@ export default defineNuxtConfig({
     'nuxt-security',
   ],
 
-  css: ['~/assets/css/main.css', '~/assets/css/app.scss'],
+  css: [
+    '~/assets/css/main.css',
+    '~/assets/css/app.scss',
+    '~/assets/css/match.css',
+  ],
 
   vite: {
     plugins: [tailwindcss()],
@@ -24,15 +28,38 @@ export default defineNuxtConfig({
 
   app: {
     head: {
-      htmlAttrs: { lang: 'ru' },
+      htmlAttrs: { lang: 'uk' },
+      title: 'Ancient Lens — розбір матчів Dota 2',
+      link: [{ rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' }],
+      meta: [{ name: 'theme-color', content: '#171a18' }],
     },
   },
 
   site: {
     url: process.env.NUXT_PUBLIC_SITE_URL,
     name: 'Ancient Lens',
-    description: 'Ancient Lens',
-    defaultLocale: 'ru',
+    description:
+      'Ancient Lens — статистика матчів Dota 2: результат, гравці, економіка та предмети. Дані OpenDota.',
+    defaultLocale: 'uk',
+  },
+
+  fonts: {
+    families: [
+      {
+        name: 'IBM Plex Sans',
+        provider: 'google',
+        global: true,
+        weights: [400, 500, 600, 700],
+        styles: ['normal'],
+      },
+      {
+        name: 'Roboto Condensed',
+        provider: 'google',
+        global: true,
+        weights: [500, 600, 700, 800],
+        styles: ['normal'],
+      },
+    ],
   },
 
   typescript: {
@@ -60,6 +87,14 @@ export default defineNuxtConfig({
   security: {
     headers: {
       crossOriginEmbedderPolicy: 'unsafe-none',
+      contentSecurityPolicy: {
+        'img-src': [
+          "'self'",
+          'data:',
+          'https://cdn.cloudflare.steamstatic.com',
+        ],
+        'connect-src': ["'self'", 'https://api.opendota.com'],
+      },
     },
   },
 })
