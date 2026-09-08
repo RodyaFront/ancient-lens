@@ -10,5 +10,5 @@ do
   esac
 done
 
-echo "pre-push: running npm run build"
-npm run build
+echo "pre-push: running npm run generate"
+npm run generate

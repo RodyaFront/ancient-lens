@@ -4,20 +4,21 @@ Dota 2 match review with a Ukrainian interface. Live stats come from OpenDota; t
 
 ## Stack
 
-| Layer                  | Choice                                               |
-| ---------------------- | ---------------------------------------------------- |
-| Runtime                | Node.js 22 LTS                                       |
-| Framework              | Nuxt 4 + Vue 3 + Vue Router 5                        |
-| Language               | TypeScript (strict)                                  |
-| Server                 | Nitro                                                |
-| State                  | Pinia                                                |
-| Composables            | VueUse                                               |
-| Validation             | Zod                                                  |
-| Styles                 | Tailwind CSS v4 + match scoreboard CSS + SCSS tokens |
-| Fonts / icons / images | `@nuxt/fonts`, `@nuxt/icon`, `@nuxt/image`           |
-| SEO                    | `@nuxtjs/seo` (sitemap, robots, OG, Schema.org)      |
-| Security               | `nuxt-security` 2.5 (Node 22)                        |
-| Quality                | ESLint, Prettier, Vitest, Vue Test Utils, Playwright |
+| Layer         | Choice                                               |
+| ------------- | ---------------------------------------------------- |
+| Runtime       | Node.js 22 LTS                                       |
+| Framework     | Nuxt 4 + Vue 3 + Vue Router 5                        |
+| Language      | TypeScript (strict)                                  |
+| Server        | Nitro                                                |
+| State         | Pinia                                                |
+| Composables   | VueUse                                               |
+| Validation    | Zod                                                  |
+| Styles        | Tailwind CSS v4 + match scoreboard CSS + SCSS tokens |
+| Fonts / icons | `@nuxt/fonts`, `@nuxt/icon`                          |
+| SEO           | `@nuxtjs/seo` (sitemap, robots, Schema.org)          |
+| Security      | `nuxt-security` 2.5 (Node 22)                        |
+| Quality       | ESLint, Prettier, Vitest, Vue Test Utils             |
+| Hosting       | Cloudflare Pages (static `nuxt generate`)            |
 
 ## Scripts
 
@@ -27,7 +28,7 @@ npm run dev
 npm run verify
 ```
 
-`npm run verify` runs format, lint, typecheck, tests, and production build.
+`npm run verify` runs format, lint, typecheck, tests, and `nuxt generate` (the Cloudflare Pages artifact).
 
 Copy `.env.example` to `.env` and set `NUXT_PUBLIC_SITE_URL` for production.
 
