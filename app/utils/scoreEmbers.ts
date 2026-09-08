@@ -7,12 +7,28 @@ export interface ScoreEmbersHandle {
   dispose: () => void
 }
 
-const INTRO_DELAY = 1.72
-const INTRO_FADE = 0.9
-const FLAME_COUNT = 52
-const SPARK_COUNT = 70
+export const SCORE_EMBERS_INTRO_DELAY = 1.72
+export const SCORE_EMBERS_INTRO_FADE = 0.9
+export const SCORE_EMBERS_FLAME_COUNT = 52
+export const SCORE_EMBERS_SPARK_COUNT = 70
+export const SCORE_EMBERS_HEARTH_MIN_X = -1.06
+export const SCORE_EMBERS_HEARTH_WIDTH = 0.62
 
-function fillHearth(
+export function scoreEmbersWinnerUniform(winner: ScoreEmbersWinner) {
+  return winner === 'dire' ? 1 : 0
+}
+
+export function scoreEmbersIntroFade(elapsedSec: number) {
+  return Math.min(
+    1,
+    Math.max(
+      0,
+      (elapsedSec - SCORE_EMBERS_INTRO_DELAY) / SCORE_EMBERS_INTRO_FADE,
+    ),
+  )
+}
+
+export function fillHearth(
   kind: number,
   count: number,
   origins: Float32Array,
@@ -35,7 +51,8 @@ function fillHearth(
     const u = (col + jitterX) / cols
     const v = (row + jitterY) / rows
     const write = offset + index
-    origins[write * 3] = -1.06 + u * 0.62
+    origins[write * 3] =
+      SCORE_EMBERS_HEARTH_MIN_X + u * SCORE_EMBERS_HEARTH_WIDTH
     origins[write * 3 + 1] = -1.08 + v * 0.78
     origins[write * 3 + 2] = 0
     if (flame) {
@@ -77,7 +94,7 @@ export function createScoreEmbers(
   const hearthUniforms = {
     uTime: { value: 0 },
     uFade: { value: 0 },
-    uWinner: { value: winner === 'dire' ? 1 : 0 },
+    uWinner: { value: scoreEmbersWinnerUniform(winner) },
   }
 
   const hearthMaterial = new THREE.ShaderMaterial({
@@ -128,7 +145,7 @@ export function createScoreEmbers(
   hearth.frustumCulled = false
   scene.add(hearth)
 
-  const count = FLAME_COUNT + SPARK_COUNT
+  const count = SCORE_EMBERS_FLAME_COUNT + SCORE_EMBERS_SPARK_COUNT
   const origins = new Float32Array(count * 3)
   const velocities = new Float32Array(count * 3)
   const delays = new Float32Array(count)
@@ -139,7 +156,7 @@ export function createScoreEmbers(
 
   fillHearth(
     0,
-    FLAME_COUNT,
+    SCORE_EMBERS_FLAME_COUNT,
     origins,
     velocities,
     delays,
@@ -151,7 +168,7 @@ export function createScoreEmbers(
   )
   fillHearth(
     1,
-    SPARK_COUNT,
+    SCORE_EMBERS_SPARK_COUNT,
     origins,
     velocities,
     delays,
@@ -159,7 +176,7 @@ export function createScoreEmbers(
     seeds,
     lives,
     kinds,
-    FLAME_COUNT,
+    SCORE_EMBERS_FLAME_COUNT,
   )
 
   const quad = new THREE.PlaneGeometry(1, 1)
@@ -188,7 +205,7 @@ export function createScoreEmbers(
   const emberUniforms = {
     uTime: { value: 0 },
     uFade: { value: 0 },
-    uWinner: { value: winner === 'dire' ? 1 : 0 },
+    uWinner: { value: scoreEmbersWinnerUniform(winner) },
     uAspect: { value: 1 },
     uResolution: { value: new THREE.Vector2(1, 1) },
   }
@@ -291,10 +308,6 @@ export function createScoreEmbers(
   observer.observe(canvas)
   resize()
 
-  function introFade(elapsed: number) {
-    return Math.min(1, Math.max(0, (elapsed - INTRO_DELAY) / INTRO_FADE))
-  }
-
   function tick(now: number) {
     if (disposed) {
       return
@@ -304,7 +317,7 @@ export function createScoreEmbers(
       return
     }
     const elapsed = (now - startedAt) / 1000
-    const fade = introFade(elapsed)
+    const fade = scoreEmbersIntroFade(elapsed)
     hearthUniforms.uTime.value = elapsed
     hearthUniforms.uFade.value = fade
     emberUniforms.uTime.value = elapsed
@@ -321,7 +334,7 @@ export function createScoreEmbers(
   }
 
   function setWinner(next: ScoreEmbersWinner) {
-    const value = next === 'dire' ? 1 : 0
+    const value = scoreEmbersWinnerUniform(next)
     hearthUniforms.uWinner.value = value
     emberUniforms.uWinner.value = value
   }

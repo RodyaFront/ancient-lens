@@ -7,8 +7,9 @@ export interface ScoreVfxHandle {
   dispose: () => void
 }
 
-const DURATION_MS = 2200
-const IMPACT_AT = 0.16
+export const SCORE_VFX_DURATION_MS = 2200
+export const SCORE_VFX_IMPACT_AT = 0.16
+export const SCORE_VFX_IMPACT_END = 0.78
 const SPARK_COUNT = 56
 
 function clamp01(value: number) {
@@ -27,6 +28,20 @@ function range(value: number, start: number, end: number) {
 function pulse(elapsed: number, peak: number, width: number) {
   const x = (elapsed - peak) / width
   return Math.exp(-x * x * 2.2)
+}
+
+export function scoreVfxWinnerUniform(winner: ScoreVfxWinner) {
+  return winner === 'dire' ? 1 : 0
+}
+
+export function scoreVfxPunch(elapsedSec: number) {
+  return {
+    flash: pulse(elapsedSec, 0.12, 0.055),
+    scan: easeOutQuart(range(elapsedSec, 0.05, 0.42)),
+    impact: range(elapsedSec, SCORE_VFX_IMPACT_AT, SCORE_VFX_IMPACT_END),
+    field: easeOutQuart(range(elapsedSec, 0.1, 0.7)),
+    fade: 1 - range(elapsedSec, 1.28, 2.2),
+  }
 }
 
 export function createScoreVfx(canvas: HTMLCanvasElement): ScoreVfxHandle {
@@ -147,7 +162,7 @@ export function createScoreVfx(canvas: HTMLCanvasElement): ScoreVfxHandle {
     velocities[index * 3] = Math.cos(angle) * speed
     velocities[index * 3 + 1] = Math.sin(angle) * speed * 0.62
     velocities[index * 3 + 2] = 0
-    delays[index] = IMPACT_AT + (index % 10) * 0.01
+    delays[index] = SCORE_VFX_IMPACT_AT + (index % 10) * 0.01
     sizes[index] = 8 + (index % 5) * 1.8
     lives[index] = 0.5 + (index % 6) * 0.07
     tones[index] = index % 3 === 0 ? 1 : 0
@@ -290,17 +305,18 @@ export function createScoreVfx(canvas: HTMLCanvasElement): ScoreVfxHandle {
     }
 
     const elapsed = (now - startedAt) / 1000
-    overlayUniforms.uFlash.value = pulse(elapsed, 0.12, 0.055)
-    overlayUniforms.uScan.value = easeOutQuart(range(elapsed, 0.05, 0.42))
-    overlayUniforms.uImpact.value = range(elapsed, IMPACT_AT, 0.78)
-    overlayUniforms.uField.value = easeOutQuart(range(elapsed, 0.1, 0.7))
-    overlayUniforms.uFade.value = 1 - range(elapsed, 1.28, 2.2)
+    const punch = scoreVfxPunch(elapsed)
+    overlayUniforms.uFlash.value = punch.flash
+    overlayUniforms.uScan.value = punch.scan
+    overlayUniforms.uImpact.value = punch.impact
+    overlayUniforms.uField.value = punch.field
+    overlayUniforms.uFade.value = punch.fade
     sparkUniforms.uTime.value = elapsed
     sparkUniforms.uFade.value = overlayUniforms.uFade.value
 
     renderer.render(scene, camera)
 
-    if (playing && now - startedAt < DURATION_MS) {
+    if (playing && now - startedAt < SCORE_VFX_DURATION_MS) {
       frame = window.requestAnimationFrame(tick)
       return
     }
@@ -317,7 +333,7 @@ export function createScoreVfx(canvas: HTMLCanvasElement): ScoreVfxHandle {
       return
     }
 
-    overlayUniforms.uWinner.value = winner === 'dire' ? 1 : 0
+    overlayUniforms.uWinner.value = scoreVfxWinnerUniform(winner)
     sparkUniforms.uWinner.value = overlayUniforms.uWinner.value
     startedAt = performance.now()
     playing = true
