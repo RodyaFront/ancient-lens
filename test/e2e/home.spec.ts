@@ -10,7 +10,8 @@ describe('ssr', () => {
   it('renders the home page', async () => {
     const html = await $fetch('/')
 
-    expect(html).toContain('Продакшн-стек Vue 3 + Nuxt')
+    expect(html).toContain('Розбір матчу')
+    expect(html).toContain('Ancient Lens')
   })
 
   it('returns a healthy API payload', async () => {

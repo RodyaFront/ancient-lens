@@ -3,9 +3,9 @@ import { mountSuspended } from '@nuxt/test-utils/runtime'
 import IndexPage from '../../app/pages/index.vue'
 
 describe('index page', () => {
-  it('renders the production stack heading', async () => {
+  it('renders the match review heading', async () => {
     const wrapper = await mountSuspended(IndexPage)
 
-    expect(wrapper.text()).toContain('Продакшн-стек Vue 3 + Nuxt')
+    expect(wrapper.text()).toContain('Розбір матчу')
   })
 })
