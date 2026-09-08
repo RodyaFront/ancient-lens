@@ -2,8 +2,11 @@
 /**
  * npm flattens `wrangler-upstream` (npm:wrangler) and its `wrangler` bin
  * overwrites this package's bin. Re-point .bin after install.
+ *
+ * On Linux `.bin/wrangler` is a symlink — must unlink before write, or
+ * writeFileSync follows the link and corrupts wrangler-upstream's JS.
  */
-import { chmodSync, writeFileSync } from 'node:fs'
+import { chmodSync, lstatSync, unlinkSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -28,21 +31,25 @@ $basedir = Split-Path $MyInvocation.MyCommand.Definition -Parent
 exit $LASTEXITCODE
 `
 
-for (const [name, body] of [
-  ['wrangler', unix],
-  ['wrangler2', unix],
-  ['cf-wrangler', unix],
-]) {
-  const path = join(binDir, name)
-  writeFileSync(path, body, { encoding: 'utf8' })
+function writeBin(path, body, mode) {
   try {
-    chmodSync(path, 0o755)
+    const st = lstatSync(path)
+    if (st.isSymbolicLink() || st.isFile()) unlinkSync(path)
   } catch {
-    // Windows may ignore chmod
+    // missing is fine
+  }
+  writeFileSync(path, body, { encoding: 'utf8' })
+  if (mode) {
+    try {
+      chmodSync(path, mode)
+    } catch {
+      // Windows may ignore chmod
+    }
   }
 }
 
 for (const name of ['wrangler', 'wrangler2', 'cf-wrangler']) {
-  writeFileSync(join(binDir, `${name}.cmd`), cmd, { encoding: 'utf8' })
-  writeFileSync(join(binDir, `${name}.ps1`), ps1, { encoding: 'utf8' })
+  writeBin(join(binDir, name), unix, 0o755)
+  writeBin(join(binDir, `${name}.cmd`), cmd)
+  writeBin(join(binDir, `${name}.ps1`), ps1)
 }
