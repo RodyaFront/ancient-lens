@@ -1,64 +1,64 @@
 import * as THREE from 'three'
 
+export type ScoreEmbersWinner = 'radiant' | 'dire'
+
 export interface ScoreEmbersHandle {
+  setWinner: (winner: ScoreEmbersWinner) => void
   dispose: () => void
 }
 
 const INTRO_DELAY = 1.72
 const INTRO_FADE = 0.9
-const FLAME_PER_SIDE = 28
-const SPARK_PER_SIDE = 40
+const FLAME_COUNT = 52
+const SPARK_COUNT = 70
 
 function fillHearth(
   kind: number,
-  countPerSide: number,
+  count: number,
   origins: Float32Array,
   velocities: Float32Array,
   delays: Float32Array,
   sizes: Float32Array,
-  sides: Float32Array,
   seeds: Float32Array,
   lives: Float32Array,
   kinds: Float32Array,
   offset: number,
 ) {
   const flame = kind === 0
-  for (let index = 0; index < countPerSide * 2; index++) {
-    const slot = index % countPerSide
-    const radiant = index < countPerSide
-    const cols = flame ? 8 : 9
-    const col = slot % cols
-    const row = Math.floor(slot / cols)
-    const jitterX = ((slot * 17) % 11) / 11
-    const jitterY = ((slot * 13) % 9) / 9
+  const cols = flame ? 8 : 10
+  const rows = Math.max(1, Math.ceil(count / cols))
+  for (let index = 0; index < count; index++) {
+    const col = index % cols
+    const row = Math.floor(index / cols)
+    const jitterX = ((index * 17) % 11) / 11
+    const jitterY = ((index * 13) % 9) / 9
     const u = (col + jitterX) / cols
-    const v = (row + jitterY) / Math.max(1, Math.ceil(countPerSide / cols))
+    const v = (row + jitterY) / rows
     const write = offset + index
-    const inward = radiant ? 1 : -1
-    origins[write * 3] = inward * (-1.14 + u * 0.38)
-    origins[write * 3 + 1] = -1.22 + v * 0.42
+    origins[write * 3] = -1.06 + u * 0.62
+    origins[write * 3 + 1] = -1.08 + v * 0.78
     origins[write * 3 + 2] = 0
     if (flame) {
-      velocities[write * 3] = inward * (0.04 + (slot % 6) * 0.01)
-      velocities[write * 3 + 1] = 0.12 + (slot % 5) * 0.018
-      sizes[write] = 8 + (slot % 5) * 1.4
-      lives[write] = 2.4 + (slot % 6) * 0.35
+      velocities[write * 3] = 0.035 + (index % 6) * 0.01
+      velocities[write * 3 + 1] = 0.14 + (index % 5) * 0.022
+      sizes[write] = 9 + (index % 5) * 1.6
+      lives[write] = 2.5 + (index % 6) * 0.32
     } else {
-      velocities[write * 3] = inward * (0.055 + (slot % 8) * 0.01)
-      velocities[write * 3 + 1] = 0.13 + (slot % 7) * 0.016
-      sizes[write] = 5 + (slot % 5) * 0.8
-      lives[write] = 2.9 + (slot % 7) * 0.4
+      velocities[write * 3] = 0.045 + (index % 8) * 0.012
+      velocities[write * 3 + 1] = 0.18 + (index % 7) * 0.024
+      sizes[write] = 5.2 + (index % 5) * 0.9
+      lives[write] = 2.9 + (index % 7) * 0.36
     }
     velocities[write * 3 + 2] = 0
-    delays[write] = (slot * 0.11) % (flame ? 1.4 : 2.1)
-    sides[write] = radiant ? 0 : 1
-    seeds[write] = (slot * 11.13 + kind * 4.7) % 20
+    delays[write] = (index * 0.11) % (flame ? 1.6 : 2.2)
+    seeds[write] = (index * 11.13 + kind * 4.7) % 20
     kinds[write] = kind
   }
 }
 
 export function createScoreEmbers(
   canvas: HTMLCanvasElement,
+  winner: ScoreEmbersWinner,
 ): ScoreEmbersHandle {
   const renderer = new THREE.WebGLRenderer({
     canvas,
@@ -77,7 +77,7 @@ export function createScoreEmbers(
   const hearthUniforms = {
     uTime: { value: 0 },
     uFade: { value: 0 },
-    uAspect: { value: 1 },
+    uWinner: { value: winner === 'dire' ? 1 : 0 },
   }
 
   const hearthMaterial = new THREE.ShaderMaterial({
@@ -96,30 +96,28 @@ export function createScoreEmbers(
     fragmentShader: `
       uniform float uTime;
       uniform float uFade;
-      uniform float uAspect;
+      uniform float uWinner;
       varying vec2 vUv;
 
       void main() {
         vec3 radiant = vec3(0.612, 0.843, 0.478);
         vec3 dire = vec3(0.941, 0.529, 0.455);
         vec3 gold = vec3(0.882, 0.780, 0.506);
-        vec3 color = vec3(0.0);
+        vec3 team = mix(radiant, dire, uWinner);
         float flicker =
           0.84 +
           0.16 * sin(uTime * 3.2) * sin(uTime * 1.7 + 1.7);
-
-        vec2 left = vUv - vec2(0.0, 0.04);
-        left.x *= uAspect;
-        float leftShape = exp(-length(left) * 5.4);
-        float leftNoise = 0.7 + 0.3 * sin(vUv.y * 22.0 - uTime * 2.4 + vUv.x * 14.0);
-        color += (radiant * 0.8 + gold * 0.2) * leftShape * leftNoise * flicker;
-
-        vec2 right = vUv - vec2(1.0, 0.04);
-        right.x *= uAspect;
-        float rightShape = exp(-length(right) * 5.4);
-        float rightNoise = 0.7 + 0.3 * sin(vUv.y * 20.0 - uTime * 2.2 - vUv.x * 13.0);
-        color += (dire * 0.8 + gold * 0.18) * rightShape * rightNoise * flicker;
-
+        vec2 uv = vUv;
+        uv.x = mix(uv.x, 1.0 - uv.x, uWinner);
+        vec2 p = uv - vec2(0.16, 0.2);
+        p.x *= 2.35;
+        p.y *= 1.85;
+        float core = exp(-length(p) * 2.05);
+        float wash = exp(-length(p * vec2(0.82, 1.05)) * 1.35);
+        float column = (1.0 - smoothstep(0.34, 0.52, uv.x))
+          * (1.0 - smoothstep(0.62, 0.08, uv.y));
+        float noise = 0.72 + 0.28 * sin(uv.y * 18.0 - uTime * 2.3 + uv.x * 12.0);
+        vec3 color = (team * 0.82 + gold * 0.22) * (core * 0.85 + wash * 0.55) * column * noise * flicker;
         color *= uFade;
         gl_FragColor = vec4(color, min(1.0, length(color)));
       }
@@ -130,24 +128,22 @@ export function createScoreEmbers(
   hearth.frustumCulled = false
   scene.add(hearth)
 
-  const count = (FLAME_PER_SIDE + SPARK_PER_SIDE) * 2
+  const count = FLAME_COUNT + SPARK_COUNT
   const origins = new Float32Array(count * 3)
   const velocities = new Float32Array(count * 3)
   const delays = new Float32Array(count)
   const sizes = new Float32Array(count)
-  const sides = new Float32Array(count)
   const seeds = new Float32Array(count)
   const lives = new Float32Array(count)
   const kinds = new Float32Array(count)
 
   fillHearth(
     0,
-    FLAME_PER_SIDE,
+    FLAME_COUNT,
     origins,
     velocities,
     delays,
     sizes,
-    sides,
     seeds,
     lives,
     kinds,
@@ -155,16 +151,15 @@ export function createScoreEmbers(
   )
   fillHearth(
     1,
-    SPARK_PER_SIDE,
+    SPARK_COUNT,
     origins,
     velocities,
     delays,
     sizes,
-    sides,
     seeds,
     lives,
     kinds,
-    FLAME_PER_SIDE * 2,
+    FLAME_COUNT,
   )
 
   const quad = new THREE.PlaneGeometry(1, 1)
@@ -185,7 +180,6 @@ export function createScoreEmbers(
   )
   geometry.setAttribute('aDelay', new THREE.InstancedBufferAttribute(delays, 1))
   geometry.setAttribute('aSize', new THREE.InstancedBufferAttribute(sizes, 1))
-  geometry.setAttribute('aSide', new THREE.InstancedBufferAttribute(sides, 1))
   geometry.setAttribute('aSeed', new THREE.InstancedBufferAttribute(seeds, 1))
   geometry.setAttribute('aLife', new THREE.InstancedBufferAttribute(lives, 1))
   geometry.setAttribute('aKind', new THREE.InstancedBufferAttribute(kinds, 1))
@@ -194,6 +188,7 @@ export function createScoreEmbers(
   const emberUniforms = {
     uTime: { value: 0 },
     uFade: { value: 0 },
+    uWinner: { value: winner === 'dire' ? 1 : 0 },
     uAspect: { value: 1 },
     uResolution: { value: new THREE.Vector2(1, 1) },
   }
@@ -209,15 +204,14 @@ export function createScoreEmbers(
       attribute vec3 aVelocity;
       attribute float aDelay;
       attribute float aSize;
-      attribute float aSide;
       attribute float aSeed;
       attribute float aLife;
       attribute float aKind;
       uniform float uTime;
+      uniform float uWinner;
       uniform float uAspect;
       uniform vec2 uResolution;
       varying float vLife;
-      varying float vSide;
       varying float vHot;
       varying float vKind;
       varying vec2 vUv;
@@ -225,18 +219,18 @@ export function createScoreEmbers(
       void main() {
         float t = mod(uTime + aDelay, aLife);
         float age = t / aLife;
-        float gust = 0.82 + 0.18 * sin(uTime * 0.45 + aSide * 2.2 + aSeed);
+        float gust = 0.82 + 0.18 * sin(uTime * 0.45 + aSeed);
         vLife = smoothstep(0.0, 0.16, age) * (1.0 - smoothstep(0.62, 1.0, age));
-        vSide = aSide;
         vHot = 1.0 - age;
         vKind = aKind;
         vUv = uv;
+        float flip = mix(1.0, -1.0, uWinner);
         vec2 wind = vec2(aVelocity.x * gust, aVelocity.y * gust);
         vec3 world = aOrigin;
-        world.x = (aOrigin.x + wind.x * t) * uAspect;
+        world.x = (aOrigin.x + wind.x * t) * uAspect * flip;
         world.y = aOrigin.y + wind.y * t;
-        world.x += sin(uTime * 1.6 + aSeed + t * 2.2) * mix(0.016, 0.008, aKind) * uAspect;
-        world.y += sin(uTime * 1.2 + aSeed * 1.4) * mix(0.012, 0.006, aKind);
+        world.x += sin(uTime * 1.6 + aSeed + t * 2.2) * mix(0.018, 0.01, aKind) * uAspect * flip;
+        world.y += sin(uTime * 1.2 + aSeed * 1.4) * mix(0.014, 0.008, aKind);
         vec4 clip = projectionMatrix * modelViewMatrix * vec4(world, 1.0);
         vec2 ndc = (aSize * mix(0.82, 1.05, vHot) * vLife) / uResolution * 2.0;
         clip.xy += position.xy * ndc;
@@ -246,8 +240,8 @@ export function createScoreEmbers(
     fragmentShader: `
       uniform float uTime;
       uniform float uFade;
+      uniform float uWinner;
       varying float vLife;
-      varying float vSide;
       varying float vHot;
       varying float vKind;
       varying vec2 vUv;
@@ -263,7 +257,7 @@ export function createScoreEmbers(
         vec3 dire = vec3(0.941, 0.529, 0.455);
         vec3 gold = vec3(0.882, 0.780, 0.506);
         vec3 white = vec3(1.0, 0.95, 0.74);
-        vec3 team = mix(radiant, dire, vSide);
+        vec3 team = mix(radiant, dire, uWinner);
         vec3 color = mix(team, gold, 0.16 + vHot * 0.28);
         color = mix(color, white, core * mix(0.35, 0.7, vKind));
         color *= spark * flicker * mix(0.4, 0.85, vKind) * (0.5 + vHot * 0.5);
@@ -291,7 +285,6 @@ export function createScoreEmbers(
     camera.updateProjectionMatrix()
     emberUniforms.uAspect.value = aspect
     emberUniforms.uResolution.value.set(width, height)
-    hearthUniforms.uAspect.value = aspect
   }
 
   const observer = new ResizeObserver(resize)
@@ -327,6 +320,12 @@ export function createScoreEmbers(
     }
   }
 
+  function setWinner(next: ScoreEmbersWinner) {
+    const value = next === 'dire' ? 1 : 0
+    hearthUniforms.uWinner.value = value
+    emberUniforms.uWinner.value = value
+  }
+
   document.addEventListener('visibilitychange', onVisibility)
   frame = window.requestAnimationFrame(tick)
 
@@ -344,5 +343,5 @@ export function createScoreEmbers(
     renderer.dispose()
   }
 
-  return { dispose }
+  return { setWinner, dispose }
 }

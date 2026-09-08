@@ -181,7 +181,7 @@ onMounted(() => {
       :data-winner="winner || ''"
       @animationend="onAnimationEnd"
     >
-      <MatchScoreEmbers />
+      <MatchScoreEmbers :winner="winner" />
       <div class="score-fx" aria-hidden="true">
         <MatchScoreVfx ref="vfx" :winner="winner" />
         <div v-if="winner" class="fx-verdict">
