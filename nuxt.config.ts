@@ -72,9 +72,14 @@ export default defineNuxtConfig({
   },
 
   nitro: {
-    // Workers Builds sees wrangler.toml and would otherwise pick
-    // cloudflare-module, then `wrangler pages deploy` fails on ASSETS.
-    preset: 'static',
+    // On Workers Builds, wrangler.toml would otherwise pick cloudflare-module
+    // and `wrangler pages deploy` fails on reserved ASSETS. Do not hardcode
+    // static — that removes the Node server and breaks @nuxt/test-utils e2e.
+    preset:
+      process.env.NITRO_PRESET ||
+      (process.env.WORKERS_CI === '1' || process.env.CF_PAGES === '1'
+        ? 'static'
+        : undefined),
     compressPublicAssets: true,
     prerender: {
       crawlLinks: true,

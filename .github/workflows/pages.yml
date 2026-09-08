@@ -8,8 +8,9 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  NUXT_PUBLIC_SITE_URL: https://ancientlens.duckdns.org
-  NUXT_SITE_URL: https://ancientlens.duckdns.org
+  NUXT_PUBLIC_SITE_URL: https://ancientlens.info
+  NUXT_SITE_URL: https://ancientlens.info
+  NITRO_PRESET: static
 
 jobs:
   generate:
