@@ -4,13 +4,31 @@ import { describe, expect, it } from 'vitest'
 
 await setup({
   rootDir: fileURLToPath(new URL('../..', import.meta.url)),
+  // Local/CI shells may set NITRO_PRESET=static for Workers; e2e needs a Node server.
+  nuxtConfig: {
+    nitro: {
+      preset: 'node-server',
+    },
+  },
 })
 
-describe('static home', () => {
-  it('renders the home page', async () => {
+describe('routes', () => {
+  it('renders the root page without a match scoreboard', async () => {
     const html = await $fetch('/')
 
-    expect(html).toContain('Розбір матчу')
     expect(html).toContain('Ancient Lens')
+    expect(html).toContain('Розбір матчу')
+    expect(html).toContain('Відкрити матч')
+    expect(html).toContain('ID матчу або URL')
+    expect(html).not.toContain('Еталонний протокол')
+    expect(html).not.toContain('Недавні')
+    expect(html).not.toContain('score-card')
+  })
+
+  it('renders the match page shell', async () => {
+    const html = await $fetch('/match/8961419173?snapshot=1')
+
+    expect(html).toContain('Ancient Lens')
+    expect(html).toContain('Розбір матчу')
   })
 })

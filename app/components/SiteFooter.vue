@@ -16,7 +16,7 @@ const emit = defineEmits<{
       type="button"
       @click="emit('sources')"
     >
-      Дані OpenDota <AppIcon name="external-link" />
+      Дані OpenDota
     </button>
   </footer>
 </template>

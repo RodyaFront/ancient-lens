@@ -8,6 +8,7 @@ import {
   formatNumber,
   playerDisplayName,
   playerItemId,
+  savedResultLabel,
 } from '~/utils/matchFormat'
 
 const dialog = defineModel<MatchDialogState>({ required: true })
@@ -106,19 +107,9 @@ function onBackdropClick(event: MouseEvent) {
   }
 }
 
-function savedResult(entry: { radiant_win?: boolean }) {
-  if (entry.radiant_win === true) {
-    return 'Перемога Radiant'
-  }
-  if (entry.radiant_win === false) {
-    return 'Перемога Dire'
-  }
-  return 'Результат не надано'
-}
-
 function openSaved(id: string) {
   close()
-  void store.loadMatch(id, { sound: true })
+  void store.openMatchInput(id)
 }
 
 function removeSaved(id: string) {
@@ -214,7 +205,7 @@ function removeSaved(id: string) {
             >
               <strong>#{{ entry.id }}</strong>
               <small>
-                {{ savedResult(entry) }} · {{ duration(entry.duration) }}
+                {{ savedResultLabel(entry) }} · {{ duration(entry.duration) }}
               </small>
             </button>
             <button

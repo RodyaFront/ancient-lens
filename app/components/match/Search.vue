@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { EXAMPLE_MATCH_ID } from '#shared/match/constants'
-
 const store = useMatchStore()
 const input = ref(store.lastInput)
+const errorTitle = useTemplateRef<HTMLElement>('errorTitle')
 
 watch(
   () => store.lastInput,
@@ -11,8 +10,13 @@ watch(
   },
 )
 
-function submit() {
-  void store.loadMatch(input.value, { sound: true })
+async function submit() {
+  await store.openMatchInput(input.value)
+  if (!store.inputInvalid) {
+    return
+  }
+  await nextTick()
+  errorTitle.value?.focus()
 }
 </script>
 
@@ -24,22 +28,26 @@ function submit() {
   >
     <div class="search-heading">
       <h1 id="search-title">Розбір матчу</h1>
-      <p>Результат, економіка, внесок гравців.</p>
+      <p>
+        Результат, економіка, внесок гравців. Вставте ID або посилання Dotabuff
+        / OpenDota.
+      </p>
     </div>
     <div class="search-controls">
-      <form novalidate @submit.prevent="submit">
+      <form id="search-form" novalidate @submit.prevent="submit">
         <label for="match-input">ID або посилання на матч</label>
         <div class="search-box">
           <input
             id="match-input"
             v-model="input"
             type="text"
-            inputmode="url"
+            inputmode="text"
             autocomplete="off"
             spellcheck="false"
-            placeholder="ID або URL матчу"
+            placeholder="ID матчу або URL"
             aria-describedby="input-help"
             :aria-invalid="store.inputInvalid ? 'true' : undefined"
+            :aria-errormessage="store.error ? 'match-input-error' : undefined"
             :disabled="store.loading"
           />
           <button class="primary" type="submit" :disabled="store.loading">
@@ -48,33 +56,23 @@ function submit() {
         </div>
       </form>
       <div class="input-footer">
-        <span id="input-help">Dotabuff / OpenDota</span>
-        <button
-          class="text-button"
-          type="button"
-          :disabled="store.loading"
-          @click="store.loadExample({ sound: true })"
-        >
-          Приклад #{{ EXAMPLE_MATCH_ID }}
-        </button>
+        <span id="input-help">Підтримуються Dotabuff і OpenDota</span>
       </div>
     </div>
-    <div v-if="store.error" class="error-box" role="alert">
-      <strong>{{ store.error.title }}</strong>
+    <div
+      v-if="store.error"
+      id="match-input-error"
+      class="error-box"
+      role="alert"
+    >
+      <strong ref="errorTitle" tabindex="-1">{{ store.error.title }}</strong>
       <p>{{ store.error.body }}</p>
       <div v-if="store.error.actions" class="error-actions">
         <button
           type="button"
-          @click="store.loadMatch(store.error.id || input, { sound: true })"
+          @click="store.openMatchInput(store.error.id || input)"
         >
           Спробувати ще раз
-        </button>
-        <button
-          v-if="store.error.id === EXAMPLE_MATCH_ID"
-          type="button"
-          @click="store.loadExample({ sound: true })"
-        >
-          Показати перевірений знімок
         </button>
         <a
           v-if="store.error.id"

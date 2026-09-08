@@ -12,4 +12,6 @@ export const iconPaths: Record<string, string> = {
   info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-10v.1"/>',
   chevron: '<path d="m9 6 6 6-6 6"/>',
   trash: '<path d="M3 6h18M9 6V3h6v3M6 6l1 15h10l1-15M10 10v7m4-7v7"/>',
+  history:
+    '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.2 1.9M4.2 8.2 2.5 6m1.7 2.2L6 6.5"/>',
 }

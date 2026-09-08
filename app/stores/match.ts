@@ -1,11 +1,14 @@
 import {
   EXAMPLE_MATCH_ID,
   MATCH_FETCH_TIMEOUT_MS,
+  MAX_RECENT_MATCHES,
   MAX_SAVED_MATCHES,
   OPENDOTA_API,
+  RECENT_MATCHES_KEY,
   SAVED_MATCHES_KEY,
 } from '#shared/match/constants'
 import { parseMatchId } from '#shared/match/parseMatchId'
+import { upsertRecentMatch } from '#shared/match/recent'
 import { radiant, validateMatch } from '#shared/match/stats'
 import type {
   HeroEntry,
@@ -14,6 +17,7 @@ import type {
   MatchPlayer,
   MatchSource,
   PlayerSort,
+  RecentMatch,
   SavedMatch,
   ScoreboardView,
   SnapshotMeta,
@@ -45,12 +49,13 @@ export const useMatchStore = defineStore('match', () => {
     actions: boolean
   } | null>(null)
   const toast = ref('')
-  const lastInput = ref(EXAMPLE_MATCH_ID)
+  const lastInput = ref('')
   const inputInvalid = ref(false)
   const heroes = ref<Record<string, HeroEntry>>({})
   const items = ref<Record<string, ItemEntry>>({})
   const snapshotMeta = ref<SnapshotMeta | null>(null)
   const saved = ref<SavedMatch[]>([])
+  const recent = ref<RecentMatch[]>([])
   const requestNo = ref(0)
   const revealNonce = ref(0)
   const revealWithSound = ref(false)
@@ -117,6 +122,75 @@ export const useMatchStore = defineStore('match', () => {
     saved.value = next
   }
 
+  function isRecentMatch(entry: unknown): entry is RecentMatch {
+    if (!entry || typeof entry !== 'object') {
+      return false
+    }
+    const value = entry as RecentMatch
+    return (
+      /^\d{1,16}$/.test(String(value.id)) &&
+      typeof value.openedAt === 'number' &&
+      Number.isFinite(value.openedAt)
+    )
+  }
+
+  function loadRecent() {
+    if (!import.meta.client) {
+      return
+    }
+
+    try {
+      const parsed = JSON.parse(
+        localStorage.getItem(RECENT_MATCHES_KEY) || '[]',
+      ) as unknown
+      if (Array.isArray(parsed)) {
+        recent.value = parsed
+          .filter(isRecentMatch)
+          .map((entry) => ({
+            id: String(entry.id),
+            radiant_win: entry.radiant_win,
+            duration: entry.duration,
+            openedAt: entry.openedAt,
+          }))
+          .slice(0, MAX_RECENT_MATCHES)
+      }
+    } catch {
+      recent.value = []
+    }
+  }
+
+  function persistRecent(next: RecentMatch[]) {
+    localStorage.setItem(RECENT_MATCHES_KEY, JSON.stringify(next))
+    recent.value = next
+  }
+
+  function rememberRecent(data: MatchData) {
+    if (!import.meta.client) {
+      return
+    }
+
+    const entry: RecentMatch = {
+      id: String(data.match_id),
+      radiant_win: data.radiant_win,
+      duration: data.duration,
+      openedAt: Date.now(),
+    }
+
+    try {
+      persistRecent(upsertRecentMatch(recent.value, entry, MAX_RECENT_MATCHES))
+    } catch {
+      // Ignore quota / private-mode write failures.
+    }
+  }
+
+  function removeRecent(id: string) {
+    try {
+      persistRecent(recent.value.filter((entry) => entry.id !== id))
+    } catch {
+      showToast('Не вдалося оновити недавні матчі')
+    }
+  }
+
   function heroById(id: number | undefined) {
     return id == null ? undefined : heroes.value[String(id)]
   }
@@ -132,12 +206,70 @@ export const useMatchStore = defineStore('match', () => {
     )
   }
 
-  function setQuery(id: string, snapshot = false) {
-    const query: Record<string, string> = { match: id }
-    if (snapshot) {
-      query.snapshot = '1'
+  function prepareHome() {
+    loadSaved()
+    loadRecent()
+    match.value = null
+    source.value = null
+    error.value = null
+    loading.value = false
+    inputInvalid.value = false
+    view.value = 'overview'
+    filter.value = 'all'
+    sort.value = 'slot'
+  }
+
+  function matchPath(id: string) {
+    return `/match/${id}`
+  }
+
+  function isCurrentMatchRoute(id: string, snapshot = false) {
+    const route = useRoute()
+    return (
+      route.path === matchPath(id) &&
+      (route.query.snapshot === '1') === snapshot
+    )
+  }
+
+  async function openMatchInput(
+    input: string,
+    options: { snapshot?: boolean } = {},
+  ) {
+    inputInvalid.value = false
+    error.value = null
+    try {
+      const id = parseMatchId(input)
+      lastInput.value = id
+      const snapshot = Boolean(options.snapshot)
+      if (isCurrentMatchRoute(id, snapshot)) {
+        await bootstrapFromRoute(id, snapshot)
+        return
+      }
+      await navigateTo({
+        path: matchPath(id),
+        query: snapshot ? { snapshot: '1' } : {},
+      })
+    } catch (errorValue) {
+      inputInvalid.value = true
+      const message =
+        errorValue instanceof Error
+          ? errorValue.message
+          : 'Перевірте ID або посилання на матч.'
+      showError('Некоректний запит', message, null, false)
     }
-    void navigateTo({ query }, { replace: true })
+  }
+
+  function openExampleMatch() {
+    lastInput.value = EXAMPLE_MATCH_ID
+    inputInvalid.value = false
+    error.value = null
+    if (isCurrentMatchRoute(EXAMPLE_MATCH_ID, true)) {
+      return bootstrapFromRoute(EXAMPLE_MATCH_ID, true)
+    }
+    return navigateTo({
+      path: matchPath(EXAMPLE_MATCH_ID),
+      query: { snapshot: '1' },
+    })
   }
 
   function showError(
@@ -184,6 +316,13 @@ export const useMatchStore = defineStore('match', () => {
     if (metaLookup?.status === 'fulfilled') {
       snapshotMeta.value = metaLookup.value
     }
+  }
+
+  async function ensureLookups() {
+    if (Object.keys(heroes.value).length) {
+      return
+    }
+    await loadLookups()
   }
 
   async function loadMatch(input: string, options: { sound?: boolean } = {}) {
@@ -265,7 +404,7 @@ export const useMatchStore = defineStore('match', () => {
       }
       filter.value = 'all'
       revealNonce.value += 1
-      setQuery(id)
+      rememberRecent(next)
     } catch (errorValue) {
       if (no !== requestNo.value) {
         return
@@ -352,7 +491,6 @@ export const useMatchStore = defineStore('match', () => {
         fetchedAt: snapshotMeta.value?.fetched_at || '2026-09-05T05:16:46Z',
       }
       revealNonce.value += 1
-      setQuery(EXAMPLE_MATCH_ID, true)
     } catch {
       if (no === requestNo.value) {
         match.value = null
@@ -438,19 +576,16 @@ export const useMatchStore = defineStore('match', () => {
     showToast('JSON підготовлено до завантаження')
   }
 
-  async function bootstrap() {
+  async function bootstrapFromRoute(id: string, snapshot = false) {
     loadSaved()
+    loadRecent()
     await loadLookups()
-    const query = new URLSearchParams(window.location.search)
-    const requested = query.get('match')
-    if (
-      requested &&
-      !(requested === EXAMPLE_MATCH_ID && query.get('snapshot') === '1')
-    ) {
-      await loadMatch(requested)
+    lastInput.value = id
+    if (snapshot && id === EXAMPLE_MATCH_ID) {
+      await loadExample()
       return
     }
-    await loadExample()
+    await loadMatch(id)
   }
 
   return {
@@ -465,6 +600,7 @@ export const useMatchStore = defineStore('match', () => {
     lastInput,
     inputInvalid,
     saved,
+    recent,
     revealNonce,
     revealWithSound,
     radiantPlayers,
@@ -481,7 +617,12 @@ export const useMatchStore = defineStore('match', () => {
     cancelLoad,
     toggleSaved,
     removeSaved,
+    removeRecent,
     exportMatch,
-    bootstrap,
+    prepareHome,
+    ensureLookups,
+    openMatchInput,
+    openExampleMatch,
+    bootstrapFromRoute,
   }
 })

@@ -86,6 +86,13 @@ export interface SavedMatch {
   start_time?: number
 }
 
+export interface RecentMatch {
+  id: string
+  radiant_win?: boolean
+  duration?: number
+  openedAt: number
+}
+
 export type MatchSourceKind = 'live' | 'example'
 
 export interface MatchSource {

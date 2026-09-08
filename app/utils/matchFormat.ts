@@ -30,6 +30,30 @@ export function formatDate(value: unknown): string {
   }).format(new Date(value * 1000))
 }
 
+export function formatRelativeOpened(openedAt: unknown): string {
+  if (!isNum(openedAt)) {
+    return ''
+  }
+
+  const deltaSec = Math.max(0, Math.round((Date.now() - openedAt) / 1000))
+  if (deltaSec < 60) {
+    return 'щойно'
+  }
+  if (deltaSec < 3600) {
+    return `${Math.floor(deltaSec / 60)} хв тому`
+  }
+  if (deltaSec < 86400) {
+    return `${Math.floor(deltaSec / 3600)} год тому`
+  }
+  if (deltaSec < 86400 * 7) {
+    return `${Math.floor(deltaSec / 86400)} д тому`
+  }
+
+  return new Intl.DateTimeFormat('uk-UA', { dateStyle: 'medium' }).format(
+    new Date(openedAt),
+  )
+}
+
 export function playerDisplayName(player: MatchPlayer): string {
   return (
     player.personaname ||
@@ -72,6 +96,16 @@ export function steamAssetUrl(path: string | undefined): string | null {
 
 export function initials(text: string, length = 2): string {
   return text.slice(0, length).toUpperCase()
+}
+
+export function savedResultLabel(entry: { radiant_win?: boolean }): string {
+  if (entry.radiant_win === true) {
+    return 'Перемога Radiant'
+  }
+  if (entry.radiant_win === false) {
+    return 'Перемога Dire'
+  }
+  return 'Результат не надано'
 }
 
 export function formatKda(player: MatchPlayer): string {

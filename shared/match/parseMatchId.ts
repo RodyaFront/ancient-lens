@@ -2,17 +2,27 @@ export function isNum(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value)
 }
 
+const GENERIC_ID_OR_LINK =
+  'Вставте числовий ID або посилання на матч Dotabuff / OpenDota.'
+
+/** True when the value looks like a URL, not a bare token / garbage. */
+function looksLikeMatchUrl(text: string): boolean {
+  return /^https?:\/\//i.test(text) || text.includes('/')
+}
+
 export function parseMatchId(value: unknown): string {
   let text = String(value ?? '').trim()
 
   if (!/^\d+$/.test(text)) {
+    if (!looksLikeMatchUrl(text)) {
+      throw new Error(GENERIC_ID_OR_LINK)
+    }
+
     let url: URL
     try {
       url = new URL(/^https?:\/\//i.test(text) ? text : `https://${text}`)
     } catch {
-      throw new Error(
-        'Вставте числовий ID або посилання на матч Dotabuff / OpenDota.',
-      )
+      throw new Error(GENERIC_ID_OR_LINK)
     }
 
     if (

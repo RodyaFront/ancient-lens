@@ -9,6 +9,14 @@ name = "ancient-lens"
 compatibility_date = "2025-07-15"
 workers_dev = true
 
+[[routes]]
+pattern = "ancientlens.info"
+custom_domain = true
+
+[[routes]]
+pattern = "www.ancientlens.info"
+custom_domain = true
+
 [assets]
 directory = ".output/public"
 

@@ -7,6 +7,7 @@ import {
   parseMatchId,
   radiant,
   total,
+  upsertRecentMatch,
   validateMatch,
 } from '../../shared/match'
 
@@ -35,6 +36,44 @@ describe('parseMatchId', () => {
     ]) {
       expect(() => parseMatchId(input)).toThrow()
     }
+  })
+
+  it('rejects bare tokens with the generic ID/link message', () => {
+    for (const input of ['abc', 'not-a-url', 'google.com']) {
+      expect(() => parseMatchId(input)).toThrow(
+        /числовий ID або посилання на матч/,
+      )
+    }
+  })
+
+  it('still rejects unsupported hosts when the value looks like a URL', () => {
+    expect(() => parseMatchId('evil.test/matches/123')).toThrow(
+      /dotabuff\.com або opendota\.com/,
+    )
+  })
+})
+
+describe('upsertRecentMatch', () => {
+  it('prepends, dedupes, and caps the list', () => {
+    const first = { id: '1', openedAt: 1 }
+    const second = { id: '2', openedAt: 2 }
+    const again = { id: '1', openedAt: 3 }
+
+    expect(upsertRecentMatch([], first, 8)).toEqual([first])
+    expect(upsertRecentMatch([first], second, 8)).toEqual([second, first])
+    expect(upsertRecentMatch([second, first], again, 8)).toEqual([
+      again,
+      second,
+    ])
+    expect(
+      upsertRecentMatch([second, first], { id: '3', openedAt: 4 }, 2),
+    ).toEqual([{ id: '3', openedAt: 4 }, second])
+  })
+
+  it('ignores invalid ids', () => {
+    expect(upsertRecentMatch([{ id: '1' }], { id: 'abc' }, 8)).toEqual([
+      { id: '1' },
+    ])
   })
 })
 
