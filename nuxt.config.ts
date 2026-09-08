@@ -45,8 +45,20 @@ export default defineNuxtConfig({
 
   fonts: {
     families: [
-      { name: 'IBM Plex Sans', weights: [400, 500, 600, 700] },
-      { name: 'Roboto Condensed', weights: [500, 600, 700, 800] },
+      {
+        name: 'IBM Plex Sans',
+        provider: 'google',
+        global: true,
+        weights: [400, 500, 600, 700],
+        styles: ['normal'],
+      },
+      {
+        name: 'Roboto Condensed',
+        provider: 'google',
+        global: true,
+        weights: [500, 600, 700, 800],
+        styles: ['normal'],
+      },
     ],
   },
 

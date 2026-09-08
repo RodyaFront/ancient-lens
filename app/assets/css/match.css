@@ -1421,8 +1421,13 @@ footer .text-button {
   font-size: 0.75rem;
 }
 dialog {
+  position: fixed;
+  inset: 0;
   width: min(660px, calc(100% - 32px));
   max-height: 85dvh;
+  height: fit-content;
+  margin: auto;
+  overflow: auto;
   padding: 28px;
   border: 1px solid #68755f;
   background: var(--panel);
