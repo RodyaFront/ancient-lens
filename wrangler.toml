@@ -1,10 +1,13 @@
 # Cloudflare Workers static site (Workers Builds).
 # No account id or API token here — connect the GitHub repo in the
-# dashboard. Deploy with `npx wrangler deploy` (not `pages deploy`:
-# Builds API tokens have Workers Scripts edit, not Pages Edit).
+# dashboard. Prefer Deploy command `npx wrangler deploy`.
+# If the dashboard still runs `npx wrangler pages deploy …`, the local
+# `tools/wrangler-ci-shim` (package.json `wrangler` dep) rewrites that
+# to `wrangler deploy` so Builds tokens (Workers Scripts only) succeed.
 
 name = "ancient-lens"
 compatibility_date = "2025-07-15"
+workers_dev = true
 
 [assets]
 directory = ".output/public"
