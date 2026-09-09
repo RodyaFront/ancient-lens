@@ -1,0 +1,15 @@
+{
+  "name": "wrangler",
+  "version": "4.129.1-ci-shim",
+  "private": true,
+  "type": "module",
+  "description": "Maps `wrangler pages deploy` → `wrangler deploy` so Workers Builds stays green when the dashboard Deploy command is still pages deploy.",
+  "bin": {
+    "wrangler": "./bin.mjs",
+    "wrangler2": "./bin.mjs",
+    "cf-wrangler": "./bin.mjs"
+  },
+  "dependencies": {
+    "wrangler-upstream": "npm:wrangler@4.129.1"
+  }
+}

@@ -1,0 +1,14 @@
+# Forbid direct pushes to main/master. Always run a production build before push.
+
+while read local_ref local_sha remote_ref remote_sha
+do
+  case "$remote_ref" in
+    refs/heads/main|refs/heads/master)
+      echo "pre-push: direct push to main/master is forbidden. Open a PR."
+      exit 1
+      ;;
+  esac
+done
+
+echo "pre-push: running npm run generate"
+npm run generate

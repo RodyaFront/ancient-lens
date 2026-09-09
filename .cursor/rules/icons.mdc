@@ -1,0 +1,24 @@
+---
+description: Icon usage — prefer @nuxt/icon (Lucide); do not invent SVG paths
+alwaysApply: true
+---
+
+# Icons
+
+## Canon
+
+- New UI icons come from **`@nuxt/icon`** (already in `nuxt.config` modules).
+- Default collection: **Lucide** → `<Icon name="lucide:swords" />` (or the project’s Nuxt Icon wrapper if one is introduced).
+- Before picking a name, prefer real Lucide names (`coins`, `swords`, `layout-list`, `rows-3`, …). Do not invent glyphs.
+
+## Do not
+
+- Do **not** draw one-off SVG path strings for new icons.
+- Do **not** reintroduce `AppIcon`, `iconPaths.ts`, or another hand-rolled SVG path map.
+- Do **not** add a second icon library alongside Lucide without an explicit product decision.
+
+## Style
+
+- Match stroke weight / size to surrounding controls (typically ~1rem in tabs).
+- Color via `currentColor` / parent text tokens (`--gold`, `--accent`, `--muted`, …), not hard-coded fills in the SVG.
+- No decorative glow/sparkle icons for chrome (see `DESIGN.md`).

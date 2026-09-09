@@ -1,0 +1,41 @@
+---
+description: GitHub Flow — ветки, запрет stash/push в main, вылить текущее перед новой задачей
+alwaysApply: true
+---
+
+# Git pipeline
+
+GitHub Flow: короткоживущая ветка → PR в `main` → squash-merge. Канон для людей: раздел How we ship в `README.md`.
+
+## Запрещено
+
+- `git push` в `main` или `master` (и `--force` туда же)
+- `git push` без зелёного `npm run verify` (как минимум `npm run generate` не должен падать)
+- `git push --no-verify`
+- `git stash` / `stash push` / `pop` / `apply` / `drop` без явной фразы «стешни» / «stash». По умолчанию **не стешить**: коммитить в текущую feature-ветку
+
+## Новая задача, а в ветке уже есть функционал
+
+Не смешивать темы и не стешить. Сначала **вылить** текущее, потом новая ветка:
+
+1. Дописать и закоммитить оставшееся в текущей `feat|fix|chore|…` ветке
+2. `npm run verify`
+3. `git fetch origin` и влить `origin/main` в ветку (не наоборот)
+4. `git push -u origin HEAD` — только feature-ветка
+5. `gh pr create --base main`
+6. Новая ветка от `origin/main`. Если новый код **зависит** от ещё не влитого PR — ветка от текущей, и сказать об этом
+
+## Ветки
+
+Не коммитить в `main`/`master`. Имя: `<type>/<short-name>` (`feat`, `fix`, `chore`, `refactor`, `docs`, `hotfix`), kebab-case, английский, без `cursor/`.
+
+```
+git fetch origin
+git checkout -b feat/short-name origin/main
+```
+
+Один PR ≈ одна тема. Если имя ветки больше не про scope — переименовать до push/PR.
+
+## Коммиты
+
+Conventional Commits, английский, 1–2 предложения **зачем**: `feat:`, `fix:`, `chore:`, `refactor:`, `docs:`. Не коммитить `.env`, секреты, `node_modules/`, `.output/`.

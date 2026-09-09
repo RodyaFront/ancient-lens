@@ -1,0 +1,112 @@
+# Dotabuff → Ancient Lens parity backlog
+
+**Canonical progress list for match-page features inspired by Dotabuff.**
+
+- Inventory source: [`docs/dotabuff-match-8989689202-features.md`](./dotabuff-match-8989689202-features.md)
+- Reference match: https://www.dotabuff.com/matches/8989689202
+- Product: Ancient Lens (Nuxt scorebook) — adapt, do not clone Dotabuff chrome/Plus/ads
+
+## How agents should use this file
+
+When the user asks to continue Dotabuff parity / match functionality progress:
+
+1. Read **this file** and update checkbox statuses as work lands
+2. Prefer items marked `P0` / `P1` unless the user scopes otherwise
+3. Keep EN/UK i18n for every new UI string
+4. Reuse `AppTooltip` / existing match components; do not shift scoreboard grid with padding for badges
+
+**Trigger phrases (user → agent):** see “How to resume” at the bottom of this file.
+
+---
+
+## Status legend
+
+- `[ ]` not started
+- `[~]` in progress / partial
+- `[x]` done for Ancient Lens (good enough; not pixel-parity)
+
+---
+
+## Already in Ancient Lens (baseline)
+
+- [x] Match route + OpenDota fetch / snapshot
+- [x] Score header (result, duration, meta chips, save/refresh/export)
+- [x] Scoreboard Radiant/Dire with K/D/A, NET, GPM, LH/DN, damage, items
+- [x] Overview / Economy / Combat column views + team filter + sort
+- [x] Player / item dialogs (basic)
+- [x] Insights (team comparison)
+- [x] i18n EN default + UK
+- [x] `AppTooltip` + best-in-match star on scoreboard leaders (`MatchBestStat`)
+
+---
+
+## P0 — Hover / tooltip layer (Dotabuff §0)
+
+Highest product gap vs Dotabuff: encyclopedia detail lives on hover.
+
+- [ ] **Item hover card** — name, cost, stats, active/passive, lore (from OpenDota/item dictionary + CDN); use `AppTooltip` or richer card; no layout shift
+- [ ] **Hero portrait hover** — name + level (compact)
+- [x] **Scoreboard header tooltips** — plain-language definitions for K/D/A, NET, LH/DN, GPM, XPM, DMG, HEAL, BLD, Items (i18n)
+- [ ] **Ability hover card** (needed once builds exist) — name, hotkey, description, key numbers
+- [ ] **Talent tree hover** (needed once builds exist) — 10/15/20/25 board, taken options highlighted
+
+---
+
+## P1 — Match structure parity (Dotabuff §2–5, §7–9)
+
+- [ ] **Draft strip** — ordered picks/bans with PICK/BAN markers + hero icons
+- [ ] **Team totals row** on scoreboard (aggregate K/D/A, NET, farm, damage…)
+- [ ] **Ability builds preview** on match page (skill order 1–25 + talents)
+- [ ] **Build Details** surface (tab or section) — per-player ability timeline
+- [ ] **Team advantage chart** — XP (and Gold when data exists) over time; toggle Team Adv / Per Minute if data allows
+- [ ] **Towers & barracks** map / structure status
+- [ ] **Parse-state messaging** — when OpenDota lacks parsed extras, show clear “limited stats” notice (like Dotabuff Analyzing / extra stats missing)
+
+---
+
+## P2 — Deeper parse extras (Dotabuff §6, §13)
+
+Only when OpenDota payload supports it:
+
+- [ ] Item purchase timings timeline
+- [ ] Kill participation / kill matrix or player kill counts beyond basics
+- [ ] Additional series on advantage chart (Gold, etc.)
+- [ ] Ward / vision extras if we ever expose them (out of scope until data + design)
+
+---
+
+## P3 — Explicitly out of scope / low priority
+
+Do **not** treat as Ancient Lens parity goals unless product direction changes:
+
+- [ ] Dotabuff site chrome (Esports hub, Forums, Plus paywall, ads)
+- [ ] Steam Sign-In / match comments
+- [ ] Live Matches browser / event modes (Siltbreaker, Dark Moon)
+- [ ] Dotabuff catalog deep-links as primary UX (OpenDota / first-party data preferred)
+- [ ] Rank medals / full player profiles network (optional later)
+
+---
+
+## Suggested implementation order
+
+1. ~~Header column tooltips~~ (done)
+2. Item hover cards on `MatchItemSlot`
+3. Hero portrait hover
+4. Draft strip
+5. Team totals row
+6. Advantage chart (XP/Gold from OpenDota)
+7. Towers & barracks
+8. Ability builds + ability/talent tooltips
+9. Parse-limited extras when data exists
+
+---
+
+## Progress log
+
+| Date       | Note                                                                                     |
+| ---------- | ---------------------------------------------------------------------------------------- |
+| 2026-09-09 | Inventory captured; backlog created                                                      |
+| 2026-09-09 | Best-stat badge + tooltip on value+star shipped                                          |
+| 2026-09-09 | Scoreboard column header AppTooltips; removed LH/DN footnote + native `title` on headers |
+
+Update this table when a chunk of work merges or is clearly done.
