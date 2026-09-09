@@ -1,13 +1,13 @@
 {
   "seo": {
-    "siteTitle": "Ancient Lens — розбір матчів Dota 2",
-    "siteDescription": "Ancient Lens — статистика матчів Dota 2: результат, гравці, економіка та предмети. Дані OpenDota.",
-    "matchTitle": "Матч #{id} — Ancient Lens",
-    "matchTitleFallback": "Розбір матчу — Ancient Lens",
+    "siteTitle": "Розбір матчів Dota 2",
+    "siteDescription": "Статистика матчів Dota 2: результат, гравці, економіка та предмети. Дані OpenDota.",
+    "matchTitle": "Матч #{id}",
+    "matchTitleFallback": "Розбір матчу",
     "matchDescription": "Статистика матчу Dota 2: результат, гравці, економіка та предмети. Дані OpenDota."
   },
   "nav": {
-    "homeAria": "Ancient Lens — головна",
+    "homeAria": "Ancient Lens, головна",
     "role": "Статистика матчів",
     "label": "Навігація",
     "overview": "Огляд",

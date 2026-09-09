@@ -1,13 +1,13 @@
 {
   "seo": {
-    "siteTitle": "Ancient Lens — Dota 2 match review",
-    "siteDescription": "Ancient Lens — Dota 2 match stats: result, players, economy, and items. OpenDota data.",
-    "matchTitle": "Match #{id} — Ancient Lens",
-    "matchTitleFallback": "Match review — Ancient Lens",
+    "siteTitle": "Dota 2 match review",
+    "siteDescription": "Dota 2 match stats: result, players, economy, and items. OpenDota data.",
+    "matchTitle": "Match #{id}",
+    "matchTitleFallback": "Match review",
     "matchDescription": "Dota 2 match stats: result, players, economy, and items. OpenDota data."
   },
   "nav": {
-    "homeAria": "Ancient Lens — home",
+    "homeAria": "Ancient Lens home",
     "role": "Match statistics",
     "label": "Navigation",
     "overview": "Overview",
