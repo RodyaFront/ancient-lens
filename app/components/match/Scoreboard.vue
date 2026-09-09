@@ -90,19 +90,19 @@ const views = computed(() => [
     id: 'overview' as ScoreboardView,
     label: t('scoreboard.overview'),
     icon: 'lucide:layout-list',
-    tone: 'overview',
+    tone: 'overview' as const,
   },
   {
     id: 'economy' as ScoreboardView,
     label: t('scoreboard.economy'),
     icon: 'lucide:coins',
-    tone: 'economy',
+    tone: 'economy' as const,
   },
   {
     id: 'combat' as ScoreboardView,
     label: t('scoreboard.combat'),
     icon: 'lucide:swords',
-    tone: 'combat',
+    tone: 'combat' as const,
   },
 ])
 
@@ -112,53 +112,125 @@ const filters = computed(() => [
   { id: 'dire' as const, label: 'Dire' },
 ])
 
-type HeadCol = { label: string; tip: string }
+type MetricColId =
+  | 'net_worth'
+  | 'gpm'
+  | 'xpm'
+  | 'lh_dn'
+  | 'damage'
+  | 'buildings'
+  | 'healing'
+  | 'participation'
 
-const heads = computed((): HeadCol[] => {
-  if (store.view === 'economy') {
-    return [
-      {
+type HeadCol = {
+  id: MetricColId
+  label: string
+  tip: string
+  tone: 'overview' | 'economy' | 'combat'
+}
+
+const SET_COLUMNS: Record<ScoreboardView, MetricColId[]> = {
+  overview: ['net_worth', 'gpm', 'lh_dn', 'damage'],
+  economy: ['net_worth', 'gpm', 'xpm', 'lh_dn'],
+  combat: ['damage', 'buildings', 'healing', 'participation'],
+}
+
+const COLUMN_ORDER: MetricColId[] = [
+  'net_worth',
+  'gpm',
+  'xpm',
+  'lh_dn',
+  'damage',
+  'buildings',
+  'healing',
+  'participation',
+]
+
+function columnMeta(id: MetricColId): Omit<HeadCol, 'tone'> {
+  switch (id) {
+    case 'net_worth':
+      return {
+        id,
         label: t('scoreboard.colNetWorth'),
         tip: t('scoreboard.tipNetWorth'),
-      },
-      { label: t('scoreboard.colGpm'), tip: t('scoreboard.tipGpm') },
-      { label: t('scoreboard.colXpm'), tip: t('scoreboard.tipXpm') },
-      { label: t('scoreboard.colLhDn'), tip: t('scoreboard.tipLhDn') },
-    ]
-  }
-  if (store.view === 'combat') {
-    return [
-      {
+      }
+    case 'gpm':
+      return {
+        id,
+        label: t('scoreboard.colGpm'),
+        tip: t('scoreboard.tipGpm'),
+      }
+    case 'xpm':
+      return {
+        id,
+        label: t('scoreboard.colXpm'),
+        tip: t('scoreboard.tipXpm'),
+      }
+    case 'lh_dn':
+      return {
+        id,
+        label: t('scoreboard.colLhDn'),
+        tip: t('scoreboard.tipLhDn'),
+      }
+    case 'damage':
+      return {
+        id,
         label: t('scoreboard.colDamage'),
         tip: t('scoreboard.tipDamage'),
-      },
-      {
+      }
+    case 'buildings':
+      return {
+        id,
         label: t('scoreboard.colBuildings'),
         tip: t('scoreboard.tipBuildings'),
-      },
-      {
+      }
+    case 'healing':
+      return {
+        id,
         label: t('scoreboard.colHealing'),
         tip: t('scoreboard.tipHealing'),
-      },
-      {
+      }
+    case 'participation':
+      return {
+        id,
         label: t('scoreboard.colParticipation'),
         tip: t('scoreboard.tipParticipation'),
-      },
-    ]
+      }
   }
-  return [
-    {
-      label: t('scoreboard.colNetWorth'),
-      tip: t('scoreboard.tipNetWorth'),
-    },
-    { label: t('scoreboard.colGpm'), tip: t('scoreboard.tipGpm') },
-    { label: t('scoreboard.colLhDn'), tip: t('scoreboard.tipLhDn') },
-    {
-      label: t('scoreboard.colDamage'),
-      tip: t('scoreboard.tipDamage'),
-    },
-  ]
+}
+
+/** Header tone from the last enabled set that owns the column. */
+function columnTone(
+  id: MetricColId,
+  sets: Record<ScoreboardView, boolean>,
+): HeadCol['tone'] {
+  let tone: HeadCol['tone'] = 'overview'
+  for (const viewId of ['overview', 'economy', 'combat'] as ScoreboardView[]) {
+    if (sets[viewId] && SET_COLUMNS[viewId].includes(id)) {
+      tone = viewId
+    }
+  }
+  return tone
+}
+
+const heads = computed((): HeadCol[] => {
+  const sets = store.columnSets
+  const enabled = new Set<MetricColId>()
+  for (const viewId of ['overview', 'economy', 'combat'] as ScoreboardView[]) {
+    if (!sets[viewId]) {
+      continue
+    }
+    for (const col of SET_COLUMNS[viewId]) {
+      enabled.add(col)
+    }
+  }
+  return COLUMN_ORDER.filter((id) => enabled.has(id)).map((id) => ({
+    ...columnMeta(id),
+    tone: columnTone(id, sets),
+  }))
 })
+
+const tableColspan = computed(() => 3 + heads.value.length)
 
 const teamKillTotals = computed(() => {
   if (!store.match) {
@@ -286,28 +358,41 @@ function killParticipation(player: MatchPlayer, teamKills: number | null) {
   return `${percent}%`
 }
 
-function onTabKey(event: KeyboardEvent) {
+function setEnabled(id: ScoreboardView) {
+  return store.columnSets[id]
+}
+
+function toneIcon(tone: HeadCol['tone']) {
+  if (tone === 'economy') {
+    return 'lucide:coins'
+  }
+  if (tone === 'combat') {
+    return 'lucide:swords'
+  }
+  return 'lucide:layout-list'
+}
+
+function onSetKey(event: KeyboardEvent, id: ScoreboardView) {
   if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) {
     return
   }
   event.preventDefault()
   const ids = views.value.map((entry) => entry.id)
-  let index = ids.indexOf(store.view)
+  let index = ids.indexOf(id)
   if (event.key === 'Home') {
     index = 0
   } else if (event.key === 'End') {
-    index = 2
+    index = ids.length - 1
   } else {
-    index = (index + (event.key === 'ArrowRight' ? 1 : 2)) % 3
+    index =
+      (index + (event.key === 'ArrowRight' ? 1 : ids.length - 1)) % ids.length
   }
-  const nextView = ids[index]
-  if (nextView) {
-    store.view = nextView
+  const nextId = ids[index]
+  if (!nextId) {
+    return
   }
   nextTick(() => {
-    document
-      .querySelector<HTMLButtonElement>(`[data-tab="${store.view}"]`)
-      ?.focus()
+    document.querySelector<HTMLInputElement>(`[data-tab="${nextId}"]`)?.focus()
   })
 }
 </script>
@@ -315,26 +400,26 @@ function onTabKey(event: KeyboardEvent) {
 <template>
   <div v-if="store.match" class="panel">
     <div class="scoreboard-controls">
-      <div class="tabs" role="tablist" :aria-label="t('scoreboard.tabsAria')">
-        <button
+      <div class="tabs" role="group" :aria-label="t('scoreboard.tabsAria')">
+        <label
           v-for="entry in views"
-          :id="`tab-${entry.id}`"
           :key="entry.id"
-          role="tab"
           class="tab"
-          :class="{ active: store.view === entry.id }"
+          :class="{ active: setEnabled(entry.id) }"
           :data-tone="entry.tone"
-          :aria-selected="store.view === entry.id"
-          :tabindex="store.view === entry.id ? '0' : '-1'"
-          aria-controls="score-table"
-          :data-tab="entry.id"
-          type="button"
-          @click="store.view = entry.id"
-          @keydown="onTabKey"
         >
+          <input
+            class="tab-check"
+            type="checkbox"
+            :checked="setEnabled(entry.id)"
+            :data-tab="entry.id"
+            :aria-label="entry.label"
+            @change="store.toggleColumnSet(entry.id)"
+            @keydown="onSetKey($event, entry.id)"
+          />
           <Icon :name="entry.icon" class="tab-icon" aria-hidden="true" />
           <span>{{ entry.label }}</span>
-        </button>
+        </label>
       </div>
       <div class="control-right">
         <div
@@ -370,8 +455,6 @@ function onTabKey(event: KeyboardEvent) {
       id="score-table"
       class="table-scroll"
       :class="{ 'is-entering': tableClipOverflow }"
-      role="tabpanel"
-      :aria-labelledby="`tab-${store.view}`"
       tabindex="0"
     >
       <table :aria-label="t('scoreboard.tableAria')">
@@ -395,12 +478,20 @@ function onTabKey(event: KeyboardEvent) {
             </th>
             <th
               v-for="head in heads"
-              :key="head.label"
+              :key="head.id"
               scope="col"
               class="number-col"
+              :data-tone="head.tone"
             >
               <AppTooltip :text="head.tip" :label="head.tip">
-                {{ head.label }}
+                <span class="head-label">
+                  <Icon
+                    :name="toneIcon(head.tone)"
+                    class="head-icon"
+                    aria-hidden="true"
+                  />
+                  {{ head.label }}
+                </span>
               </AppTooltip>
             </th>
             <th scope="col" class="items-col">
@@ -415,7 +506,7 @@ function onTabKey(event: KeyboardEvent) {
         </thead>
         <tbody v-for="group in groups" :key="String(group.radiant)">
           <tr class="team-row" :class="{ dire: !group.radiant }">
-            <td colspan="7">
+            <td :colspan="tableColspan">
               <div class="team-row-inner">
                 {{ group.radiant ? 'RADIANT' : 'DIRE' }}
                 <span
@@ -494,23 +585,30 @@ function onTabKey(event: KeyboardEvent) {
                 {{ formatNumber(player.assists) }}
               </MatchBestStat>
             </td>
-            <template v-if="store.view === 'economy'">
-              <td class="gold" :title="formatNumber(player.net_worth)">
+            <template
+              v-for="head in heads"
+              :key="`${playerIndex(player)}-${head.id}`"
+            >
+              <td
+                v-if="head.id === 'net_worth'"
+                class="gold"
+                :title="formatNumber(player.net_worth)"
+              >
                 <MatchBestStat :best="isBest(player, 'net_worth')">
                   {{ formatShort(player.net_worth) }}
                 </MatchBestStat>
               </td>
-              <td>
+              <td v-else-if="head.id === 'gpm'">
                 <MatchBestStat :best="isBest(player, 'gold_per_min')">
                   {{ formatNumber(player.gold_per_min) }}
                 </MatchBestStat>
               </td>
-              <td>
+              <td v-else-if="head.id === 'xpm'">
                 <MatchBestStat :best="isBest(player, 'xp_per_min')">
                   {{ formatNumber(player.xp_per_min) }}
                 </MatchBestStat>
               </td>
-              <td>
+              <td v-else-if="head.id === 'lh_dn'">
                 <MatchBestStat :best="isBest(player, 'last_hits')">
                   {{ formatNumber(player.last_hits) }}
                 </MatchBestStat>
@@ -519,52 +617,33 @@ function onTabKey(event: KeyboardEvent) {
                   {{ formatNumber(player.denies) }}
                 </MatchBestStat>
               </td>
-            </template>
-            <template v-else-if="store.view === 'combat'">
-              <td :title="formatNumber(player.hero_damage)">
+              <td
+                v-else-if="head.id === 'damage'"
+                :title="formatNumber(player.hero_damage)"
+              >
                 <MatchBestStat :best="isBest(player, 'hero_damage')">
                   {{ formatShort(player.hero_damage) }}
                 </MatchBestStat>
               </td>
-              <td :title="formatNumber(player.tower_damage)">
+              <td
+                v-else-if="head.id === 'buildings'"
+                :title="formatNumber(player.tower_damage)"
+              >
                 <MatchBestStat :best="isBest(player, 'tower_damage')">
                   {{ formatShort(player.tower_damage) }}
                 </MatchBestStat>
               </td>
-              <td :title="formatNumber(player.hero_healing)">
+              <td
+                v-else-if="head.id === 'healing'"
+                :title="formatNumber(player.hero_healing)"
+              >
                 <MatchBestStat :best="isBest(player, 'hero_healing')">
                   {{ formatShort(player.hero_healing) }}
                 </MatchBestStat>
               </td>
-              <td>
+              <td v-else-if="head.id === 'participation'">
                 <MatchBestStat :best="isBestParticipation(player, group.kills)">
                   {{ killParticipation(player, group.kills) }}
-                </MatchBestStat>
-              </td>
-            </template>
-            <template v-else>
-              <td class="gold" :title="formatNumber(player.net_worth)">
-                <MatchBestStat :best="isBest(player, 'net_worth')">
-                  {{ formatShort(player.net_worth) }}
-                </MatchBestStat>
-              </td>
-              <td>
-                <MatchBestStat :best="isBest(player, 'gold_per_min')">
-                  {{ formatNumber(player.gold_per_min) }}
-                </MatchBestStat>
-              </td>
-              <td>
-                <MatchBestStat :best="isBest(player, 'last_hits')">
-                  {{ formatNumber(player.last_hits) }}
-                </MatchBestStat>
-                <span class="secondary-number"> / </span>
-                <MatchBestStat :best="isBest(player, 'denies')">
-                  {{ formatNumber(player.denies) }}
-                </MatchBestStat>
-              </td>
-              <td :title="formatNumber(player.hero_damage)">
-                <MatchBestStat :best="isBest(player, 'hero_damage')">
-                  {{ formatShort(player.hero_damage) }}
                 </MatchBestStat>
               </td>
             </template>

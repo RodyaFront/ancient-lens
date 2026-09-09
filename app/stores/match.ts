@@ -40,7 +40,12 @@ class HttpError extends Error {
 export const useMatchStore = defineStore('match', () => {
   const match = ref<MatchData | null>(null)
   const source = ref<MatchSource | null>(null)
-  const view = ref<ScoreboardView>('overview')
+  /** Additive scoreboard column groups (not exclusive tabs). */
+  const columnSets = ref<Record<ScoreboardView, boolean>>({
+    overview: true,
+    economy: false,
+    combat: false,
+  })
   const filter = ref<TeamFilter>('all')
   const sort = ref<PlayerSort>('slot')
   const loading = ref(false)
@@ -234,7 +239,7 @@ export const useMatchStore = defineStore('match', () => {
     error.value = null
     setLoading(false)
     inputInvalid.value = false
-    view.value = 'overview'
+    resetColumnSets()
     filter.value = 'all'
     sort.value = 'slot'
   }
@@ -645,10 +650,27 @@ export const useMatchStore = defineStore('match', () => {
     await loadMatch(id, { sound: true })
   }
 
+  function toggleColumnSet(id: ScoreboardView) {
+    columnSets.value = {
+      ...columnSets.value,
+      [id]: !columnSets.value[id],
+    }
+  }
+
+  function resetColumnSets() {
+    columnSets.value = {
+      overview: true,
+      economy: false,
+      combat: false,
+    }
+  }
+
   return {
     match,
     source,
-    view,
+    columnSets,
+    toggleColumnSet,
+    resetColumnSets,
     filter,
     sort,
     loading,

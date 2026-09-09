@@ -27,5 +27,6 @@ control sizes (~2.5–2.75rem).
 
 ## Anti-patterns
 
-Breadcrumbs, MVP score widgets, purple neon, removing sticky player column,
+Breadcrumbs, invented MVP/contender score widgets (except the single Match MVP
+panel beside the score banner), purple neon, removing sticky player column,
 shrinking type to avoid table scroll.

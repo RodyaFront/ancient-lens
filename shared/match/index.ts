@@ -35,6 +35,7 @@ export {
   validateMatch,
   ValidateMatchError,
 } from './stats'
+export { matchMvpScore, pickMatchMvp } from './mvp'
 export type {
   BestStatKey,
   MaxStatKey,
