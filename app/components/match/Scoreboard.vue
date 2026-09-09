@@ -580,13 +580,9 @@ function onTabKey(event: KeyboardEvent) {
                   :item-id="player.item_neutral2"
                   extra="neutral enchant"
                 />
-                <MatchAghanimSlot
-                  kind="scepter"
-                  :owned="player.aghanims_scepter === 1"
-                />
-                <MatchAghanimSlot
-                  kind="shard"
-                  :owned="player.aghanims_shard === 1"
+                <MatchAghanimPair
+                  :scepter-owned="player.aghanims_scepter === 1"
+                  :shard-owned="player.aghanims_shard === 1"
                 />
                 <button
                   class="item more"

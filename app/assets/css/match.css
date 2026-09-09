@@ -1149,7 +1149,7 @@ th.number-col {
   width: 6.75rem;
 }
 th.items-col {
-  /* 6 slots + 2 neutrals + scepter/shard + more chevron */
+  /* 6 slots + 2 neutrals + aghanim pair + more chevron */
   width: 27rem;
   text-align: left;
   padding-left: var(--space-6);
@@ -2130,23 +2130,33 @@ th .app-tooltip-trigger {
 .item.neutral.enchant {
   margin-left: 0;
 }
+.aghanim-pair {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  width: 1.5rem;
+  margin-left: var(--space-1);
+  /* Pair is 3rem tall; pull into the 1.75rem item-row box via padding. */
+  margin-block: -0.625rem;
+  transform: translateY(0.25rem);
+  overflow: visible;
+}
 .item.aghanim {
   width: 1.5rem;
   height: 1.5rem;
-  margin-left: var(--space-1);
+  margin-left: 0;
   border: 0;
   background: transparent;
 }
 .item.aghanim img {
   object-fit: contain;
 }
-.item.aghanim.is-inactive {
-  opacity: 0.38;
-}
 .item.aghanim:hover,
 .item.aghanim.is-pinned {
   border: 0;
-  opacity: 1;
 }
 .table-footnote {
   padding: var(--space-3) 0;
@@ -2643,12 +2653,18 @@ dialog::backdrop {
   width: 2.5rem;
   height: 2.5rem;
 }
-.detail-items .item.aghanim {
-  width: 2.25rem;
-  height: 2.25rem;
-}
 .detail-items--aghanims {
   align-items: center;
+}
+.detail-items .aghanim-pair {
+  width: 2.25rem;
+  margin-left: 0;
+  margin-block: 0;
+  transform: none;
+}
+.detail-items .aghanim-pair .item.aghanim {
+  width: 2.25rem;
+  height: 2.25rem;
 }
 .saved-row {
   display: flex;
