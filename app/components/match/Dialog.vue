@@ -29,12 +29,6 @@ const title = computed(() => {
   if (dialog.value?.kind === 'player') {
     return player.value ? playerDisplayName(player.value) : ''
   }
-  if (dialog.value?.kind === 'item') {
-    return (
-      store.itemById(dialog.value.id)?.dname ||
-      t('format.itemFallback', { id: dialog.value.id })
-    )
-  }
   return ''
 })
 
@@ -85,10 +79,6 @@ watch(dialog, async (state) => {
 
 function close() {
   dialog.value = null
-}
-
-function openItem(id: number) {
-  dialog.value = { kind: 'item', id }
 }
 
 function onDialogClose() {
@@ -237,7 +227,6 @@ function removeSaved(id: string) {
             v-for="slot in 6"
             :key="slot"
             :item-id="playerItemId(player, `item_${slot - 1}`)"
-            @open="openItem"
           />
         </div>
         <div class="detail-heading">{{ t('dialog.inventoryBackpack') }}</div>
@@ -246,13 +235,12 @@ function removeSaved(id: string) {
             v-for="slot in 3"
             :key="slot"
             :item-id="playerItemId(player, `backpack_${slot - 1}`)"
-            @open="openItem"
           />
         </div>
         <div class="detail-heading">{{ t('dialog.inventoryNeutral') }}</div>
         <div class="detail-items">
-          <MatchItemSlot :item-id="player.item_neutral" @open="openItem" />
-          <MatchItemSlot :item-id="player.item_neutral2" @open="openItem" />
+          <MatchItemSlot :item-id="player.item_neutral" />
+          <MatchItemSlot :item-id="player.item_neutral2" />
         </div>
         <p>
           {{
@@ -276,17 +264,6 @@ function removeSaved(id: string) {
           >
         </p>
         <p v-else>{{ t('dialog.noPublicId') }}</p>
-      </template>
-
-      <template v-else-if="dialog?.kind === 'item'">
-        <div class="detail-items">
-          <MatchItemSlot :item-id="dialog.id" />
-        </div>
-        <p>
-          {{ t('dialog.itemId') }} <strong>{{ dialog.id }}</strong>
-        </p>
-        <p>{{ t('dialog.itemBody') }}</p>
-        <p>{{ t('dialog.itemHint') }}</p>
       </template>
     </div>
   </dialog>

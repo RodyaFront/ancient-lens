@@ -16,7 +16,6 @@ const audio = useScoreAudio()
 const card = ref<HTMLElement | null>(null)
 const vfx = ref<{ play: () => Promise<void> | void } | null>(null)
 let revealGeneration = 0
-let revealFinishedGeneration = 0
 
 const dateLocale = computed(() => (locale.value === 'uk' ? 'uk-UA' : 'en-US'))
 
@@ -63,32 +62,18 @@ function teamName(isRadiant: boolean) {
   return team?.name || label
 }
 
-function finishReveal(generation: number) {
-  if (
-    generation !== revealGeneration ||
-    generation === revealFinishedGeneration
-  ) {
-    return
-  }
-  revealFinishedGeneration = generation
-  card.value?.classList.remove('score-reveal')
-  store.markRevealDone()
-}
-
 function startReveal(withSound = false) {
   const el = card.value
-  const generation = ++revealGeneration
   if (!el || !winner.value) {
-    finishReveal(generation)
     return
   }
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
     if (withSound) {
       store.showToast(t('toast.motionReduced'))
     }
-    finishReveal(generation)
     return
   }
+  const generation = ++revealGeneration
   el.classList.remove('score-reveal')
   void el.offsetWidth
   el.classList.add('score-reveal')
@@ -96,8 +81,11 @@ function startReveal(withSound = false) {
   if (withSound) {
     audio.play(winner.value)
   }
-  // Safety if animationend on .score-meta does not fire.
-  window.setTimeout(() => finishReveal(generation), 3600)
+  window.setTimeout(() => {
+    if (generation === revealGeneration) {
+      el.classList.remove('score-reveal')
+    }
+  }, 3600)
 }
 
 function replay() {
@@ -106,12 +94,14 @@ function replay() {
 }
 
 function onAnimationEnd(event: AnimationEvent) {
+  const el = card.value
   if (
+    el &&
     event.target instanceof HTMLElement &&
     event.target.matches('.score-meta') &&
     event.animationName === 'score-meta-in'
   ) {
-    finishReveal(revealGeneration)
+    el.classList.remove('score-reveal')
   }
 }
 

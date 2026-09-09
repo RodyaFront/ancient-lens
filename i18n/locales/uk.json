@@ -73,6 +73,17 @@
     "emptySlot": "Порожній слот",
     "slotUnknown": "Дані слота не надано"
   },
+  "itemHover": {
+    "type": "Тип: {value}",
+    "affects": "Діє: {value}",
+    "active": "Активне: {name}",
+    "passive": "Пасивне: {name}",
+    "costAria": "{cost} золота",
+    "mana": "Мана {n}",
+    "cooldown": "Перезарядка {n}",
+    "ringAria": "Завантаження деталей предмета",
+    "tier": "Артефакт {n}-го розряду"
+  },
   "parse": {
     "generic": "Вставте числовий ID або посилання на матч Dotabuff / OpenDota.",
     "host": "Підтримуються посилання лише з dotabuff.com або opendota.com. Можна також вставити сам ID.",

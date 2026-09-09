@@ -73,6 +73,17 @@
     "emptySlot": "Empty slot",
     "slotUnknown": "Slot data not provided"
   },
+  "itemHover": {
+    "type": "Type: {value}",
+    "affects": "Affects: {value}",
+    "active": "Active: {name}",
+    "passive": "Passive: {name}",
+    "costAria": "{cost} gold",
+    "mana": "Mana cost {n}",
+    "cooldown": "Cooldown {n}",
+    "ringAria": "Loading item details",
+    "tier": "Tier {n} Neutral"
+  },
   "parse": {
     "generic": "Enter a numeric ID or a Dotabuff / OpenDota match link.",
     "host": "Only links from dotabuff.com or opendota.com are supported. You can also paste the ID alone.",

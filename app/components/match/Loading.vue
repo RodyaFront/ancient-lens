@@ -45,12 +45,20 @@ const stageCopy = computed(() => {
 
     <div class="loading-scorebook" aria-hidden="true">
       <div class="loading-score-card skeleton-shimmer">
-        <div class="loading-team-block" />
-        <div class="loading-score-center">
-          <div class="loading-score-pill" />
-          <div class="loading-score-pill short" />
+        <div class="loading-score-main">
+          <div class="loading-team-block" />
+          <div class="loading-score-center">
+            <div class="loading-score-pill tall" />
+            <div class="loading-score-pill short" />
+          </div>
+          <div class="loading-team-block" />
         </div>
-        <div class="loading-team-block" />
+        <div class="loading-score-meta">
+          <span />
+          <span />
+          <span />
+          <span />
+        </div>
       </div>
       <div class="loading-controls skeleton-shimmer">
         <span class="loading-chip" />

@@ -61,7 +61,6 @@ export const useMatchStore = defineStore('match', () => {
   const requestNo = ref(0)
   const revealNonce = ref(0)
   const revealWithSound = ref(false)
-  const revealDoneNonce = ref(0)
   let controller: AbortController | null = null
   let toastTimer: ReturnType<typeof setTimeout> | null = null
   let buildPhaseTimer: ReturnType<typeof setTimeout> | null = null
@@ -320,10 +319,6 @@ export const useMatchStore = defineStore('match', () => {
         loadPhase.value = 'build'
       }
     }, BUILD_PHASE_AFTER_MS)
-  }
-
-  function markRevealDone() {
-    revealDoneNonce.value += 1
   }
 
   function cancelLoad() {
@@ -652,7 +647,6 @@ export const useMatchStore = defineStore('match', () => {
     recent,
     revealNonce,
     revealWithSound,
-    revealDoneNonce,
     radiantPlayers,
     direPlayers,
     isSaved,
@@ -662,7 +656,6 @@ export const useMatchStore = defineStore('match', () => {
     itemById,
     heroName,
     showToast,
-    markRevealDone,
     loadMatch,
     loadExample,
     cancelLoad,

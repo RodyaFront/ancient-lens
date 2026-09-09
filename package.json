@@ -7,6 +7,7 @@
   },
   "scripts": {
     "postinstall": "nuxt prepare && node tools/wrangler-ci-shim/link-bin.mjs",
+    "sync:items": "node scripts/sync-opendota-items.mjs",
     "build": "nuxt build",
     "dev": "nuxt dev --host 0.0.0.0 --port 3000",
     "generate": "nuxt generate",

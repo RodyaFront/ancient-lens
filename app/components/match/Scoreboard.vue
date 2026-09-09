@@ -21,17 +21,19 @@ import {
 
 const emit = defineEmits<{
   player: [index: number]
-  item: [id: number]
 }>()
 
 const { t } = useI18n()
 const store = useMatchStore()
 
-const scoreboardPending = ref(true)
 const scoreboardEnter = ref(false)
+const tableClipOverflow = ref(false)
+let enterClipTimer: ReturnType<typeof setTimeout> | null = null
+
+const ENTER_CLIP_MS = 700
 
 watch(
-  () => store.revealDoneNonce,
+  () => store.revealNonce,
   async (nonce) => {
     if (!nonce) {
       return
@@ -40,21 +42,32 @@ watch(
       import.meta.client &&
       window.matchMedia('(prefers-reduced-motion: reduce)').matches
     ) {
-      scoreboardPending.value = false
       scoreboardEnter.value = false
+      tableClipOverflow.value = false
       return
     }
-    if (scoreboardPending.value) {
-      scoreboardPending.value = false
-      await nextTick()
-      scoreboardEnter.value = true
-      return
+    if (enterClipTimer) {
+      clearTimeout(enterClipTimer)
+      enterClipTimer = null
     }
     scoreboardEnter.value = false
+    tableClipOverflow.value = false
     await nextTick()
     scoreboardEnter.value = true
+    tableClipOverflow.value = true
+    enterClipTimer = setTimeout(() => {
+      tableClipOverflow.value = false
+      enterClipTimer = null
+    }, ENTER_CLIP_MS)
   },
+  { immediate: true },
 )
+
+onBeforeUnmount(() => {
+  if (enterClipTimer) {
+    clearTimeout(enterClipTimer)
+  }
+})
 
 function rowEnterDelay(player: MatchPlayer) {
   if (!scoreboardEnter.value) {
@@ -356,6 +369,7 @@ function onTabKey(event: KeyboardEvent) {
     <div
       id="score-table"
       class="table-scroll"
+      :class="{ 'is-entering': tableClipOverflow }"
       role="tabpanel"
       :aria-labelledby="`tab-${store.view}`"
       tabindex="0"
@@ -430,7 +444,6 @@ function onTabKey(event: KeyboardEvent) {
             class="player-row"
             :class="{
               'has-party': !!party,
-              'scoreboard-pending': scoreboardPending,
               'scoreboard-enter': scoreboardEnter,
             }"
             :style="
@@ -561,13 +574,8 @@ function onTabKey(event: KeyboardEvent) {
                   v-for="slot in 6"
                   :key="slot"
                   :item-id="playerItemId(player, `item_${slot - 1}`)"
-                  @open="emit('item', $event)"
                 />
-                <MatchItemSlot
-                  :item-id="player.item_neutral"
-                  extra="neutral"
-                  @open="emit('item', $event)"
-                />
+                <MatchItemSlot :item-id="player.item_neutral" extra="neutral" />
                 <button
                   class="item more"
                   type="button"

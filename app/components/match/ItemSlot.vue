@@ -7,13 +7,11 @@ const props = defineProps<{
   extra?: string
 }>()
 
-const emit = defineEmits<{
-  open: [id: number]
-}>()
-
 const { t } = useI18n()
 const store = useMatchStore()
+const preview = useItemPreview()
 const failed = ref(false)
+const root = ref<HTMLElement | null>(null)
 
 const entry = computed(() =>
   typeof props.itemId === 'number' ? store.itemById(props.itemId) : undefined,
@@ -30,16 +28,49 @@ const title = computed(() => {
 const imageUrl = computed(() => steamAssetUrl(entry.value?.img))
 const empty = computed(() => props.itemId === 0 || !isNum(props.itemId))
 const emptyMark = computed(() => (props.itemId === 0 ? '·' : '—'))
+const pinnedHere = computed(
+  () => isNum(props.itemId) && preview.isPinned(props.itemId),
+)
 
 watch(imageUrl, () => {
   failed.value = false
 })
 
 function handleClick() {
-  if (isNum(props.itemId) && props.itemId !== 0) {
-    emit('open', props.itemId)
+  if (!isNum(props.itemId) || props.itemId === 0 || !root.value) {
+    return
   }
+  preview.togglePin(props.itemId, root.value)
 }
+
+function onPointerEnter(event: PointerEvent) {
+  if (!isNum(props.itemId) || props.itemId === 0 || !root.value) {
+    return
+  }
+  preview.start(props.itemId, root.value, event.clientX, event.clientY)
+}
+
+function onPointerMove(event: PointerEvent) {
+  if (!isNum(props.itemId) || props.itemId === 0) {
+    return
+  }
+  preview.move(event.clientX, event.clientY)
+}
+
+function onPointerLeave() {
+  if (!isNum(props.itemId) || props.itemId === 0) {
+    return
+  }
+  preview.leave(props.itemId)
+}
+
+onBeforeUnmount(() => {
+  if (!isNum(props.itemId) || props.itemId === 0) {
+    return
+  }
+  // Trigger gone — pinned tip cannot stay anchored.
+  preview.dismiss(props.itemId)
+})
 </script>
 
 <template>
@@ -54,12 +85,18 @@ function handleClick() {
   </span>
   <button
     v-else
+    ref="root"
     class="item"
-    :class="extra"
-    :title="title"
+    :class="[extra, { 'is-pinned': pinnedHere }]"
+    data-item-preview-trigger
     :aria-label="title"
+    :aria-expanded="pinnedHere ? 'true' : undefined"
     type="button"
     @click="handleClick"
+    @pointerenter="onPointerEnter"
+    @pointermove="onPointerMove"
+    @pointerleave="onPointerLeave"
+    @pointercancel="onPointerLeave"
   >
     <img
       v-if="imageUrl && !failed"

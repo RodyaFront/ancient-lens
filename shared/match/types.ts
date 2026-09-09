@@ -68,10 +68,36 @@ export interface HeroEntry {
   icon?: string
 }
 
+export interface ItemAttrib {
+  key?: string
+  value?: string
+  display?: string
+}
+
+export interface ItemAbility {
+  type?: string
+  title?: string
+  description?: string
+}
+
 export interface ItemEntry {
   id: number
   dname?: string
   img?: string
+  cost?: number
+  /** Neutral item tier (1–5) when present in OpenDota constants. */
+  tier?: number
+  behavior?: string[]
+  target_team?: string
+  target_type?: string
+  attrib?: ItemAttrib[]
+  abilities?: ItemAbility[]
+  mc?: number
+  cd?: number
+  lore?: string
+  notes?: string
+  hint?: string[]
+  components?: string[]
 }
 
 export interface SnapshotMeta {
@@ -112,5 +138,4 @@ export type MatchDialogState =
   | { kind: 'sources' }
   | { kind: 'saved' }
   | { kind: 'player'; index: number }
-  | { kind: 'item'; id: number }
   | null
