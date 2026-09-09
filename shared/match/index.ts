@@ -24,6 +24,8 @@ export type {
 } from './stats'
 export type {
   HeroEntry,
+  ItemAbility,
+  ItemAttrib,
   ItemEntry,
   MatchData,
   MatchPlayer,

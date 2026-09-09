@@ -13,7 +13,9 @@
     "overview": "Overview",
     "saved": "Saved",
     "sources": "About data",
-    "language": "Language"
+    "language": "Language",
+    "mute": "Mute sound",
+    "unmute": "Unmute sound"
   },
   "shell": {
     "skipToSearch": "Skip to match search",
@@ -73,6 +75,17 @@
     "emptySlot": "Empty slot",
     "slotUnknown": "Slot data not provided"
   },
+  "itemHover": {
+    "type": "Type: {value}",
+    "affects": "Affects: {value}",
+    "active": "Active: {name}",
+    "passive": "Passive: {name}",
+    "costAria": "{cost} gold",
+    "mana": "Mana cost {n}",
+    "cooldown": "Cooldown {n}",
+    "ringAria": "Loading item details",
+    "tier": "Tier {n} Neutral"
+  },
   "parse": {
     "generic": "Enter a numeric ID or a Dotabuff / OpenDota match link.",
     "host": "Only links from dotabuff.com or opendota.com are supported. You can also paste the ID alone.",
@@ -126,9 +139,6 @@
     "sourceLive": "fetched from API",
     "sourceSnapshot": "snapshot",
     "fetchedAt": "Fetched {when}",
-    "replayTitle": "Replay score reveal with sound",
-    "replayDisabled": "Match result not provided",
-    "replayAria": "Replay score animation with sound",
     "save": "Save match",
     "unsave": "Remove from saved",
     "refresh": "Refresh from OpenDota",
@@ -144,7 +154,6 @@
     "statsBasic": "Basic",
     "sourceLiveLabel": "OpenDota API — current request",
     "sourceSnapshotLabel": "Verified OpenDota API snapshot",
-    "replayShort": "Replay",
     "verdictBanner": "MATCH WINNER",
     "radiantSide": "THE RADIANT",
     "direSide": "THE DIRE",

@@ -61,7 +61,6 @@ export const useMatchStore = defineStore('match', () => {
   const requestNo = ref(0)
   const revealNonce = ref(0)
   const revealWithSound = ref(false)
-  const revealDoneNonce = ref(0)
   let controller: AbortController | null = null
   let toastTimer: ReturnType<typeof setTimeout> | null = null
   let buildPhaseTimer: ReturnType<typeof setTimeout> | null = null
@@ -245,6 +244,8 @@ export const useMatchStore = defineStore('match', () => {
     input: string,
     options: { snapshot?: boolean } = {},
   ) {
+    // User gesture: unlock so reveal whoosh can play after the async fetch.
+    useScoreAudio().unlock()
     inputInvalid.value = false
     error.value = null
     try {
@@ -272,6 +273,7 @@ export const useMatchStore = defineStore('match', () => {
   }
 
   function openExampleMatch() {
+    useScoreAudio().unlock()
     lastInput.value = EXAMPLE_MATCH_ID
     inputInvalid.value = false
     error.value = null
@@ -320,10 +322,6 @@ export const useMatchStore = defineStore('match', () => {
         loadPhase.value = 'build'
       }
     }, BUILD_PHASE_AFTER_MS)
-  }
-
-  function markRevealDone() {
-    revealDoneNonce.value += 1
   }
 
   function cancelLoad() {
@@ -630,10 +628,10 @@ export const useMatchStore = defineStore('match', () => {
     await loadLookups()
     lastInput.value = id
     if (snapshot && id === EXAMPLE_MATCH_ID) {
-      await loadExample()
+      await loadExample({ sound: true })
       return
     }
-    await loadMatch(id)
+    await loadMatch(id, { sound: true })
   }
 
   return {
@@ -652,7 +650,6 @@ export const useMatchStore = defineStore('match', () => {
     recent,
     revealNonce,
     revealWithSound,
-    revealDoneNonce,
     radiantPlayers,
     direPlayers,
     isSaved,
@@ -662,7 +659,6 @@ export const useMatchStore = defineStore('match', () => {
     itemById,
     heroName,
     showToast,
-    markRevealDone,
     loadMatch,
     loadExample,
     cancelLoad,

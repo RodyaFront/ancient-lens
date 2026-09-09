@@ -17,7 +17,8 @@ Dota 2 match scorebook. Working surface, not a marketing landing page.
 
 ## Root `/`
 
-1. Masthead + match search. No auto-loaded match.
+1. Masthead + **shared search chrome** (same padding, border, `h1`, blurb as match).
+   Page class: `main.page-home`. Do not restyle search via `:has(.result-region)`.
 2. Below search, only when data exists in this browser:
    - **Недавні** — last opened live matches (`localStorage`)
    - **Закладки** — explicitly saved matches
@@ -27,7 +28,7 @@ Dota 2 match scorebook. Working surface, not a marketing landing page.
 ## Match `/match/:id`
 
 Live OpenDota. `?snapshot=1` exists for automated tests / offline fixture only —
-not linked from the product UI.
+not linked from the product UI. Search chrome must not jump on navigate/load.
 
 ## Anti-patterns
 

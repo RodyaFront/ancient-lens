@@ -11,11 +11,17 @@ export const SCORE_EMBERS_INTRO_DELAY = 1.72
 export const SCORE_EMBERS_INTRO_FADE = 0.9
 export const SCORE_EMBERS_FLAME_COUNT = 52
 export const SCORE_EMBERS_SPARK_COUNT = 70
+/** Left-column campfire in pre-aspect NDC (−1…1). */
 export const SCORE_EMBERS_HEARTH_MIN_X = -1.06
 export const SCORE_EMBERS_HEARTH_WIDTH = 0.62
 
 export function scoreEmbersWinnerUniform(winner: ScoreEmbersWinner) {
   return winner === 'dire' ? 1 : 0
+}
+
+/** Map a screen UV.x into winner-local space (0 = winner corner edge). */
+export function scoreEmbersLocalUvX(uvX: number, winner: ScoreEmbersWinner) {
+  return winner === 'dire' ? 1 - uvX : uvX
 }
 
 export function scoreEmbersIntroFade(elapsedSec: number) {
@@ -95,6 +101,11 @@ export function createScoreEmbers(
     uTime: { value: 0 },
     uFade: { value: 0 },
     uWinner: { value: scoreEmbersWinnerUniform(winner) },
+    uAspect: { value: 1 },
+    /** UV origin; (0,0) = winner corner. Tunable via `--hearth-x` / `--hearth-y` on the canvas. */
+    uOrigin: { value: new THREE.Vector2(0, 0) },
+    /** Radial reach scale. Tunable via `--hearth-scale` on the canvas. */
+    uScale: { value: 4 },
   }
 
   const hearthMaterial = new THREE.ShaderMaterial({
@@ -114,6 +125,9 @@ export function createScoreEmbers(
       uniform float uTime;
       uniform float uFade;
       uniform float uWinner;
+      uniform float uAspect;
+      uniform vec2 uOrigin;
+      uniform float uScale;
       varying vec2 vUv;
 
       void main() {
@@ -121,22 +135,26 @@ export function createScoreEmbers(
         vec3 dire = vec3(0.941, 0.529, 0.455);
         vec3 gold = vec3(0.882, 0.780, 0.506);
         vec3 team = mix(radiant, dire, uWinner);
-        float flicker =
-          0.84 +
-          0.16 * sin(uTime * 3.2) * sin(uTime * 1.7 + 1.7);
+
         vec2 uv = vUv;
         uv.x = mix(uv.x, 1.0 - uv.x, uWinner);
-        vec2 p = uv - vec2(0.16, 0.2);
-        p.x *= 2.35;
-        p.y *= 1.85;
-        float core = exp(-length(p) * 2.05);
-        float wash = exp(-length(p * vec2(0.82, 1.05)) * 1.35);
-        float column = (1.0 - smoothstep(0.34, 0.52, uv.x))
-          * (1.0 - smoothstep(0.62, 0.08, uv.y));
-        float noise = 0.72 + 0.28 * sin(uv.y * 18.0 - uTime * 2.3 + uv.x * 12.0);
-        vec3 color = (team * 0.82 + gold * 0.22) * (core * 0.85 + wash * 0.55) * column * noise * flicker;
+
+        // uOrigin is in winner-local UV: (0,0) = winner corner after the flip above.
+        vec2 center = uOrigin;
+        float scale = max(0.05, uScale);
+        vec2 p = (uv - center) * vec2(uAspect, 1.0) / scale;
+        float r = length(p);
+
+        float pulse = 0.5 + 0.5 * sin(uTime * 0.5);
+        float pulseSoft = pulse * pulse * (3.0 - 2.0 * pulse);
+        float reach = 0.85 + pulseSoft * 0.12;
+        float skirt = 1.0 - smoothstep(0.0, reach, r);
+        skirt = pow(skirt, 1.45);
+
+        float strength = skirt * (0.16 + pulseSoft * 0.06);
+        vec3 color = mix(team, gold, 0.25) * strength;
         color *= uFade;
-        gl_FragColor = vec4(color, min(1.0, length(color)));
+        gl_FragColor = vec4(color, min(1.0, length(color) * 1.35));
       }
     `,
   })
@@ -237,7 +255,8 @@ export function createScoreEmbers(
         float t = mod(uTime + aDelay, aLife);
         float age = t / aLife;
         float gust = 0.82 + 0.18 * sin(uTime * 0.45 + aSeed);
-        vLife = smoothstep(0.0, 0.16, age) * (1.0 - smoothstep(0.62, 1.0, age));
+        // Soft birth, then linear fade for the rest of the path.
+        vLife = smoothstep(0.0, 0.08, age) * (1.0 - age);
         vHot = 1.0 - age;
         vKind = aKind;
         vUv = uv;
@@ -249,7 +268,9 @@ export function createScoreEmbers(
         world.x += sin(uTime * 1.6 + aSeed + t * 2.2) * mix(0.018, 0.01, aKind) * uAspect * flip;
         world.y += sin(uTime * 1.2 + aSeed * 1.4) * mix(0.014, 0.008, aKind);
         vec4 clip = projectionMatrix * modelViewMatrix * vec4(world, 1.0);
-        vec2 ndc = (aSize * mix(0.82, 1.05, vHot) * vLife) / uResolution * 2.0;
+        // Equal pixel extent on X/Y — never use a single NDC scale (that makes ovals).
+        float px = aSize * mix(0.88, 1.08, vHot) * vLife;
+        vec2 ndc = vec2(px / uResolution.x, px / uResolution.y) * 2.0;
         clip.xy += position.xy * ndc;
         gl_Position = clip;
       }
@@ -292,6 +313,16 @@ export function createScoreEmbers(
   let paused = document.hidden
   const startedAt = performance.now()
 
+  function syncHearthParams() {
+    const style = getComputedStyle(canvas)
+    const x = Number.parseFloat(style.getPropertyValue('--hearth-x')) || 0
+    const y = Number.parseFloat(style.getPropertyValue('--hearth-y')) || 0
+    const scale = Number.parseFloat(style.getPropertyValue('--hearth-scale'))
+    hearthUniforms.uOrigin.value.set(x, y)
+    hearthUniforms.uScale.value =
+      Number.isFinite(scale) && scale > 0 ? scale : 4
+  }
+
   function resize() {
     const width = canvas.clientWidth || 1
     const height = canvas.clientHeight || 1
@@ -300,8 +331,10 @@ export function createScoreEmbers(
     camera.left = -aspect
     camera.right = aspect
     camera.updateProjectionMatrix()
+    hearthUniforms.uAspect.value = aspect
     emberUniforms.uAspect.value = aspect
     emberUniforms.uResolution.value.set(width, height)
+    syncHearthParams()
   }
 
   const observer = new ResizeObserver(resize)
@@ -318,6 +351,7 @@ export function createScoreEmbers(
     }
     const elapsed = (now - startedAt) / 1000
     const fade = scoreEmbersIntroFade(elapsed)
+    syncHearthParams()
     hearthUniforms.uTime.value = elapsed
     hearthUniforms.uFade.value = fade
     emberUniforms.uTime.value = elapsed

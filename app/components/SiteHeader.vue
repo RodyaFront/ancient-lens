@@ -9,6 +9,7 @@ const localePath = useLocalePath()
 const switchLocalePath = useSwitchLocalePath()
 const route = useRoute()
 const store = useMatchStore()
+const { muted, toggleMute } = useScoreAudio()
 
 const homePath = computed(() => localePath({ name: 'index' }))
 const onRoot = computed(() => route.path === homePath.value)
@@ -63,6 +64,20 @@ const availableLocales = computed(() =>
           @click="emit('sources')"
         >
           {{ t('nav.sources') }}
+        </button>
+        <button
+          class="nav-item nav-mute"
+          type="button"
+          :class="{ active: muted }"
+          :aria-pressed="muted"
+          :aria-label="muted ? t('nav.unmute') : t('nav.mute')"
+          :title="muted ? t('nav.unmute') : t('nav.mute')"
+          @click="toggleMute()"
+        >
+          <Icon
+            :name="muted ? 'lucide:volume-x' : 'lucide:volume-2'"
+            aria-hidden="true"
+          />
         </button>
         <div class="locale-switch" role="group" :aria-label="t('nav.language')">
           <NuxtLink

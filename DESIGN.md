@@ -25,6 +25,10 @@ surface for players, not an analytics product landing page.
   Ranked (competitive ladder) lobby — reuse `.tone-ranked` / `data-tone="ranked"`,
   do not overload gold or accent for that meaning. Multi-player queue groups use a
   left-edge party color strip (`--party-strip-width`, `--party-1`…`--party-5`).
+  Item hover encyclopedia cues (flat, no glow): `--item-active` (lilac) /
+  `--item-passive` (cool blue-grey) for ability panels; `--item-mana` / `--item-cooldown`
+  for resource chips; gold remains shop cost/NW only. Neutral tiers 1–5 use
+  `--item-tier-1`…`--item-tier-5` on the tier label (and a light identity wash).
   Outcome always has a text label as well as color.
 - Lengths in CSS/UI: prefer `rem` and `--space-*` (see `.cursor/rules/units-rem.mdc`).
   Avoid new `px` except 1px hairlines.
@@ -42,6 +46,9 @@ surface for players, not an analytics product landing page.
 - Match open ritual: scorebook-shaped loading skeleton + stage copy
   (resolve → fetch → build); climax remains the score card reveal / VFX — do not
   add a second full-page analyze spectacle or artificial post-fetch delay.
+- Home and match share one search chrome (padding, border, heading, blurb). Drive
+  page differences with `main.page-home` / `main.page-match` from the route — not
+  `:has(.result-region)`, which jumps when results mount.
 
 Future edits should follow this direction rather than adding generic dashboard
 chrome or changing only the accent color.

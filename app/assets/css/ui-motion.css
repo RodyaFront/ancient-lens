@@ -1,0 +1,62 @@
+/**
+ * Overlay motion presets.
+ *
+ * Contract: position shells use `.ui-float` + `--ui-float-ox/oy`.
+ * Enter/leave animates `.ui-float__surface` only (opacity + translateY),
+ * so placement never fights motion. Mirror leave = reverse enter.
+ */
+
+:root {
+  --ui-rise-distance: 0.5rem;
+  --ui-rise-duration: 160ms;
+  --ui-rise-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --ui-float-z: 60;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --ui-rise-distance: 0;
+    --ui-rise-duration: 1ms;
+  }
+}
+
+.ui-float-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  pointer-events: none;
+}
+
+.ui-float {
+  position: fixed;
+  z-index: var(--ui-float-z, 60);
+  transform: translate(var(--ui-float-ox, -50%), var(--ui-float-oy, 0%));
+  pointer-events: none;
+}
+
+.ui-float__surface {
+  pointer-events: none;
+}
+
+.ui-float__surface.is-interactive {
+  pointer-events: auto;
+}
+
+.ui-rise-enter-active .ui-float__surface,
+.ui-rise-leave-active .ui-float__surface {
+  transition:
+    opacity var(--ui-rise-duration) var(--ui-rise-ease),
+    transform var(--ui-rise-duration) var(--ui-rise-ease);
+}
+
+.ui-rise-enter-from .ui-float__surface,
+.ui-rise-leave-to .ui-float__surface {
+  opacity: 0;
+  transform: translateY(var(--ui-rise-distance));
+}
+
+.ui-rise-enter-to .ui-float__surface,
+.ui-rise-leave-from .ui-float__surface {
+  opacity: 1;
+  transform: translateY(0);
+}

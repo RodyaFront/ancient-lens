@@ -38,12 +38,12 @@ watch(
 </script>
 
 <template>
-  <AppShell v-slot="{ openPlayer, openItem }">
+  <AppShell v-slot="{ openPlayer }">
     <MatchSearch />
     <MatchLoading v-if="store.loading" />
     <div v-else id="result" class="result-region" aria-live="polite">
       <MatchScore>
-        <MatchScoreboard @player="openPlayer" @item="openItem" />
+        <MatchScoreboard @player="openPlayer" />
         <div
           v-if="store.match && store.match.players.length !== 10"
           class="data-note"

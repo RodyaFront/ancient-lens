@@ -13,7 +13,9 @@
     "overview": "Огляд",
     "saved": "Збережені",
     "sources": "Про дані",
-    "language": "Мова"
+    "language": "Мова",
+    "mute": "Вимкнути звук",
+    "unmute": "Увімкнути звук"
   },
   "shell": {
     "skipToSearch": "Перейти до пошуку матчу",
@@ -73,6 +75,17 @@
     "emptySlot": "Порожній слот",
     "slotUnknown": "Дані слота не надано"
   },
+  "itemHover": {
+    "type": "Тип: {value}",
+    "affects": "Діє: {value}",
+    "active": "Активне: {name}",
+    "passive": "Пасивне: {name}",
+    "costAria": "{cost} золота",
+    "mana": "Мана {n}",
+    "cooldown": "Перезарядка {n}",
+    "ringAria": "Завантаження деталей предмета",
+    "tier": "Артефакт {n}-го розряду"
+  },
   "parse": {
     "generic": "Вставте числовий ID або посилання на матч Dotabuff / OpenDota.",
     "host": "Підтримуються посилання лише з dotabuff.com або opendota.com. Можна також вставити сам ID.",
@@ -126,9 +139,6 @@
     "sourceLive": "отримано з API",
     "sourceSnapshot": "знімок",
     "fetchedAt": "Отримано {when}",
-    "replayTitle": "Повторити появу рахунку зі звуком",
-    "replayDisabled": "Результат матчу не надано",
-    "replayAria": "Повторити анімацію рахунку зі звуком",
     "save": "Зберегти матч",
     "unsave": "Видалити зі збережених",
     "refresh": "Оновити з OpenDota",
@@ -144,7 +154,6 @@
     "statsBasic": "Базова",
     "sourceLiveLabel": "OpenDota API — поточний запит",
     "sourceSnapshotLabel": "Перевірений знімок OpenDota API",
-    "replayShort": "Повтор",
     "verdictBanner": "ПЕРЕМОЖЕЦЬ МАТЧУ",
     "radiantSide": "СИЛИ СВІТЛА",
     "direSide": "СИЛИ ТЕМРЯВИ",
