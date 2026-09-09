@@ -8,13 +8,22 @@ export default defineNuxtConfig({
     '@nuxt/eslint',
     '@nuxt/fonts',
     '@nuxt/icon',
-    '@nuxt/image',
     '@nuxt/test-utils',
     '@pinia/nuxt',
     '@vueuse/nuxt',
     '@nuxtjs/seo',
     'nuxt-security',
+    '@nuxtjs/i18n',
   ],
+
+  icon: {
+    mode: 'svg',
+    clientBundle: {
+      scan: true,
+      // Dynamic tab icons in Scoreboard.vue are not string-literal scanned.
+      icons: ['lucide:layout-list', 'lucide:coins', 'lucide:swords'],
+    },
+  },
 
   css: [
     '~/assets/css/main.css',
@@ -28,8 +37,7 @@ export default defineNuxtConfig({
 
   app: {
     head: {
-      htmlAttrs: { lang: 'uk' },
-      title: 'Ancient Lens — розбір матчів Dota 2',
+      title: 'Ancient Lens — Dota 2 match review',
       link: [{ rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' }],
       meta: [{ name: 'theme-color', content: '#171a18' }],
     },
@@ -39,8 +47,29 @@ export default defineNuxtConfig({
     url: process.env.NUXT_PUBLIC_SITE_URL,
     name: 'Ancient Lens',
     description:
-      'Ancient Lens — статистика матчів Dota 2: результат, гравці, економіка та предмети. Дані OpenDota.',
-    defaultLocale: 'uk',
+      'Ancient Lens — Dota 2 match stats: result, players, economy, and items. OpenDota data.',
+    defaultLocale: 'en',
+  },
+
+  i18n: {
+    locales: [
+      { code: 'en', language: 'en', name: 'English', file: 'en.json' },
+      { code: 'uk', language: 'uk', name: 'Українська', file: 'uk.json' },
+    ],
+    defaultLocale: 'en',
+    strategy: 'prefix_except_default',
+    langDir: 'locales',
+    baseUrl:
+      process.env.NUXT_PUBLIC_SITE_URL &&
+      !/localhost|127\.0\.0\.1/i.test(process.env.NUXT_PUBLIC_SITE_URL)
+        ? process.env.NUXT_PUBLIC_SITE_URL
+        : 'https://ancientlens.info',
+    detectBrowserLanguage: {
+      useCookie: true,
+      cookieKey: 'al_locale',
+      redirectOn: 'root',
+      fallbackLocale: 'en',
+    },
   },
 
   fonts: {
@@ -73,7 +102,19 @@ export default defineNuxtConfig({
   },
 
   nitro: {
+    // On Workers Builds, wrangler.toml would otherwise pick cloudflare-module
+    // and `wrangler pages deploy` fails on reserved ASSETS. Do not hardcode
+    // static — that removes the Node server and breaks @nuxt/test-utils e2e.
+    preset:
+      process.env.NITRO_PRESET ||
+      (process.env.WORKERS_CI === '1' || process.env.CF_PAGES === '1'
+        ? 'static'
+        : undefined),
     compressPublicAssets: true,
+    prerender: {
+      crawlLinks: true,
+      routes: ['/', '/uk'],
+    },
   },
 
   experimental: {
@@ -82,6 +123,10 @@ export default defineNuxtConfig({
 
   sitemap: {
     zeroRuntime: true,
+  },
+
+  ogImage: {
+    enabled: false,
   },
 
   security: {

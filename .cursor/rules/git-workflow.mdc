@@ -10,7 +10,7 @@ GitHub Flow: короткоживущая ветка → PR в `main` → squash
 ## Запрещено
 
 - `git push` в `main` или `master` (и `--force` туда же)
-- `git push` без зелёного `npm run verify` (как минимум `npm run build` не должен падать)
+- `git push` без зелёного `npm run verify` (как минимум `npm run generate` не должен падать)
 - `git push --no-verify`
 - `git stash` / `stash push` / `pop` / `apply` / `drop` без явной фразы «стешни» / «stash». По умолчанию **не стешить**: коммитить в текущую feature-ветку
 

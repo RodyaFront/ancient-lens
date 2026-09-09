@@ -34,6 +34,8 @@ export interface MatchPlayer {
   buyback_count?: number
   aghanims_scepter?: number
   aghanims_shard?: number
+  party_id?: number
+  party_size?: number
   [key: string]: unknown
 }
 
@@ -86,6 +88,13 @@ export interface SavedMatch {
   start_time?: number
 }
 
+export interface RecentMatch {
+  id: string
+  radiant_win?: boolean
+  duration?: number
+  openedAt: number
+}
+
 export type MatchSourceKind = 'live' | 'example'
 
 export interface MatchSource {
@@ -97,6 +106,7 @@ export interface MatchSource {
 export type ScoreboardView = 'overview' | 'economy' | 'combat'
 export type TeamFilter = 'all' | 'radiant' | 'dire'
 export type PlayerSort = 'slot' | 'kills' | 'net_worth' | 'hero_damage' | 'kda'
+export type MatchLoadPhase = 'idle' | 'resolve' | 'fetch' | 'build'
 
 export type MatchDialogState =
   | { kind: 'sources' }

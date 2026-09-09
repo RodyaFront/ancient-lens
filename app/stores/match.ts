@@ -1,12 +1,15 @@
 import {
   EXAMPLE_MATCH_ID,
   MATCH_FETCH_TIMEOUT_MS,
+  MAX_RECENT_MATCHES,
   MAX_SAVED_MATCHES,
   OPENDOTA_API,
+  RECENT_MATCHES_KEY,
   SAVED_MATCHES_KEY,
 } from '#shared/match/constants'
-import { parseMatchId } from '#shared/match/parseMatchId'
-import { radiant, validateMatch } from '#shared/match/stats'
+import { parseMatchId, ParseMatchIdError } from '#shared/match/parseMatchId'
+import { upsertRecentMatch } from '#shared/match/recent'
+import { radiant, validateMatch, ValidateMatchError } from '#shared/match/stats'
 import type {
   HeroEntry,
   ItemEntry,
@@ -14,10 +17,12 @@ import type {
   MatchPlayer,
   MatchSource,
   PlayerSort,
+  RecentMatch,
   SavedMatch,
   ScoreboardView,
   SnapshotMeta,
   TeamFilter,
+  MatchLoadPhase,
 } from '#shared/match/types'
 
 class HttpError extends Error {
@@ -38,6 +43,7 @@ export const useMatchStore = defineStore('match', () => {
   const filter = ref<TeamFilter>('all')
   const sort = ref<PlayerSort>('slot')
   const loading = ref(false)
+  const loadPhase = ref<MatchLoadPhase>('idle')
   const error = ref<{
     title: string
     body: string
@@ -45,17 +51,22 @@ export const useMatchStore = defineStore('match', () => {
     actions: boolean
   } | null>(null)
   const toast = ref('')
-  const lastInput = ref(EXAMPLE_MATCH_ID)
+  const lastInput = ref('')
   const inputInvalid = ref(false)
   const heroes = ref<Record<string, HeroEntry>>({})
   const items = ref<Record<string, ItemEntry>>({})
   const snapshotMeta = ref<SnapshotMeta | null>(null)
   const saved = ref<SavedMatch[]>([])
+  const recent = ref<RecentMatch[]>([])
   const requestNo = ref(0)
   const revealNonce = ref(0)
   const revealWithSound = ref(false)
+  const revealDoneNonce = ref(0)
   let controller: AbortController | null = null
   let toastTimer: ReturnType<typeof setTimeout> | null = null
+  let buildPhaseTimer: ReturnType<typeof setTimeout> | null = null
+
+  const BUILD_PHASE_AFTER_MS = 400
 
   const itemMap = computed(() => {
     const map: Record<number, ItemEntry> = {}
@@ -117,6 +128,79 @@ export const useMatchStore = defineStore('match', () => {
     saved.value = next
   }
 
+  function isRecentMatch(entry: unknown): entry is RecentMatch {
+    if (!entry || typeof entry !== 'object') {
+      return false
+    }
+    const value = entry as RecentMatch
+    return (
+      /^\d{1,16}$/.test(String(value.id)) &&
+      typeof value.openedAt === 'number' &&
+      Number.isFinite(value.openedAt)
+    )
+  }
+
+  function loadRecent() {
+    if (!import.meta.client) {
+      return
+    }
+
+    try {
+      const parsed = JSON.parse(
+        localStorage.getItem(RECENT_MATCHES_KEY) || '[]',
+      ) as unknown
+      if (Array.isArray(parsed)) {
+        recent.value = parsed
+          .filter(isRecentMatch)
+          .map((entry) => ({
+            id: String(entry.id),
+            radiant_win: entry.radiant_win,
+            duration: entry.duration,
+            openedAt: entry.openedAt,
+          }))
+          .slice(0, MAX_RECENT_MATCHES)
+      }
+    } catch {
+      recent.value = []
+    }
+  }
+
+  function persistRecent(next: RecentMatch[]) {
+    localStorage.setItem(RECENT_MATCHES_KEY, JSON.stringify(next))
+    recent.value = next
+  }
+
+  function rememberRecent(data: MatchData) {
+    if (!import.meta.client) {
+      return
+    }
+
+    const entry: RecentMatch = {
+      id: String(data.match_id),
+      radiant_win: data.radiant_win,
+      duration: data.duration,
+      openedAt: Date.now(),
+    }
+
+    try {
+      persistRecent(upsertRecentMatch(recent.value, entry, MAX_RECENT_MATCHES))
+    } catch {
+      // Ignore quota / private-mode write failures.
+    }
+  }
+
+  function t(key: string, params?: Record<string, unknown>) {
+    return useNuxtApp().$i18n.t(key, params ?? {}) as string
+  }
+
+  function removeRecent(id: string) {
+    try {
+      persistRecent(recent.value.filter((entry) => entry.id !== id))
+    } catch {
+      showToast(t('errors.recentUpdateFailed'))
+    }
+  }
+
   function heroById(id: number | undefined) {
     return id == null ? undefined : heroes.value[String(id)]
   }
@@ -128,16 +212,76 @@ export const useMatchStore = defineStore('match', () => {
   function heroName(player: MatchPlayer) {
     return (
       heroById(player.hero_id)?.localized_name ||
-      `Герой #${player.hero_id ?? '?'}`
+      t('format.heroFallback', { id: player.hero_id ?? '?' })
     )
   }
 
-  function setQuery(id: string, snapshot = false) {
-    const query: Record<string, string> = { match: id }
-    if (snapshot) {
-      query.snapshot = '1'
+  function prepareHome() {
+    loadSaved()
+    loadRecent()
+    match.value = null
+    source.value = null
+    error.value = null
+    setLoading(false)
+    inputInvalid.value = false
+    view.value = 'overview'
+    filter.value = 'all'
+    sort.value = 'slot'
+  }
+
+  function matchPath(id: string) {
+    return useLocalePath()({ name: 'match-id', params: { id } })
+  }
+
+  function isCurrentMatchRoute(id: string, snapshot = false) {
+    const route = useRoute()
+    return (
+      route.path === matchPath(id) &&
+      (route.query.snapshot === '1') === snapshot
+    )
+  }
+
+  async function openMatchInput(
+    input: string,
+    options: { snapshot?: boolean } = {},
+  ) {
+    inputInvalid.value = false
+    error.value = null
+    try {
+      const id = parseMatchId(input)
+      lastInput.value = id
+      const snapshot = Boolean(options.snapshot)
+      beginLoad('resolve')
+      if (isCurrentMatchRoute(id, snapshot)) {
+        await bootstrapFromRoute(id, snapshot)
+        return
+      }
+      await navigateTo({
+        path: matchPath(id),
+        query: snapshot ? { snapshot: '1' } : {},
+      })
+    } catch (errorValue) {
+      setLoading(false)
+      inputInvalid.value = true
+      const message =
+        errorValue instanceof ParseMatchIdError
+          ? t(`parse.${errorValue.code}`)
+          : t('errors.invalidBody')
+      showError(t('errors.invalidTitle'), message, null, false)
     }
-    void navigateTo({ query }, { replace: true })
+  }
+
+  function openExampleMatch() {
+    lastInput.value = EXAMPLE_MATCH_ID
+    inputInvalid.value = false
+    error.value = null
+    if (isCurrentMatchRoute(EXAMPLE_MATCH_ID, true)) {
+      return bootstrapFromRoute(EXAMPLE_MATCH_ID, true)
+    }
+    return navigateTo({
+      path: matchPath(EXAMPLE_MATCH_ID),
+      query: { snapshot: '1' },
+    })
   }
 
   function showError(
@@ -149,8 +293,37 @@ export const useMatchStore = defineStore('match', () => {
     error.value = { title, body, id, actions }
   }
 
+  function clearBuildPhaseTimer() {
+    if (buildPhaseTimer) {
+      clearTimeout(buildPhaseTimer)
+      buildPhaseTimer = null
+    }
+  }
+
   function setLoading(value: boolean) {
     loading.value = value
+    if (!value) {
+      loadPhase.value = 'idle'
+      clearBuildPhaseTimer()
+    }
+  }
+
+  function beginLoad(phase: MatchLoadPhase) {
+    loading.value = true
+    loadPhase.value = phase
+  }
+
+  function scheduleBuildPhase(requestId: number) {
+    clearBuildPhaseTimer()
+    buildPhaseTimer = setTimeout(() => {
+      if (requestNo.value === requestId && loading.value) {
+        loadPhase.value = 'build'
+      }
+    }, BUILD_PHASE_AFTER_MS)
+  }
+
+  function markRevealDone() {
+    revealDoneNonce.value += 1
   }
 
   function cancelLoad() {
@@ -186,6 +359,13 @@ export const useMatchStore = defineStore('match', () => {
     }
   }
 
+  async function ensureLookups() {
+    if (Object.keys(heroes.value).length) {
+      return
+    }
+    await loadLookups()
+  }
+
   async function loadMatch(input: string, options: { sound?: boolean } = {}) {
     if (options.sound) {
       useScoreAudio().unlock()
@@ -195,12 +375,11 @@ export const useMatchStore = defineStore('match', () => {
     try {
       id = parseMatchId(input)
     } catch (errorValue) {
-      showError(
-        'Перевірте URL або ID',
-        errorValue instanceof Error ? errorValue.message : 'Некоректний запит.',
-        null,
-        false,
-      )
+      const message =
+        errorValue instanceof ParseMatchIdError
+          ? t(`parse.${errorValue.code}`)
+          : t('errors.invalidBody')
+      showError(t('errors.checkUrlTitle'), message, null, false)
       inputInvalid.value = true
       return
     }
@@ -217,7 +396,9 @@ export const useMatchStore = defineStore('match', () => {
       thisController.abort()
     }, MATCH_FETCH_TIMEOUT_MS)
     error.value = null
-    setLoading(true)
+    beginLoad('resolve')
+    loadPhase.value = 'fetch'
+    scheduleBuildPhase(no)
 
     try {
       const response = await fetch(`${OPENDOTA_API}/matches/${id}`, {
@@ -236,9 +417,7 @@ export const useMatchStore = defineStore('match', () => {
       try {
         data = await response.json()
       } catch {
-        throw new Error(
-          'OpenDota повернув відповідь, яку не вдалося прочитати.',
-        )
+        throw new Error(t('errors.unreadable'))
       }
 
       if (data && typeof data === 'object' && 'error' in data) {
@@ -246,12 +425,15 @@ export const useMatchStore = defineStore('match', () => {
         const httpError = new HttpError(
           typeof payload.error === 'string'
             ? payload.error
-            : 'Дані матчу недоступні.',
+            : t('errors.unavailable'),
           404,
         )
         throw httpError
       }
 
+      if (no === requestNo.value) {
+        loadPhase.value = 'build'
+      }
       const next = validateMatch(data, id)
       if (no !== requestNo.value) {
         return
@@ -260,12 +442,12 @@ export const useMatchStore = defineStore('match', () => {
       match.value = next
       source.value = {
         kind: 'live',
-        label: 'OpenDota API — поточний запит',
+        label: t('score.sourceLiveLabel'),
         fetchedAt: new Date().toISOString(),
       }
       filter.value = 'all'
       revealNonce.value += 1
-      setQuery(id)
+      rememberRecent(next)
     } catch (errorValue) {
       if (no !== requestNo.value) {
         return
@@ -273,34 +455,36 @@ export const useMatchStore = defineStore('match', () => {
 
       const err = errorValue as HttpError
       if (err.name === 'AbortError' && !timedOut) {
-        showToast('Завантаження скасовано')
+        showToast(t('errors.cancelled'))
         return
       }
 
-      let title = 'Не вдалося отримати матч'
-      let body =
-        'Перевірте з’єднання. OpenDota може бути тимчасово недоступним або блокувати запит із цієї мережі.'
+      let title = t('errors.fetchFailed')
+      let body = t('errors.fetchFailedBody')
 
       if (timedOut) {
-        title = 'Джерело відповідає надто довго'
-        body =
-          'OpenDota не відповів за 25 секунд. Спробуйте ще раз трохи пізніше.'
+        title = t('errors.timeoutTitle')
+        body = t('errors.timeoutBody')
       } else if (err.status === 429) {
-        title = 'Ліміт запитів OpenDota'
+        title = t('errors.rateLimitTitle')
         const retry = Number(err.retry)
-        body = `Сервіс тимчасово обмежив запити. Повторіть ${Number.isFinite(retry) && retry > 0 ? `через ${retry} с` : 'приблизно за хвилину'}.`
+        body = t('errors.rateLimitBody', {
+          when:
+            Number.isFinite(retry) && retry > 0
+              ? t('errors.rateLimitSeconds', { n: retry })
+              : t('errors.rateLimitSoon'),
+        })
       } else if (err.status === 404) {
-        title = 'Матч не знайдено в OpenDota'
-        body =
-          'Перевірте ID. Матч може бути приватним, ще не проіндексованим або недоступним у цьому джерелі.'
+        title = t('errors.notFoundTitle')
+        body = t('errors.notFoundBody')
       } else if (err.status === 403 || err.status === 401) {
-        title = 'Джерело відхилило запит'
-        body =
-          'OpenDota обмежив доступ до API. Спробуйте пізніше або відкрийте матч у джерелі.'
+        title = t('errors.rejectedTitle')
+        body = t('errors.rejectedBody')
       } else if (err.status && err.status >= 500) {
-        title = 'Тимчасова помилка OpenDota'
-        body =
-          'Сервіс повернув помилку. Ваш ID збережено — повторіть запит пізніше.'
+        title = t('errors.tempTitle')
+        body = t('errors.tempBody')
+      } else if (errorValue instanceof ValidateMatchError) {
+        body = t(`errors.validate.${errorValue.code}`)
       } else if (
         err.message !== 'Failed to fetch' &&
         err.message !== 'Load failed' &&
@@ -330,7 +514,9 @@ export const useMatchStore = defineStore('match', () => {
     const no = ++requestNo.value
     controller?.abort()
     controller = null
-    setLoading(true)
+    beginLoad('resolve')
+    loadPhase.value = 'fetch'
+    scheduleBuildPhase(no)
     error.value = null
     inputInvalid.value = false
     lastInput.value = EXAMPLE_MATCH_ID
@@ -338,7 +524,10 @@ export const useMatchStore = defineStore('match', () => {
     try {
       const response = await fetch(`/data/match-${EXAMPLE_MATCH_ID}.json`)
       if (!response.ok) {
-        throw new Error('Знімок недоступний')
+        throw new Error(t('errors.snapshotMissing'))
+      }
+      if (no === requestNo.value) {
+        loadPhase.value = 'build'
       }
       const data = validateMatch(await response.json(), EXAMPLE_MATCH_ID)
       if (no !== requestNo.value) {
@@ -348,18 +537,17 @@ export const useMatchStore = defineStore('match', () => {
       filter.value = 'all'
       source.value = {
         kind: 'example',
-        label: 'Перевірений знімок OpenDota API',
+        label: t('score.sourceSnapshotLabel'),
         fetchedAt: snapshotMeta.value?.fetched_at || '2026-09-05T05:16:46Z',
       }
       revealNonce.value += 1
-      setQuery(EXAMPLE_MATCH_ID, true)
     } catch {
       if (no === requestNo.value) {
         match.value = null
         source.value = null
         showError(
-          'Не вдалося відкрити приклад',
-          'Спробуйте отримати матч безпосередньо з OpenDota.',
+          t('errors.exampleFailedTitle'),
+          t('errors.exampleFailedBody'),
           EXAMPLE_MATCH_ID,
         )
       }
@@ -391,11 +579,9 @@ export const useMatchStore = defineStore('match', () => {
 
     try {
       persistSaved(next)
-      showToast(
-        had ? 'Матч видалено зі збережених' : 'Матч збережено в цьому браузері',
-      )
+      showToast(had ? t('toast.unsaved') : t('toast.saved'))
     } catch {
-      showToast('Браузер не дозволив зберегти матч.')
+      showToast(t('toast.saveBlocked'))
     }
   }
 
@@ -403,7 +589,7 @@ export const useMatchStore = defineStore('match', () => {
     try {
       persistSaved(saved.value.filter((entry) => entry.id !== id))
     } catch {
-      showToast('Браузер не дозволив змінити закладки.')
+      showToast(t('toast.bookmarkBlocked'))
     }
   }
 
@@ -435,22 +621,19 @@ export const useMatchStore = defineStore('match', () => {
     link.download = `dota-match-${match.value.match_id}.json`
     link.click()
     setTimeout(() => URL.revokeObjectURL(link.href), 1000)
-    showToast('JSON підготовлено до завантаження')
+    showToast(t('toast.jsonReady'))
   }
 
-  async function bootstrap() {
+  async function bootstrapFromRoute(id: string, snapshot = false) {
     loadSaved()
+    loadRecent()
     await loadLookups()
-    const query = new URLSearchParams(window.location.search)
-    const requested = query.get('match')
-    if (
-      requested &&
-      !(requested === EXAMPLE_MATCH_ID && query.get('snapshot') === '1')
-    ) {
-      await loadMatch(requested)
+    lastInput.value = id
+    if (snapshot && id === EXAMPLE_MATCH_ID) {
+      await loadExample()
       return
     }
-    await loadExample()
+    await loadMatch(id)
   }
 
   return {
@@ -460,13 +643,16 @@ export const useMatchStore = defineStore('match', () => {
     filter,
     sort,
     loading,
+    loadPhase,
     error,
     toast,
     lastInput,
     inputInvalid,
     saved,
+    recent,
     revealNonce,
     revealWithSound,
+    revealDoneNonce,
     radiantPlayers,
     direPlayers,
     isSaved,
@@ -476,12 +662,18 @@ export const useMatchStore = defineStore('match', () => {
     itemById,
     heroName,
     showToast,
+    markRevealDone,
     loadMatch,
     loadExample,
     cancelLoad,
     toggleSaved,
     removeSaved,
+    removeRecent,
     exportMatch,
-    bootstrap,
+    prepareHome,
+    ensureLookups,
+    openMatchInput,
+    openExampleMatch,
+    bootstrapFromRoute,
   }
 })

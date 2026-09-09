@@ -4,22 +4,31 @@ import { describe, expect, it } from 'vitest'
 
 await setup({
   rootDir: fileURLToPath(new URL('../..', import.meta.url)),
+  // Local/CI shells may set NITRO_PRESET=static for Workers; e2e needs a Node server.
+  nuxtConfig: {
+    nitro: {
+      preset: 'node-server',
+    },
+  },
 })
 
-describe('ssr', () => {
-  it('renders the home page', async () => {
+describe('routes', () => {
+  it('renders the root page without a match scoreboard', async () => {
     const html = await $fetch('/')
 
-    expect(html).toContain('Розбір матчу')
     expect(html).toContain('Ancient Lens')
+    expect(html).toContain('Match review')
+    expect(html).toContain('Open match')
+    expect(html).toContain('Match ID or URL')
+    expect(html).not.toContain('Еталонний протокол')
+    expect(html).not.toContain('Недавні')
+    expect(html).not.toContain('score-card')
   })
 
-  it('returns a healthy API payload', async () => {
-    const payload = await $fetch('/api/health')
+  it('renders the match page shell', async () => {
+    const html = await $fetch('/match/8961419173?snapshot=1')
 
-    expect(payload).toMatchObject({
-      ok: true,
-      service: 'ancient-lens',
-    })
+    expect(html).toContain('Ancient Lens')
+    expect(html).toContain('Match review')
   })
 })

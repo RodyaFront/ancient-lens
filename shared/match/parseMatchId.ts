@@ -2,17 +2,36 @@ export function isNum(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value)
 }
 
+export type ParseMatchIdErrorCode = 'generic' | 'host' | 'path' | 'range'
+
+export class ParseMatchIdError extends Error {
+  readonly code: ParseMatchIdErrorCode
+
+  constructor(code: ParseMatchIdErrorCode) {
+    super(code)
+    this.name = 'ParseMatchIdError'
+    this.code = code
+  }
+}
+
+/** True when the value looks like a URL, not a bare token / garbage. */
+function looksLikeMatchUrl(text: string): boolean {
+  return /^https?:\/\//i.test(text) || text.includes('/')
+}
+
 export function parseMatchId(value: unknown): string {
   let text = String(value ?? '').trim()
 
   if (!/^\d+$/.test(text)) {
+    if (!looksLikeMatchUrl(text)) {
+      throw new ParseMatchIdError('generic')
+    }
+
     let url: URL
     try {
       url = new URL(/^https?:\/\//i.test(text) ? text : `https://${text}`)
     } catch {
-      throw new Error(
-        'Вставте числовий ID або посилання на матч Dotabuff / OpenDota.',
-      )
+      throw new ParseMatchIdError('generic')
     }
 
     if (
@@ -24,15 +43,13 @@ export function parseMatchId(value: unknown): string {
         url.hostname,
       )
     ) {
-      throw new Error(
-        'Підтримуються посилання лише з dotabuff.com або opendota.com. Можна також вставити сам ID.',
-      )
+      throw new ParseMatchIdError('host')
     }
 
     const match = url.pathname.match(/^\/matches\/(\d+)(?:\/.*)?$/)
     const id = match?.[1]
     if (!id) {
-      throw new Error('У посиланні має бути /matches/ та числовий ID матчу.')
+      throw new ParseMatchIdError('path')
     }
     text = id
   }
@@ -42,7 +59,7 @@ export function parseMatchId(value: unknown): string {
     BigInt(text) < BigInt(1) ||
     BigInt(text) > BigInt(Number.MAX_SAFE_INTEGER)
   ) {
-    throw new Error('ID має бути додатним цілим числом до 16 цифр.')
+    throw new ParseMatchIdError('range')
   }
 
   return BigInt(text).toString()

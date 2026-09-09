@@ -1,16 +1,18 @@
 <script setup lang="ts">
+const { t } = useI18n()
+const localePath = useLocalePath()
 const error = useError()
 
 const title = computed(() => {
   if (error.value?.statusCode === 404) {
-    return 'Сторінку не знайдено'
+    return t('errors.pageMissing')
   }
 
-  return 'Щось пішло не так'
+  return t('errors.genericFail')
 })
 
 function handleClear() {
-  clearError({ redirect: '/' })
+  clearError({ redirect: localePath({ name: 'index' }) })
 }
 </script>
 
@@ -19,7 +21,7 @@ function handleClear() {
     <p class="text-accent text-sm">{{ error?.statusCode ?? 500 }}</p>
     <h1 class="mt-2 text-3xl font-semibold">{{ title }}</h1>
     <button class="primary mt-6" type="button" @click="handleClear">
-      На головну
+      {{ t('errors.backHome') }}
     </button>
   </div>
 </template>

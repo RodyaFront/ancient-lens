@@ -6,13 +6,23 @@ import {
   formatNumber,
   gameModeLabel,
   lobbyLabel,
+  lobbyTone,
   regionLabel,
 } from '~/utils/matchFormat'
 
+const { t, locale } = useI18n()
 const store = useMatchStore()
 const audio = useScoreAudio()
 const card = ref<HTMLElement | null>(null)
 const vfx = ref<{ play: () => Promise<void> | void } | null>(null)
+let revealGeneration = 0
+let revealFinishedGeneration = 0
+
+const dateLocale = computed(() => (locale.value === 'uk' ? 'uk-UA' : 'en-US'))
+
+function formatFetchedAt(when: string | number) {
+  return new Date(when).toLocaleString(dateLocale.value)
+}
 
 const match = computed(() => store.match)
 const winner = computed(() => {
@@ -53,15 +63,30 @@ function teamName(isRadiant: boolean) {
   return team?.name || label
 }
 
+function finishReveal(generation: number) {
+  if (
+    generation !== revealGeneration ||
+    generation === revealFinishedGeneration
+  ) {
+    return
+  }
+  revealFinishedGeneration = generation
+  card.value?.classList.remove('score-reveal')
+  store.markRevealDone()
+}
+
 function startReveal(withSound = false) {
   const el = card.value
+  const generation = ++revealGeneration
   if (!el || !winner.value) {
+    finishReveal(generation)
     return
   }
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
     if (withSound) {
-      store.showToast('Анімацію вимкнено системними налаштуваннями.')
+      store.showToast(t('toast.motionReduced'))
     }
+    finishReveal(generation)
     return
   }
   el.classList.remove('score-reveal')
@@ -71,6 +96,8 @@ function startReveal(withSound = false) {
   if (withSound) {
     audio.play(winner.value)
   }
+  // Safety if animationend on .score-meta does not fire.
+  window.setTimeout(() => finishReveal(generation), 3600)
 }
 
 function replay() {
@@ -79,14 +106,12 @@ function replay() {
 }
 
 function onAnimationEnd(event: AnimationEvent) {
-  const el = card.value
   if (
-    el &&
     event.target instanceof HTMLElement &&
     event.target.matches('.score-meta') &&
     event.animationName === 'score-meta-in'
   ) {
-    el.classList.remove('score-reveal')
+    finishReveal(revealGeneration)
   }
 }
 
@@ -109,66 +134,68 @@ onMounted(() => {
   <section
     v-if="match && store.source"
     class="match-section"
-    aria-label="Огляд матчу"
+    :aria-label="t('score.regionAria')"
   >
     <div class="match-topline">
       <div class="match-caption">
-        <h2>Матч #{{ match.match_id }}</h2>
-        <span class="tiny-tag">{{ lobbyLabel(match.lobby_type) }}</span>
+        <h2>{{ t('score.matchLabel', { id: match.match_id }) }}</h2>
+        <span
+          class="tiny-tag"
+          :data-tone="lobbyTone(match.lobby_type) ?? undefined"
+        >
+          {{ lobbyLabel(match.lobby_type) }}
+        </span>
         <span
           class="source-status"
-          :title="`Отримано ${new Date(store.source.fetchedAt).toLocaleString('uk-UA')}`"
+          :title="
+            t('score.fetchedAt', {
+              when: formatFetchedAt(store.source.fetchedAt),
+            })
+          "
         >
-          OpenDota ·
-          {{ store.source.kind === 'live' ? 'отримано з API' : 'знімок' }}
+          OpenDota
         </span>
       </div>
       <div class="match-actions">
         <button
           class="ghost replay-score"
           type="button"
-          :title="
-            winner
-              ? 'Повторити появу рахунку зі звуком'
-              : 'Результат матчу не надано'
-          "
-          aria-label="Повторити анімацію рахунку зі звуком"
+          :title="winner ? t('score.replayTitle') : t('score.replayDisabled')"
+          :aria-label="t('score.replayAria')"
           :disabled="!winner"
           @click="replay"
         >
-          <AppIcon name="sparkles" />
-          <span class="replay-label">Повтор</span>
+          <Icon name="lucide:sparkles" aria-hidden="true" />
+          <span class="replay-label">{{ t('score.replayShort') }}</span>
         </button>
         <button
           class="icon-button"
           :class="{ 'is-saved': store.isSaved }"
           type="button"
-          :title="store.isSaved ? 'Видалити зі збережених' : 'Зберегти матч'"
-          :aria-label="
-            store.isSaved ? 'Видалити зі збережених' : 'Зберегти матч'
-          "
+          :title="store.isSaved ? t('score.unsave') : t('score.save')"
+          :aria-label="store.isSaved ? t('score.unsave') : t('score.save')"
           :aria-pressed="store.isSaved"
           @click="store.toggleSaved()"
         >
-          <AppIcon name="bookmark" />
+          <Icon name="lucide:bookmark" aria-hidden="true" />
         </button>
         <button
           class="icon-button"
           type="button"
-          title="Оновити з OpenDota"
-          aria-label="Оновити з OpenDota"
+          :title="t('score.refresh')"
+          :aria-label="t('score.refresh')"
           @click="store.loadMatch(String(match.match_id), { sound: true })"
         >
-          <AppIcon name="refresh" />
+          <Icon name="lucide:refresh-cw" aria-hidden="true" />
         </button>
         <button
           class="ghost"
           type="button"
-          title="Експортувати JSON"
-          aria-label="Експортувати матч у JSON"
+          :title="t('score.export')"
+          :aria-label="t('score.exportAria')"
           @click="store.exportMatch()"
         >
-          <AppIcon name="download" />
+          <Icon name="lucide:download" aria-hidden="true" />
           <span class="export-label">JSON</span>
         </button>
       </div>
@@ -185,24 +212,24 @@ onMounted(() => {
       <div class="score-fx" aria-hidden="true">
         <MatchScoreVfx ref="vfx" :winner="winner" />
         <div v-if="winner" class="fx-verdict">
-          <span>ПЕРЕМОЖЕЦЬ МАТЧУ</span>
+          <span>{{ t('score.verdictBanner') }}</span>
           <strong>{{ winner.toUpperCase() }}</strong>
         </div>
       </div>
       <div class="score-main">
         <div class="team-intro radiant">
-          <span class="team-side">СИЛИ СВІТЛА</span>
+          <span class="team-side">{{ t('score.radiantSide') }}</span>
           <h3>{{ teamName(true) }}</h3>
           <small class="team-result" :class="{ won: winner === 'radiant' }">
             {{
               winner
                 ? winner === 'radiant'
-                  ? 'Перемога'
-                  : 'Поразка'
-                : 'Результат не надано'
+                  ? t('score.win')
+                  : t('score.loss')
+                : t('score.resultUnknown')
             }}
           </small>
-          <div class="team-draft" aria-label="Герої Radiant">
+          <div class="team-draft" :aria-label="t('score.radiantHeroes')">
             <MatchHeroPortrait
               v-for="(player, index) in sortedDraft(store.radiantPlayers)"
               :key="`r-${index}`"
@@ -211,7 +238,7 @@ onMounted(() => {
           </div>
         </div>
         <div class="score-center">
-          <span class="score-label">РАХУНОК</span>
+          <span class="score-label">{{ t('score.scoreLabel') }}</span>
           <div
             class="scoreline"
             :aria-label="`Radiant ${formatNumber(radiantScore)}, Dire ${formatNumber(direScore)}`"
@@ -231,22 +258,23 @@ onMounted(() => {
             </span>
           </div>
           <div class="duration">
-            Тривалість <strong>{{ duration(match.duration) }}</strong>
+            {{ t('score.duration') }}
+            <strong>{{ duration(match.duration) }}</strong>
           </div>
         </div>
         <div class="team-intro dire">
-          <span class="team-side">СИЛИ ТЕМРЯВИ</span>
+          <span class="team-side">{{ t('score.direSide') }}</span>
           <h3>{{ teamName(false) }}</h3>
           <small class="team-result" :class="{ won: winner === 'dire' }">
             {{
               winner
                 ? winner === 'dire'
-                  ? 'Перемога'
-                  : 'Поразка'
-                : 'Результат не надано'
+                  ? t('score.win')
+                  : t('score.loss')
+                : t('score.resultUnknown')
             }}
           </small>
-          <div class="team-draft" aria-label="Герої Dire">
+          <div class="team-draft" :aria-label="t('score.direHeroes')">
             <MatchHeroPortrait
               v-for="(player, index) in sortedDraft(store.direPlayers)"
               :key="`d-${index}`"
@@ -257,19 +285,24 @@ onMounted(() => {
       </div>
       <div class="score-meta">
         <span>
-          <span class="meta-label">Режим</span
+          <span class="meta-label">{{ t('score.metaMode') }}</span
           >{{ gameModeLabel(match.game_mode) }}
         </span>
         <span>
-          <span class="meta-label">Початок</span
+          <span class="meta-label">{{ t('score.metaStart') }}</span
           >{{ formatDate(match.start_time) }}
         </span>
         <span>
-          <span class="meta-label">Регіон</span>{{ regionLabel(match.region) }}
+          <span class="meta-label">{{ t('score.metaRegion') }}</span
+          >{{ regionLabel(match.region) }}
         </span>
         <span>
-          <span class="meta-label">Статистика</span>
-          {{ isNum(match.version) ? 'Детальна' : 'Базова' }}
+          <span class="meta-label">{{ t('score.metaStats') }}</span>
+          {{
+            isNum(match.version)
+              ? t('score.statsDetailed')
+              : t('score.statsBasic')
+          }}
         </span>
       </div>
     </div>

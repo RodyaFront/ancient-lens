@@ -2,8 +2,10 @@ export const EXAMPLE_MATCH_ID = '8961419173'
 export const OPENDOTA_API = 'https://api.opendota.com/api'
 export const STEAM_CDN = 'https://cdn.cloudflare.steamstatic.com'
 export const SAVED_MATCHES_KEY = 'ancient-lens-saved'
+export const RECENT_MATCHES_KEY = 'ancient-lens-recent'
 export const MATCH_FETCH_TIMEOUT_MS = 25_000
 export const MAX_SAVED_MATCHES = 50
+export const MAX_RECENT_MATCHES = 8
 
 export const GAME_MODES: Record<number, string> = {
   1: 'All Pick',

@@ -21,8 +21,13 @@ surface for players, not an analytics product landing page.
 - IBM Plex Sans for interface text; Roboto Condensed for the wordmark, headings,
   score and large statistics; system monospace for IDs and table values.
 - Charcoal background, neutral text and vermilion for brand and the primary action.
-  Green/red encode Radiant/Dire; gold identifies net worth. Outcome always has a
-  text label as well as color.
+  Green/red encode Radiant/Dire; gold identifies net worth; amber `--ranked` marks
+  Ranked (competitive ladder) lobby — reuse `.tone-ranked` / `data-tone="ranked"`,
+  do not overload gold or accent for that meaning. Multi-player queue groups use a
+  left-edge party color strip (`--party-strip-width`, `--party-1`…`--party-5`).
+  Outcome always has a text label as well as color.
+- Lengths in CSS/UI: prefer `rem` and `--space-*` (see `.cursor/rules/units-rem.mdc`).
+  Avoid new `px` except 1px hairlines.
 - No decorative gradients, glows, faux glass, AI sparkles or ornamental status dots.
   The spinner, team comparison bars, neutral item circles and hero images all have
   specific information or interaction roles.
@@ -34,6 +39,9 @@ surface for players, not an analytics product landing page.
 - Keep the Ukrainian interface and existing match, filter, sort, bookmark, export,
   source and detail flows. Use data from the existing OpenDota pipeline; do not add
   invented insights, performance claims or a decorative MVP score.
+- Match open ritual: scorebook-shaped loading skeleton + stage copy
+  (resolve → fetch → build); climax remains the score card reveal / VFX — do not
+  add a second full-page analyze spectacle or artificial post-fetch delay.
 
 Future edits should follow this direction rather than adding generic dashboard
 chrome or changing only the accent color.
