@@ -80,11 +80,47 @@
     "affects": "Affects: {value}",
     "active": "Active: {name}",
     "passive": "Passive: {name}",
+    "use": "Use: {name}",
+    "toggle": "Toggle: {name}",
+    "upgrade": "Upgrade: {name}",
     "costAria": "{cost} gold",
     "mana": "Mana cost {n}",
+    "health": "Health cost {n}",
     "cooldown": "Cooldown {n}",
     "ringAria": "Loading item details",
     "tier": "Tier {n} Neutral"
+  },
+  "heroHover": {
+    "primary": {
+      "str": "Strength",
+      "agi": "Agility",
+      "int": "Intelligence",
+      "all": "Universal"
+    },
+    "attr": {
+      "str": "STR",
+      "agi": "AGI",
+      "int": "INT"
+    },
+    "attack": {
+      "melee": "Melee",
+      "ranged": "Ranged"
+    },
+    "level": "Level {n}",
+    "moveSpeed": "Move speed",
+    "armor": "Armor",
+    "damage": "Damage",
+    "attackRate": "Attack rate",
+    "magicResist": "Magic resist",
+    "attackRange": "Attack range",
+    "health": "Health",
+    "mana": "Mana",
+    "healthDetail": "Health {n}, regen {regen}",
+    "manaDetail": "Mana {n}, regen {regen}",
+    "popularity": "Pub popularity",
+    "winRate": "Win rate",
+    "meta": "{rank} most popular · {rate} win rate",
+    "winRateOnly": "{rate} win rate"
   },
   "parse": {
     "generic": "Enter a numeric ID or a Dotabuff / OpenDota match link.",
@@ -198,7 +234,7 @@
     "tipBuildings": "Damage dealt to enemy buildings",
     "tipHealing": "Healing provided to allied heroes",
     "tipParticipation": "Share of team kills involving the player",
-    "tipItems": "Final inventory, backpack, and neutral item",
+    "tipItems": "Final inventory, backpack, neutral item, enchantment, and Aghanims",
     "openStats": "Open stats: {name}",
     "details": "Details for {name}",
     "playersKills": "{count} players · {kills} kills",
@@ -251,13 +287,16 @@
     "savedEmpty": "No saved matches yet. Open a match and tap the bookmark icon next to its number.",
     "inventoryMain": "Main inventory",
     "inventoryBackpack": "Backpack",
-    "inventoryNeutral": "Neutral slots",
-    "aghanimsLine": "Aghanim’s Scepter: {scepter} · Shard: {shard}",
+    "inventoryNeutral": "Neutral item and enchantment",
+    "inventoryAghanims": "Aghanim’s Scepter and Shard",
+    "aghanimScepter": "Aghanim’s Scepter",
+    "aghanimShard": "Aghanim’s Shard",
+    "aghanimMissing": "{name}: missing",
     "opendotaProfile": "OpenDota profile ↗",
     "noPublicId": "The source did not provide a public player ID.",
     "itemId": "Item ID:",
     "itemBody": "Item in the final inventory. Name and icon come from the OpenDota dictionary.",
-    "itemHint": "Click a player name in the table to review main slots, backpack, and neutral items."
+    "itemHint": "Click a player name in the table to review main slots, backpack, neutrals, and Aghanims."
   },
   "notes": {
     "partialPlayers": "OpenDota provided {count} of 10 players. Team totals cover only available participants.",

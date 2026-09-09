@@ -5,6 +5,25 @@ export { upsertRecentMatch } from './recent'
 export { buildPartyMarks, toRoman } from './party'
 export type { PartyMark } from './party'
 export {
+  ARMOR_PER_AGI,
+  HP_PER_STR,
+  MANA_PER_INT,
+  buildHeroProfile,
+  createHeroCatalog,
+  displayArmor,
+  displayDamage,
+  displayHealth,
+  displayMana,
+  popularityRank,
+  primaryAttrI18nKey,
+  primaryAttrIconSrc,
+  primaryAttrKey,
+  roleLine,
+  winRate,
+} from './heroCatalog'
+export type { HeroCatalog, PrimaryAttrKey } from './heroCatalog'
+export { buildHeroMetaSnapshot, normalizeHeroMetaRow } from './heroMeta'
+export {
   duration,
   isMatchBestStat,
   kda,
@@ -24,6 +43,9 @@ export type {
 } from './stats'
 export type {
   HeroEntry,
+  HeroMetaEntry,
+  HeroMetaSnapshot,
+  HeroProfile,
   ItemAbility,
   ItemAttrib,
   ItemEntry,

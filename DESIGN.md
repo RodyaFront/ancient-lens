@@ -25,11 +25,15 @@ surface for players, not an analytics product landing page.
   Ranked (competitive ladder) lobby — reuse `.tone-ranked` / `data-tone="ranked"`,
   do not overload gold or accent for that meaning. Multi-player queue groups use a
   left-edge party color strip (`--party-strip-width`, `--party-1`…`--party-5`).
-  Item hover encyclopedia cues (flat, no glow): `--item-active` (lilac) /
-  `--item-passive` (cool blue-grey) for ability panels; `--item-mana` / `--item-cooldown`
-  for resource chips; gold remains shop cost/NW only. Neutral tiers 1–5 use
+  Item hover encyclopedia cues (flat, no glow): `--item-active` (client
+  periwinkle) for Active/Toggle/Upgrade, `--item-use` (client lime, not Radiant
+  `--green`) for Use/consumable panels, `--item-passive` (cool blue-grey) for
+  passives; `--item-mana` / `--item-health` / `--item-cooldown` for resource
+  chips; gold remains shop cost/NW only. Neutral tiers 1–5 use
   `--item-tier-1`…`--item-tier-5` on the tier label (and a light identity wash).
-  Outcome always has a text label as well as color.
+  Hero tip: `--hero-str` / `--hero-agi` / `--hero-int` / `--hero-all`
+  attributes; `--hero-health` / `--hero-mana` resource bars (flat). Outcome
+  always has a text label as well as color.
 - Lengths in CSS/UI: prefer `rem` and `--space-*` (see `.cursor/rules/units-rem.mdc`).
   Avoid new `px` except 1px hairlines.
 - No decorative gradients, glows, faux glass, AI sparkles or ornamental status dots.

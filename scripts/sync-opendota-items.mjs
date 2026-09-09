@@ -91,6 +91,10 @@ function normalizeItem(raw) {
     raw.mc === false || raw.mc === null || raw.mc === undefined
       ? undefined
       : Number(raw.mc)
+  const hc =
+    raw.hc === false || raw.hc === null || raw.hc === undefined
+      ? undefined
+      : Number(raw.hc)
   const cd =
     raw.cd === false || raw.cd === null || raw.cd === undefined
       ? undefined
@@ -132,6 +136,7 @@ function normalizeItem(raw) {
       ? { abilities: normalizeAbilities(raw.abilities) }
       : {}),
     ...(Number.isFinite(mc) ? { mc } : {}),
+    ...(Number.isFinite(hc) ? { hc } : {}),
     ...(Number.isFinite(cd) ? { cd } : {}),
     ...(lore ? { lore } : {}),
     ...(notes ? { notes } : {}),

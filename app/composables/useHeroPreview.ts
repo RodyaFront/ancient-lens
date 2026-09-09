@@ -1,23 +1,24 @@
-﻿import {
+import {
   PREVIEW_LEAVE_GRACE_MS,
   PREVIEW_QUIET_MS,
   PREVIEW_REDUCED_QUIET_MS,
   PREVIEW_RING_MS,
 } from '~/utils/previewTiming'
 
-export type ItemPreviewPhase = 'quiet' | 'ring' | 'open'
+export type HeroPreviewPhase = 'quiet' | 'ring' | 'open'
 
-export type ItemPreviewSession = {
-  itemId: number
+export type HeroPreviewSession = {
+  heroId: number
+  matchLevel: number | null
   triggerEl: HTMLElement
-  phase: ItemPreviewPhase
+  phase: HeroPreviewPhase
   sticky: boolean
   cursorX: number
   cursorY: number
 }
 
-const stickySession = shallowRef<ItemPreviewSession | null>(null)
-const hoverSession = shallowRef<ItemPreviewSession | null>(null)
+const stickySession = shallowRef<HeroPreviewSession | null>(null)
+const hoverSession = shallowRef<HeroPreviewSession | null>(null)
 
 let quietTimer: ReturnType<typeof setTimeout> | null = null
 let ringTimer: ReturnType<typeof setTimeout> | null = null
@@ -56,7 +57,7 @@ function clearHover() {
   hoverSession.value = null
 }
 
-function patchHover(patch: Partial<ItemPreviewSession>) {
+function patchHover(patch: Partial<HeroPreviewSession>) {
   const current = hoverSession.value
   if (!current) {
     return
@@ -68,15 +69,15 @@ function patchHover(patch: Partial<ItemPreviewSession>) {
  * Two concurrent sessions: one sticky (click-pin) + one armed hover.
  * Leave only clears the hover session.
  */
-export function useItemPreview() {
+export function useHeroPreview() {
   const openCards = computed(() => {
-    const cards: ItemPreviewSession[] = []
+    const cards: HeroPreviewSession[] = []
     if (stickySession.value?.phase === 'open') {
       cards.push(stickySession.value)
     }
     if (
       hoverSession.value?.phase === 'open' &&
-      hoverSession.value.itemId !== stickySession.value?.itemId
+      hoverSession.value.heroId !== stickySession.value?.heroId
     ) {
       cards.push(hoverSession.value)
     }
@@ -95,10 +96,10 @@ export function useItemPreview() {
       clearHover()
       return
     }
-    if (stickySession.value?.itemId === forId) {
+    if (stickySession.value?.heroId === forId) {
       stickySession.value = null
     }
-    if (hoverSession.value?.itemId === forId) {
+    if (hoverSession.value?.heroId === forId) {
       clearHover()
     }
   }
@@ -108,21 +109,21 @@ export function useItemPreview() {
   }
 
   function leave(forId: number) {
-    if (hoverSession.value?.itemId !== forId) {
+    if (hoverSession.value?.heroId !== forId) {
       return
     }
     clearLeaveTimer()
     leaveTimer = setTimeout(() => {
       leaveTimer = null
-      if (hoverSession.value?.itemId === forId) {
+      if (hoverSession.value?.heroId === forId) {
         clearHover()
       }
     }, PREVIEW_LEAVE_GRACE_MS)
   }
 
-  /** Keep hover open while the pointer moves onto the tip (for scroll). */
+  /** Keep hover open while the pointer moves onto the tip. */
   function retain(forId: number) {
-    if (hoverSession.value?.itemId === forId) {
+    if (hoverSession.value?.heroId === forId) {
       clearLeaveTimer()
     }
   }
@@ -132,8 +133,9 @@ export function useItemPreview() {
     el: HTMLElement,
     clientX: number,
     clientY: number,
+    matchLevel: number | null = null,
   ) {
-    if (stickySession.value?.itemId === id) {
+    if (stickySession.value?.heroId === id) {
       return
     }
 
@@ -141,7 +143,8 @@ export function useItemPreview() {
     clearHover()
     const run = ++hoverToken
     hoverSession.value = {
-      itemId: id,
+      heroId: id,
+      matchLevel,
       triggerEl: el,
       phase: 'quiet',
       sticky: false,
@@ -178,12 +181,13 @@ export function useItemPreview() {
     patchHover({ cursorX: clientX, cursorY: clientY })
   }
 
-  function pin(id: number, el: HTMLElement) {
-    if (hoverSession.value?.itemId === id) {
+  function pin(id: number, el: HTMLElement, matchLevel: number | null = null) {
+    if (hoverSession.value?.heroId === id) {
       clearHover()
     }
     stickySession.value = {
-      itemId: id,
+      heroId: id,
+      matchLevel,
       triggerEl: el,
       phase: 'open',
       sticky: true,
@@ -192,16 +196,20 @@ export function useItemPreview() {
     }
   }
 
-  function togglePin(id: number, el: HTMLElement) {
-    if (stickySession.value?.itemId === id) {
+  function togglePin(
+    id: number,
+    el: HTMLElement,
+    matchLevel: number | null = null,
+  ) {
+    if (stickySession.value?.heroId === id) {
       stickySession.value = null
       return
     }
-    pin(id, el)
+    pin(id, el, matchLevel)
   }
 
   function isPinned(id: number) {
-    return stickySession.value?.itemId === id
+    return stickySession.value?.heroId === id
   }
 
   return {

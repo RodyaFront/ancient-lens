@@ -8,7 +8,7 @@ const {
   ringMs,
   stickySession,
   dismissSticky,
-} = useItemPreview()
+} = useHeroPreview()
 const teleportTo = useFloatTeleportTo()
 
 watch(
@@ -25,9 +25,9 @@ watch(
         }
         if (
           node.matches(
-            '[data-item-preview-card], [data-item-preview-trigger]',
+            '[data-hero-preview-card], [data-hero-preview-trigger]',
           ) ||
-          node.closest('[data-item-preview-card], [data-item-preview-trigger]')
+          node.closest('[data-hero-preview-card], [data-hero-preview-trigger]')
         ) {
           return true
         }
@@ -36,7 +36,6 @@ watch(
     }
 
     function onPointerDown(event: PointerEvent) {
-      // Clicks inside the tip (text select, copy, chips) must not unpin.
       if (isInsidePreview(event)) {
         return
       }
@@ -73,10 +72,11 @@ watch(
       tag="div"
       class="ui-float-layer"
     >
-      <MatchItemHoverCard
+      <MatchHeroHoverCard
         v-for="card in openCards"
-        :key="`${card.sticky ? 'pin' : 'hover'}-${card.itemId}`"
-        :item-id="card.itemId"
+        :key="`${card.sticky ? 'pin' : 'hover'}-${card.heroId}`"
+        :hero-id="card.heroId"
+        :match-level="card.matchLevel"
         :trigger-el="card.triggerEl"
         :sticky="card.sticky"
       />

@@ -1,7 +1,8 @@
 /**
  * Overlay motion presets.
  *
- * Contract: position shells use `.ui-float` + `--ui-float-ox/oy`.
+ * Contract: position shells use `.ui-float` with pixel `top`/`left` only
+ * (no percentage translate on the shell — that expands document overflow).
  * Enter/leave animates `.ui-float__surface` only (opacity + translateY),
  * so placement never fights motion. Mirror leave = reverse enter.
  */
@@ -30,7 +31,6 @@
 .ui-float {
   position: fixed;
   z-index: var(--ui-float-z, 60);
-  transform: translate(var(--ui-float-ox, -50%), var(--ui-float-oy, 0%));
   pointer-events: none;
 }
 

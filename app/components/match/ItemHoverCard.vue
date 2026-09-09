@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import {
+  abilityHeadingI18nKey,
   abilityKind,
   emphasizeNumberSegments,
+  isTriggeredAbilityKind,
   itemAffectsLabel,
   itemBehaviorLabel,
   itemStatLines,
@@ -43,15 +45,16 @@ const resourceAbilityIndex = computed(() => {
   const list = entry.value?.abilities ?? []
   if (
     typeof entry.value?.mc !== 'number' &&
+    typeof entry.value?.hc !== 'number' &&
     typeof entry.value?.cd !== 'number'
   ) {
     return -1
   }
-  const activeIndex = list.findIndex(
-    (ability) => abilityKind(ability) === 'active',
+  const triggeredIndex = list.findIndex((ability) =>
+    isTriggeredAbilityKind(abilityKind(ability)),
   )
-  if (activeIndex >= 0) {
-    return activeIndex
+  if (triggeredIndex >= 0) {
+    return triggeredIndex
   }
   return list.length ? 0 : -1
 })
@@ -65,6 +68,7 @@ const abilityViews = computed(() =>
     return {
       key: `${kind}-${ability.title || index}`,
       kind,
+      headingKey: abilityHeadingI18nKey(kind),
       title: ability.title || '',
       proseSegments: body.prose ? emphasizeNumberSegments(body.prose) : [],
       footers: body.footers.map((row) => ({
@@ -117,7 +121,15 @@ watch(imageUrl, () => {
           {{ t('itemHover.tier', { n: neutralTier }) }}
         </span>
         <span v-else-if="showShopCost" class="item-hover-card__cost">
-          <Icon name="lucide:coins" aria-hidden="true" />
+          <img
+            class="item-hover-card__res-icon"
+            src="/images/dota2/gold.png"
+            alt=""
+            width="12"
+            height="12"
+            decoding="async"
+            aria-hidden="true"
+          />
           <span>{{ formatNumber(entry?.cost) }}</span>
           <span class="sr-only">{{
             t('itemHover.costAria', { cost: formatNumber(entry?.cost) })
@@ -153,11 +165,9 @@ watch(imageUrl, () => {
       <div class="item-hover-card__ability-head">
         <strong>
           {{
-            ability.kind === 'active'
-              ? t('itemHover.active', { name: ability.title })
-              : ability.kind === 'passive'
-                ? t('itemHover.passive', { name: ability.title })
-                : ability.title
+            ability.headingKey
+              ? t(ability.headingKey, { name: ability.title })
+              : ability.title
           }}
         </strong>
         <span v-if="ability.showResources" class="item-hover-card__chips">
@@ -166,15 +176,44 @@ watch(imageUrl, () => {
             class="item-hover-card__chip--mana"
             :title="t('itemHover.mana', { n: entry.mc })"
           >
-            <Icon name="lucide:droplet" aria-hidden="true" />
+            <img
+              class="item-hover-card__res-icon"
+              src="/images/dota2/ability_manacost.png"
+              alt=""
+              width="12"
+              height="12"
+              decoding="async"
+            />
             {{ formatNumber(entry.mc) }}
+          </span>
+          <span
+            v-if="typeof entry?.hc === 'number'"
+            class="item-hover-card__chip--health"
+            :title="t('itemHover.health', { n: entry.hc })"
+          >
+            <img
+              class="item-hover-card__res-icon"
+              src="/images/dota2/ability_healthcost.png"
+              alt=""
+              width="12"
+              height="12"
+              decoding="async"
+            />
+            {{ formatNumber(entry.hc) }}
           </span>
           <span
             v-if="typeof entry?.cd === 'number'"
             class="item-hover-card__chip--cooldown"
             :title="t('itemHover.cooldown', { n: entry.cd })"
           >
-            <Icon name="lucide:timer" aria-hidden="true" />
+            <img
+              class="item-hover-card__res-icon"
+              src="/images/dota2/ability_cooldown.png"
+              alt=""
+              width="12"
+              height="12"
+              decoding="async"
+            />
             {{ formatNumber(entry.cd) }}
           </span>
         </span>

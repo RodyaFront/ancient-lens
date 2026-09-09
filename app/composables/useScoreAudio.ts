@@ -26,6 +26,17 @@ let fireScrollFactor = 1
 let gestureArm = false
 let gestureAbort: AbortController | null = null
 let muteHydrated = false
+/** Tab not visible — silence master gain without touching user mute intent. */
+let tabHidden = false
+let visibilityArmed = false
+
+/**
+ * Master output is silent when the user muted or the browser tab is hidden.
+ * Explicit mute always wins; visibility only layers temporary silence.
+ */
+export function isAudioOutputSilenced(userMuted: boolean, pageHidden: boolean) {
+  return userMuted || pageHidden
+}
 
 /** Louder at the top; fades out as the user scrolls down. */
 export function fireGainFromScroll(
@@ -105,6 +116,10 @@ export function useScoreAudio() {
     }
   }
 
+  function outputSilenced() {
+    return isAudioOutputSilenced(muted.value, tabHidden)
+  }
+
   function ensureContext() {
     const Context = window.AudioContext || window.webkitAudioContext
     if (!Context) {
@@ -113,7 +128,7 @@ export function useScoreAudio() {
     if (!scoreAudioContext) {
       scoreAudioContext = new Context()
       masterGain = scoreAudioContext.createGain()
-      masterGain.gain.value = muted.value ? 0.0001 : 1
+      masterGain.gain.value = outputSilenced() ? 0.0001 : 1
       masterGain.connect(scoreAudioContext.destination)
     }
     return scoreAudioContext
@@ -129,7 +144,7 @@ export function useScoreAudio() {
     if (!ctx || !gain) {
       return
     }
-    const next = muted.value ? 0.0001 : 1
+    const next = outputSilenced() ? 0.0001 : 1
     const now = ctx.currentTime
     gain.gain.cancelScheduledValues(now)
     if (immediate) {
@@ -138,6 +153,42 @@ export function useScoreAudio() {
     }
     gain.gain.setValueAtTime(Math.max(0.0001, gain.gain.value), now)
     gain.gain.linearRampToValueAtTime(next, now + 0.2)
+  }
+
+  function syncTabVisibility() {
+    if (import.meta.server) {
+      return
+    }
+    const nextHidden = document.visibilityState === 'hidden'
+    if (nextHidden === tabHidden) {
+      return
+    }
+    tabHidden = nextHidden
+    hydrateMute()
+    applyMasterMute(nextHidden)
+    if (nextHidden || muted.value) {
+      return
+    }
+    // Browsers often suspend AudioContext while hidden; resume ambient on return.
+    const ctx = scoreAudioContext
+    if (!ctx) {
+      return
+    }
+    void ctx.resume().then(() => {
+      flushAmbientAfterUnlock()
+    })
+  }
+
+  function armTabVisibilityMute() {
+    if (visibilityArmed || import.meta.server) {
+      return
+    }
+    visibilityArmed = true
+    tabHidden = document.visibilityState === 'hidden'
+    document.addEventListener('visibilitychange', syncTabVisibility)
+    if (tabHidden) {
+      applyMasterMute(true)
+    }
   }
 
   function setMuted(next: boolean) {
@@ -219,7 +270,7 @@ export function useScoreAudio() {
   function startWhoosh(buffer: AudioBuffer) {
     const ctx = scoreAudioContext
     const dest = output()
-    if (!ctx || !dest || ctx.state !== 'running' || muted.value) {
+    if (!ctx || !dest || ctx.state !== 'running' || outputSilenced()) {
       return false
     }
     const source = ctx.createBufferSource()
@@ -329,7 +380,7 @@ export function useScoreAudio() {
       !dest ||
       ctx.state !== 'running' ||
       !fireWanted ||
-      muted.value
+      outputSilenced()
     ) {
       return false
     }
@@ -449,7 +500,7 @@ export function useScoreAudio() {
       return
     }
     hydrateMute()
-    if (muted.value) {
+    if (outputSilenced()) {
       return
     }
 
@@ -471,7 +522,7 @@ export function useScoreAudio() {
 
     void (async () => {
       const buffer = await loadWhoosh(ctx)
-      if (!buffer || muted.value || ctx.state !== 'running') {
+      if (!buffer || outputSilenced() || ctx.state !== 'running') {
         return
       }
       startWhoosh(buffer)
@@ -488,7 +539,7 @@ export function useScoreAudio() {
     }
     fireWanted = true
     syncFireScrollFromWindow(el ?? null)
-    if (muted.value) {
+    if (outputSilenced()) {
       return
     }
     if (fireSource) {
@@ -513,7 +564,7 @@ export function useScoreAudio() {
         // Autoplay may block until a gesture.
       }
       const buffer = await loadFire(ctx)
-      if (!buffer || !fireWanted || muted.value) {
+      if (!buffer || !fireWanted || outputSilenced()) {
         return
       }
       if (startFireNodes(buffer)) {
@@ -532,7 +583,16 @@ export function useScoreAudio() {
     stopFireNodes(true)
   }
 
-  hydrateMute()
+  // Do not trust setup-time hydrate with useState: Nuxt may apply the SSR
+  // payload (always `false`) after this runs and wipe a localStorage restore.
+  if (import.meta.client) {
+    onMounted(() => {
+      muteHydrated = false
+      hydrateMute()
+      armTabVisibilityMute()
+      applyMasterMute(true)
+    })
+  }
 
   return {
     muted,

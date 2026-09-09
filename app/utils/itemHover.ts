@@ -68,15 +68,47 @@ export function splitAbilityBody(description: string): {
   return { prose: proseParts.join('\n\n'), footers }
 }
 
-export function abilityKind(
-  ability: ItemAbility,
-): 'active' | 'passive' | 'other' {
+export type AbilityKind =
+  'active' | 'passive' | 'use' | 'toggle' | 'upgrade' | 'other'
+
+const KNOWN_KINDS = new Set<AbilityKind>([
+  'active',
+  'passive',
+  'use',
+  'toggle',
+  'upgrade',
+])
+
+const TRIGGERED_KINDS = new Set<AbilityKind>([
+  'active',
+  'use',
+  'toggle',
+  'upgrade',
+])
+
+const HEADING_I18N: Record<Exclude<AbilityKind, 'other'>, string> = {
+  active: 'itemHover.active',
+  passive: 'itemHover.passive',
+  use: 'itemHover.use',
+  toggle: 'itemHover.toggle',
+  upgrade: 'itemHover.upgrade',
+}
+
+export function abilityKind(ability: ItemAbility): AbilityKind {
   const type = (ability.type || '').toLowerCase()
-  if (type === 'active') {
-    return 'active'
-  }
-  if (type === 'passive') {
-    return 'passive'
+  if (KNOWN_KINDS.has(type as AbilityKind)) {
+    return type as AbilityKind
   }
   return 'other'
+}
+
+export function isTriggeredAbilityKind(kind: AbilityKind): boolean {
+  return TRIGGERED_KINDS.has(kind)
+}
+
+export function abilityHeadingI18nKey(kind: AbilityKind): string | null {
+  if (kind === 'other') {
+    return null
+  }
+  return HEADING_I18N[kind]
 }

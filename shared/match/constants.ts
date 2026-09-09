@@ -1,6 +1,10 @@
 export const EXAMPLE_MATCH_ID = '8961419173'
 export const OPENDOTA_API = 'https://api.opendota.com/api'
 export const STEAM_CDN = 'https://cdn.cloudflare.steamstatic.com'
+
+/** OpenDota item ids used for Aghanim tip encyclopedia. */
+export const ITEM_ID_ULTIMATE_SCEPTER = 108
+export const ITEM_ID_AGHANIMS_SHARD = 609
 export const SAVED_MATCHES_KEY = 'ancient-lens-saved'
 export const RECENT_MATCHES_KEY = 'ancient-lens-recent'
 export const MATCH_FETCH_TIMEOUT_MS = 25_000

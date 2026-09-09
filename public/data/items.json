@@ -1018,6 +1018,7 @@
         "description": "Throw a grenade at the target area. Enemies in the area will take 50 damage on impact, and be slowed by -15% and take 15 damage every 1s for 5 seconds. Radius 300."
       }
     ],
+    "hc": 75,
     "cd": 10,
     "lore": "Both the hunter and the hunted must pay the blood price."
   },
@@ -5382,6 +5383,7 @@
         "description": "Consume %abilityhealthcost% health to temporarily gain 170 mana. Lasts 10 seconds.\n\nIf the mana gained cannot fit in your mana pool, it creates a buffer of mana that will be used before your mana pool."
       }
     ],
+    "hc": 170,
     "cd": 25,
     "lore": "A ring that feeds on the souls of those who wear it.",
     "notes": "If this mana is not used before the duration ends, the extra mana is lost.",
@@ -8566,6 +8568,7 @@
         "description": "Consume health to temporarily gain 25 damage for 8 seconds."
       }
     ],
+    "hc": 100,
     "cd": 30,
     "lore": "A sinister shiv that grants favor to those willing to stain its blade with a sacrifice of their own blood."
   },

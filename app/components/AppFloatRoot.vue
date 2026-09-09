@@ -2,6 +2,7 @@
 import {
   computeFloatPlacement,
   type FloatPlacementOptions,
+  type FloatTipSize,
 } from '~/utils/floatPlacement'
 
 defineOptions({ inheritAttrs: false })
@@ -12,6 +13,7 @@ const props = withDefaults(
     preferAboveMin?: number
     gap?: number
     padX?: number
+    padY?: number
     /** Sets `--ui-float-z` on the shell. */
     zIndex?: number | string
     interactive?: boolean
@@ -22,6 +24,7 @@ const props = withDefaults(
     preferAboveMin: 40,
     gap: 8,
     padX: 12,
+    padY: 12,
     interactive: false,
     zIndex: undefined,
     surfaceClass: undefined,
@@ -30,12 +33,23 @@ const props = withDefaults(
 
 const attrs = useAttrs()
 const floatStyle = ref<Record<string, string>>({})
+const surfaceRef = ref<HTMLElement | null>(null)
+const tipSize = ref<FloatTipSize | null>(null)
+let resizeObserver: ResizeObserver | null = null
 
 function placementOptions(): FloatPlacementOptions {
   return {
     gap: props.gap,
     preferAboveMin: props.preferAboveMin,
     padX: props.padX,
+    padY: props.padY,
+  }
+}
+
+function readTipSize(el: HTMLElement): FloatTipSize {
+  return {
+    width: el.offsetWidth,
+    height: el.offsetHeight,
   }
 }
 
@@ -48,12 +62,41 @@ function place() {
   const next = computeFloatPlacement(
     el.getBoundingClientRect(),
     window,
+    tipSize.value,
     placementOptions(),
   )
   if (props.zIndex != null) {
     next['--ui-float-z'] = String(props.zIndex)
   }
   floatStyle.value = next
+}
+
+function bindSurface(el: Element | ComponentPublicInstance | null) {
+  if (resizeObserver) {
+    resizeObserver.disconnect()
+    resizeObserver = null
+  }
+  const node = el instanceof HTMLElement ? el : null
+  surfaceRef.value = node
+  if (!node || !import.meta.client) {
+    tipSize.value = null
+    return
+  }
+
+  tipSize.value = readTipSize(node)
+  place()
+
+  if (typeof ResizeObserver === 'undefined') {
+    return
+  }
+  resizeObserver = new ResizeObserver(() => {
+    if (!surfaceRef.value) {
+      return
+    }
+    tipSize.value = readTipSize(surfaceRef.value)
+    place()
+  })
+  resizeObserver.observe(node)
 }
 
 watch(
@@ -63,6 +106,7 @@ watch(
       props.gap,
       props.preferAboveMin,
       props.padX,
+      props.padY,
       props.zIndex,
     ] as const,
   () => {
@@ -80,6 +124,10 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+  if (resizeObserver) {
+    resizeObserver.disconnect()
+    resizeObserver = null
+  }
   if (!import.meta.client) {
     return
   }
@@ -93,6 +141,7 @@ defineExpose({ place })
 <template>
   <div class="ui-float" :style="floatStyle">
     <div
+      :ref="bindSurface"
       class="ui-float__surface"
       :class="[surfaceClass, { 'is-interactive': interactive }]"
       v-bind="attrs"
