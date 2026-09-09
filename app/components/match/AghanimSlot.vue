@@ -65,14 +65,7 @@ onBeforeUnmount(() => {
   <button
     ref="root"
     class="item aghanim"
-    :class="[
-      extra,
-      {
-        'is-owned': owned,
-        'is-inactive': !owned,
-        'is-pinned': pinnedHere,
-      },
-    ]"
+    :class="[extra, { 'is-pinned': pinnedHere }]"
     data-item-preview-trigger
     type="button"
     :title="title"

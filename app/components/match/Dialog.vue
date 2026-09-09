@@ -256,13 +256,9 @@ function removeSaved(id: string) {
           </div>
           <div class="detail-heading">{{ t('dialog.inventoryAghanims') }}</div>
           <div class="detail-items detail-items--aghanims">
-            <MatchAghanimSlot
-              kind="scepter"
-              :owned="player.aghanims_scepter === 1"
-            />
-            <MatchAghanimSlot
-              kind="shard"
-              :owned="player.aghanims_shard === 1"
+            <MatchAghanimPair
+              :scepter-owned="player.aghanims_scepter === 1"
+              :shard-owned="player.aghanims_shard === 1"
             />
           </div>
           <p
