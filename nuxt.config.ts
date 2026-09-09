@@ -49,7 +49,8 @@ export default defineNuxtConfig({
 
   app: {
     head: {
-      title: 'Ancient Lens вЂ” Dota 2 match review',
+      // Plain ASCII separators; Nuxt SEO appends `| Ancient Lens`.
+      title: 'Dota 2 match review',
       link: [{ rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' }],
       meta: [{ name: 'theme-color', content: '#171a18' }],
     },
@@ -59,7 +60,7 @@ export default defineNuxtConfig({
     url: process.env.NUXT_PUBLIC_SITE_URL,
     name: 'Ancient Lens',
     description:
-      'Ancient Lens вЂ” Dota 2 match stats: result, players, economy, and items. OpenDota data.',
+      'Dota 2 match stats: result, players, economy, and items. OpenDota data.',
     defaultLocale: 'en',
   },
 
@@ -69,7 +70,7 @@ export default defineNuxtConfig({
       {
         code: 'uk',
         language: 'uk',
-        name: 'РЈРєСЂР°С—РЅСЃСЊРєР°',
+        name: 'Українська',
         file: 'uk.json',
       },
     ],
