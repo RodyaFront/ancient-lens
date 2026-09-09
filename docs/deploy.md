@@ -53,6 +53,8 @@ Ancient Lens отдаётся **статикой на Cloudflare Pages** (Worker
 
    **Важно для Workers Builds:** не используй `npx wrangler pages deploy …`. Токен Builds умеет Workers Scripts, не Cloudflare Pages API — будет `Authentication error [code: 10000]`. Нужен `npx wrangler deploy`. В `wrangler.toml` — `[assets] directory = ".output/public"`, не `pages_build_output_dir`.
 
+   **Deploy command на production branch = `npx wrangler deploy`, не `versions upload`.** Иначе билды только заливают preview (`*-ancient-lens.*.workers.dev`), а `ancientlens.info` остаётся на старом rollout. Non-prod branch command — `npx wrangler versions upload`. Локальный `tools/wrangler-ci-shim` на `main` переписывает ошибочный `versions upload` → `deploy`.
+
    На CI Nitro берёт `static` через `WORKERS_CI` / `CF_PAGES` (иначе из‑за wrangler снова возможен `cloudflare-module` + reserved `ASSETS`).
 
 5. Environment variables (Production и Preview) — после привязки домена:

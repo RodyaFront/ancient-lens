@@ -26,6 +26,17 @@ if (args[0] === 'pages' && args[1] === 'deploy') {
   args = ['deploy', ...cleaned]
 }
 
+// Production Deploy command must be `wrangler deploy`. If the dashboard is set to
+// `versions upload` on `main`, custom domains stay on the old rollout forever.
+const productionBranch = process.env.WORKERS_CI_PRODUCTION_BRANCH || 'main'
+if (
+  args[0] === 'versions' &&
+  args[1] === 'upload' &&
+  process.env.WORKERS_CI_BRANCH === productionBranch
+) {
+  args = ['deploy', ...args.slice(2)]
+}
+
 const result = spawnSync(process.execPath, [upstreamBin, ...args], {
   stdio: 'inherit',
   env: process.env,
