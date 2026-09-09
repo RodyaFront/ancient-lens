@@ -8,6 +8,7 @@
 name = "ancient-lens"
 compatibility_date = "2025-07-15"
 workers_dev = true
+main = "workers/spa-shell.js"
 
 [[routes]]
 pattern = "ancientlens.info"
@@ -19,9 +20,10 @@ custom_domain = true
 
 [assets]
 directory = ".output/public"
-# Match URLs are client-routed (not prerendered). Without SPA fallback,
-# hard refresh / deep link to /match/:id or /uk/match/:id returns CDN 404.
-not_found_handling = "single-page-application"
+binding = "ASSETS"
+# Do not use not_found_handling = "single-page-application": that serves
+# index.html (home SSR payload) and Nuxt hydrates deep links back to `/`.
+# Unmatched document requests hit workers/spa-shell.js → Nuxt 200.html.
 
 [vars]
 NUXT_PUBLIC_SITE_URL = "https://ancientlens.info"
