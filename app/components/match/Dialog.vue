@@ -138,7 +138,7 @@ function removeSaved(id: string) {
         :aria-label="t('dialog.close')"
         @click="close"
       >
-        <AppIcon name="x" />
+        <Icon name="lucide:x" aria-hidden="true" />
       </button>
     </div>
     <div id="dialog-content">
@@ -203,7 +203,7 @@ function removeSaved(id: string) {
               :aria-label="t('dialog.removeSaved', { id: entry.id })"
               @click="removeSaved(entry.id)"
             >
-              <AppIcon name="trash" />
+              <Icon name="lucide:trash" aria-hidden="true" />
             </button>
           </div>
         </template>

@@ -15,6 +15,15 @@
   --green: #b3d77a;
   --red: #f08774;
   --gold: #e1c781;
+  /* Competitive ladder / Ranked lobby — distinct from wealth gold & brand accent. */
+  --ranked: #e0a84a;
+  /* Party strip on the row’s left edge (color only — table overflow clips outside glyphs). */
+  --party-1: #5ec8b0;
+  --party-2: #e8c84a;
+  --party-3: #c47ae0;
+  --party-4: #6eb5e0;
+  --party-5: #e0895c;
+  --party-strip-width: 0.1875rem;
   --display: 'Roboto Condensed', 'Arial Narrow', sans-serif;
   --mono: 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
   --space-1: 0.25rem;
@@ -533,6 +542,10 @@ main:not(:has(.result-region)) .search-heading p {
   color: var(--muted);
   font-size: 0.75rem;
 }
+.tiny-tag[data-tone='ranked'],
+.tone-ranked {
+  color: var(--ranked);
+}
 .source-status {
   color: var(--muted);
   font-size: 0.75rem;
@@ -954,20 +967,42 @@ main:not(:has(.result-region)) .search-heading p {
   gap: 1.75rem;
 }
 .tab {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
   padding: var(--space-3) 0;
   min-height: 2.75rem;
   border-bottom: 2px solid transparent;
   color: var(--muted);
   font-size: 1rem;
+  /* Keep weight constant: bold-only-on-active shifts tab widths. */
+  font-weight: 600;
   background: none;
+}
+.tab-icon {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
 }
 .tab:hover {
   color: var(--text);
 }
 .tab.active {
-  border-bottom-color: var(--text);
+  border-bottom-color: currentColor;
   color: var(--text);
-  font-weight: 600;
+}
+/* Color psychology: clarity → wealth → aggression (design tokens only). */
+.tab[data-tone='overview']:hover,
+.tab[data-tone='overview'].active {
+  color: var(--text);
+}
+.tab[data-tone='economy']:hover,
+.tab[data-tone='economy'].active {
+  color: var(--gold);
+}
+.tab[data-tone='combat']:hover,
+.tab[data-tone='combat'].active {
+  color: var(--accent);
 }
 .control-right {
   display: flex;
@@ -1044,10 +1079,10 @@ th:first-child {
   z-index: 2;
 }
 th.kda-col {
-  width: 132px;
+  width: 9.5rem;
 }
 th.number-col {
-  width: 102px;
+  width: 6.75rem;
 }
 th.items-col {
   width: 348px;
@@ -1061,6 +1096,7 @@ td {
   color: #dde1d8;
   font-family: var(--mono);
   font-size: 0.875rem;
+  overflow: visible;
 }
 .player-row > td:first-child {
   position: sticky;
@@ -1069,6 +1105,35 @@ td {
   border-right: 1px solid #2c332d;
   padding-left: var(--space-4);
   text-align: left;
+}
+.party-mark {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: var(--party-strip-width);
+  pointer-events: none;
+}
+.party-mark[data-party='1'] {
+  --party-color: var(--party-1);
+}
+.party-mark[data-party='2'] {
+  --party-color: var(--party-2);
+}
+.party-mark[data-party='3'] {
+  --party-color: var(--party-3);
+}
+.party-mark[data-party='4'] {
+  --party-color: var(--party-4);
+}
+.party-mark[data-party='5'] {
+  --party-color: var(--party-5);
+}
+.party-strip {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: var(--party-color, var(--party-1));
 }
 .player-row:nth-child(odd) td {
   background: #1a1e1b;
@@ -1198,8 +1263,94 @@ tbody:last-child tr:last-child td {
 .secondary-number {
   color: var(--muted);
 }
-.metric-wrap {
+.metric-cell {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  vertical-align: middle;
+  overflow: visible;
+}
+.metric-cell > .app-tooltip-trigger {
+  position: static;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+.metric-value {
   display: inline-block;
+}
+.kda .metric-cell {
+  display: inline-flex;
+}
+.app-tooltip-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  outline: none;
+}
+th .app-tooltip-trigger {
+  font: inherit;
+  color: inherit;
+  letter-spacing: inherit;
+  cursor: help;
+}
+.app-tooltip-trigger:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 0.125rem;
+}
+.app-tooltip {
+  max-width: 14rem;
+  padding: 0.375rem 0.5rem;
+  border: 1px solid var(--line);
+  background: #121512;
+  color: #dde1d8;
+  font-family: 'IBM Plex Sans', system-ui, sans-serif;
+  font-size: 0.75rem;
+  line-height: 1.25;
+  letter-spacing: 0;
+  pointer-events: none;
+  box-shadow: 0 0.25rem 0.75rem rgb(0 0 0 / 0.45);
+}
+.best-stat {
+  /* Overlay only: never change .metric-cell box size. Sit in the
+     existing td padding gutter at the value's top-right. */
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 1;
+  line-height: 0;
+  transform: translate(70%, -40%);
+  pointer-events: auto;
+}
+.best-stat-icon {
+  display: block;
+  width: 0.8125rem;
+  height: 0.8125rem;
+  color: var(--gold);
+  transform-origin: center;
+  animation: best-stat-gleam 2.8s ease-in-out infinite;
+}
+@keyframes best-stat-gleam {
+  0%,
+  100% {
+    opacity: 0.72;
+    filter: drop-shadow(0 0 0.05rem rgb(0 0 0 / 0.55))
+      drop-shadow(0 0 0.1rem rgb(225 199 129 / 0.2));
+    transform: scale(1) rotate(0deg);
+  }
+  40% {
+    opacity: 1;
+    filter: drop-shadow(0 0 0.05rem rgb(0 0 0 / 0.45))
+      drop-shadow(0 0 0.28rem rgb(225 199 129 / 0.65));
+    transform: scale(1.06) rotate(-4deg);
+  }
+  55% {
+    opacity: 1;
+    filter: drop-shadow(0 0 0.05rem rgb(0 0 0 / 0.4))
+      drop-shadow(0 0 0.4rem rgb(255 224 160 / 0.8));
+    transform: scale(1.1) rotate(3deg);
+  }
 }
 .item-set {
   display: flex;

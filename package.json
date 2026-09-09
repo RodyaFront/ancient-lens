@@ -49,6 +49,7 @@
     "zod": "^4.5.4"
   },
   "devDependencies": {
+    "@iconify-json/lucide": "^1.2.130",
     "@types/node": "^26.5.0",
     "@types/three": "^0.185.4",
     "@vue/test-utils": "^2.5.0",

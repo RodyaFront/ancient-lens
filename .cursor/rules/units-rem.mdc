@@ -1,0 +1,27 @@
+---
+description: CSS/Tailwind length units — rem canon; party strip geometry
+alwaysApply: true
+---
+
+# Length units (rem)
+
+## Canon
+
+- Prefer **`rem`** for font-size, spacing, width/height, gaps, offsets in CSS and Tailwind.
+- Base: **16px = 1rem**. Snap to clean steps (prefer `0.125rem` / existing `--space-*`).
+- Prefer tokens: `--space-1` (0.25rem) … `--space-16`, then short rem (`0.1875rem`), then Tailwind scale.
+- Do **not** introduce new `px` for layout/type (except 1px hairlines: `border`, `outline`).
+
+| Avoid | Use |
+| ---- | ---- |
+| `width: 3px` | `width: 0.1875rem` |
+| `left: -4px` | `left: -0.25rem` or `var(--space-1)` |
+| `text-[15px]` | `text-base` / `text-[0.9375rem]` |
+
+## Party marks (scoreboard)
+
+When a multi-player party is shown on a table row:
+
+1. **Strip only** — flush with the **left edge of the row**, full row height, width `--party-strip-width` (`0.1875rem`), color from `--party-1`…`--party-5`.
+2. Do **not** draw Roman numerals or other glyphs outside the row (table/`overflow` clips them).
+3. Do **not** add left padding on the table, `.table-scroll`, or first column for party chrome.

@@ -1,0 +1,15 @@
+---
+description: Dotabuff match-page parity backlog — resume when user continues Dotabuff/match feature progress
+globs:
+alwaysApply: false
+---
+
+# Dotabuff parity progress
+
+When the user asks to continue, resume, or implement **Dotabuff** match functionality / parity / backlog / progress (Russian/Ukrainian/English phrasings like «продолжи дотабафф», «parity todo», «dotabuff backlog»), do this first:
+
+1. Read and follow `docs/dotabuff-parity-todo.md` (canonical checklist).
+2. Use `docs/dotabuff-match-8989689202-features.md` as the feature inventory reference.
+3. After finishing a chunk of work, mark items `[x]` / `[~]` in `docs/dotabuff-parity-todo.md` and add a Progress log line.
+
+Prefer P0 → P1 → P2. Skip P3 unless the user explicitly expands scope.

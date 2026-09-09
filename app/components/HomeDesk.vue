@@ -43,7 +43,11 @@ function savedMeta(entry: SavedMatch) {
     >
       <div class="home-block-head">
         <h2 id="home-recent-title">
-          <AppIcon name="history" class="home-block-icon" />
+          <Icon
+            name="lucide:clock"
+            class="home-block-icon"
+            aria-hidden="true"
+          />
           {{ t('home.recent') }}
         </h2>
         <p>{{ t('home.recentHint') }}</p>
@@ -63,7 +67,7 @@ function savedMeta(entry: SavedMatch) {
           :aria-label="t('home.removeRecent', { id: entry.id })"
           @click="store.removeRecent(entry.id)"
         >
-          <AppIcon name="trash" />
+          <Icon name="lucide:trash" aria-hidden="true" />
         </button>
       </div>
     </section>
@@ -75,7 +79,11 @@ function savedMeta(entry: SavedMatch) {
     >
       <div class="home-block-head">
         <h2 id="home-saved-title">
-          <AppIcon name="bookmark" class="home-block-icon" />
+          <Icon
+            name="lucide:bookmark"
+            class="home-block-icon"
+            aria-hidden="true"
+          />
           {{ t('home.bookmarks') }}
         </h2>
         <p>{{ t('home.bookmarksHint') }}</p>
@@ -95,7 +103,7 @@ function savedMeta(entry: SavedMatch) {
           :aria-label="t('home.removeSaved', { id: entry.id })"
           @click="store.removeSaved(entry.id)"
         >
-          <AppIcon name="trash" />
+          <Icon name="lucide:trash" aria-hidden="true" />
         </button>
       </div>
     </section>

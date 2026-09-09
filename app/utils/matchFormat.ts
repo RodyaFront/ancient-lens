@@ -74,6 +74,28 @@ export function playerDisplayName(player: MatchPlayer): string {
   )
 }
 
+export type LobbyTone = 'ranked' | 'tournament' | 'practice' | 'unranked'
+
+/** Lobby color tone — Ranked = competitive ladder (`--ranked` / `.tone-ranked`). */
+export function lobbyTone(lobbyType: unknown): LobbyTone | null {
+  if (!isNum(lobbyType)) {
+    return null
+  }
+
+  switch (lobbyType) {
+    case 7:
+      return 'ranked'
+    case 2:
+      return 'tournament'
+    case 1:
+      return 'practice'
+    case 0:
+      return 'unranked'
+    default:
+      return null
+  }
+}
+
 export function lobbyLabel(lobbyType: unknown): string {
   if (!isNum(lobbyType)) {
     return i18n().t('format.dotaMatch')

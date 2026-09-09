@@ -1,5 +1,16 @@
 <script setup lang="ts">
-import { isNum, kda, total } from '#shared/match'
+import {
+  buildPartyMarks,
+  isMatchBestStat,
+  isNum,
+  kda,
+  killParticipationPercent,
+  matchParticipationExtreme,
+  matchStatExtreme,
+  radiant,
+  total,
+} from '#shared/match'
+import type { BestStatKey, PartyMark } from '#shared/match'
 import type { MatchPlayer, ScoreboardView } from '#shared/match/types'
 import {
   formatNumber,
@@ -17,9 +28,24 @@ const { t } = useI18n()
 const store = useMatchStore()
 
 const views = computed(() => [
-  { id: 'overview' as ScoreboardView, label: t('scoreboard.overview') },
-  { id: 'economy' as ScoreboardView, label: t('scoreboard.economy') },
-  { id: 'combat' as ScoreboardView, label: t('scoreboard.combat') },
+  {
+    id: 'overview' as ScoreboardView,
+    label: t('scoreboard.overview'),
+    icon: 'lucide:layout-list',
+    tone: 'overview',
+  },
+  {
+    id: 'economy' as ScoreboardView,
+    label: t('scoreboard.economy'),
+    icon: 'lucide:coins',
+    tone: 'economy',
+  },
+  {
+    id: 'combat' as ScoreboardView,
+    label: t('scoreboard.combat'),
+    icon: 'lucide:swords',
+    tone: 'combat',
+  },
 ])
 
 const filters = computed(() => [
@@ -28,61 +54,121 @@ const filters = computed(() => [
   { id: 'dire' as const, label: 'Dire' },
 ])
 
-type HeadCol = { label: string; title?: string }
+type HeadCol = { label: string; tip: string }
 
 const heads = computed((): HeadCol[] => {
   if (store.view === 'economy') {
     return [
-      { label: 'NET WORTH' },
-      { label: 'GPM' },
-      { label: 'XPM' },
-      { label: 'LH / DN' },
+      {
+        label: t('scoreboard.colNetWorth'),
+        tip: t('scoreboard.tipNetWorth'),
+      },
+      { label: t('scoreboard.colGpm'), tip: t('scoreboard.tipGpm') },
+      { label: t('scoreboard.colXpm'), tip: t('scoreboard.tipXpm') },
+      { label: t('scoreboard.colLhDn'), tip: t('scoreboard.tipLhDn') },
     ]
   }
   if (store.view === 'combat') {
     return [
       {
         label: t('scoreboard.colDamage'),
-        title: t('scoreboard.damageTitle'),
+        tip: t('scoreboard.tipDamage'),
       },
-      { label: t('scoreboard.colBuildings') },
-      { label: t('scoreboard.colHealing') },
+      {
+        label: t('scoreboard.colBuildings'),
+        tip: t('scoreboard.tipBuildings'),
+      },
+      {
+        label: t('scoreboard.colHealing'),
+        tip: t('scoreboard.tipHealing'),
+      },
       {
         label: t('scoreboard.colParticipation'),
-        title: t('scoreboard.participationTitle'),
+        tip: t('scoreboard.tipParticipation'),
       },
     ]
   }
   return [
-    { label: 'NET WORTH' },
-    { label: 'GPM' },
-    { label: 'LH / DN' },
+    {
+      label: t('scoreboard.colNetWorth'),
+      tip: t('scoreboard.tipNetWorth'),
+    },
+    { label: t('scoreboard.colGpm'), tip: t('scoreboard.tipGpm') },
+    { label: t('scoreboard.colLhDn'), tip: t('scoreboard.tipLhDn') },
     {
       label: t('scoreboard.colDamage'),
-      title: t('scoreboard.damageTitle'),
+      tip: t('scoreboard.tipDamage'),
     },
   ]
+})
+
+const teamKillTotals = computed(() => {
+  if (!store.match) {
+    return { radiant: null as number | null, dire: null as number | null }
+  }
+  return {
+    radiant: isNum(store.match.radiant_score)
+      ? store.match.radiant_score
+      : total(store.radiantPlayers, 'kills'),
+    dire: isNum(store.match.dire_score)
+      ? store.match.dire_score
+      : total(store.direPlayers, 'kills'),
+  }
+})
+
+/** Match-wide extremes; ties share the badge on every equal leader. */
+const extremes = computed(() => {
+  const players = store.match?.players ?? []
+  const keys: BestStatKey[] = [
+    'kills',
+    'deaths',
+    'assists',
+    'net_worth',
+    'gold_per_min',
+    'xp_per_min',
+    'last_hits',
+    'denies',
+    'hero_damage',
+    'tower_damage',
+    'hero_healing',
+  ]
+  const byKey = Object.fromEntries(
+    keys.map((key) => [key, matchStatExtreme(players, key)]),
+  ) as Record<BestStatKey, number | null>
+
+  return {
+    ...byKey,
+    participation: matchParticipationExtreme(players, (player) =>
+      radiant(player)
+        ? teamKillTotals.value.radiant
+        : teamKillTotals.value.dire,
+    ),
+  }
 })
 
 const groups = computed(() => {
   if (!store.match) {
     return []
   }
-  const radiantScore = isNum(store.match.radiant_score)
-    ? store.match.radiant_score
-    : total(store.radiantPlayers, 'kills')
-  const direScore = isNum(store.match.dire_score)
-    ? store.match.dire_score
-    : total(store.direPlayers, 'kills')
 
   return [
-    { players: store.radiantPlayers, radiant: true, kills: radiantScore },
-    { players: store.direPlayers, radiant: false, kills: direScore },
+    {
+      players: store.radiantPlayers,
+      radiant: true,
+      kills: teamKillTotals.value.radiant,
+    },
+    {
+      players: store.direPlayers,
+      radiant: false,
+      kills: teamKillTotals.value.dire,
+    },
   ].filter(
     (group) =>
       store.filter === 'all' || (store.filter === 'radiant') === group.radiant,
   )
 })
+
+const partyMarks = computed(() => buildPartyMarks(store.match?.players ?? []))
 
 function ordered(players: MatchPlayer[]) {
   return [...players].sort((left, right) => {
@@ -103,16 +189,43 @@ function playerIndex(player: MatchPlayer) {
   return store.match?.players.indexOf(player) ?? -1
 }
 
-function killParticipation(player: MatchPlayer, teamKills: number | null) {
-  if (
-    isNum(teamKills) &&
-    teamKills > 0 &&
-    isNum(player.kills) &&
-    isNum(player.assists)
-  ) {
-    return `${Math.round(((player.kills + player.assists) / teamKills) * 100)}%`
+function partyMark(player: MatchPlayer): PartyMark | null {
+  const index = playerIndex(player)
+  if (index < 0) {
+    return null
   }
-  return t('format.emDash')
+  return partyMarks.value[index] ?? null
+}
+
+function orderedRows(players: MatchPlayer[]) {
+  return ordered(players).map((player) => ({
+    player,
+    party: partyMark(player),
+  }))
+}
+
+function isBest(player: MatchPlayer, key: BestStatKey) {
+  return isMatchBestStat(
+    player[key],
+    extremes.value[key],
+    key === 'deaths' ? 'min' : 'max',
+  )
+}
+
+function isBestParticipation(player: MatchPlayer, teamKills: number | null) {
+  return isMatchBestStat(
+    killParticipationPercent(player, teamKills),
+    extremes.value.participation,
+    'max',
+  )
+}
+
+function killParticipation(player: MatchPlayer, teamKills: number | null) {
+  const percent = killParticipationPercent(player, teamKills)
+  if (percent === null) {
+    return t('format.emDash')
+  }
+  return `${percent}%`
 }
 
 function onTabKey(event: KeyboardEvent) {
@@ -152,6 +265,7 @@ function onTabKey(event: KeyboardEvent) {
           role="tab"
           class="tab"
           :class="{ active: store.view === entry.id }"
+          :data-tone="entry.tone"
           :aria-selected="store.view === entry.id"
           :tabindex="store.view === entry.id ? '0' : '-1'"
           aria-controls="score-table"
@@ -160,7 +274,8 @@ function onTabKey(event: KeyboardEvent) {
           @click="store.view = entry.id"
           @keydown="onTabKey"
         >
-          {{ entry.label }}
+          <Icon :name="entry.icon" class="tab-icon" aria-hidden="true" />
+          <span>{{ entry.label }}</span>
         </button>
       </div>
       <div class="control-right">
@@ -203,19 +318,39 @@ function onTabKey(event: KeyboardEvent) {
       <table :aria-label="t('scoreboard.tableAria')">
         <thead>
           <tr>
-            <th scope="col">{{ t('scoreboard.colHero') }}</th>
-            <th scope="col" class="kda-col">{{ t('scoreboard.colKda') }}</th>
+            <th scope="col">
+              <AppTooltip
+                :text="t('scoreboard.tipHero')"
+                :label="t('scoreboard.tipHero')"
+              >
+                {{ t('scoreboard.colHero') }}
+              </AppTooltip>
+            </th>
+            <th scope="col" class="kda-col">
+              <AppTooltip
+                :text="t('scoreboard.tipKda')"
+                :label="t('scoreboard.tipKda')"
+              >
+                {{ t('scoreboard.colKda') }}
+              </AppTooltip>
+            </th>
             <th
               v-for="head in heads"
               :key="head.label"
               scope="col"
               class="number-col"
-              :title="head.title || head.label"
             >
-              {{ head.label }}
+              <AppTooltip :text="head.tip" :label="head.tip">
+                {{ head.label }}
+              </AppTooltip>
             </th>
             <th scope="col" class="items-col">
-              {{ t('scoreboard.colItems') }}
+              <AppTooltip
+                :text="t('scoreboard.tipItems')"
+                :label="t('scoreboard.tipItems')"
+              >
+                {{ t('scoreboard.colItems') }}
+              </AppTooltip>
             </th>
           </tr>
         </thead>
@@ -245,11 +380,21 @@ function onTabKey(event: KeyboardEvent) {
             </td>
           </tr>
           <tr
-            v-for="player in ordered(group.players)"
+            v-for="{ player, party } in orderedRows(group.players)"
             :key="playerIndex(player)"
             class="player-row"
+            :class="{ 'has-party': !!party }"
           >
             <td>
+              <div
+                v-if="party"
+                class="party-mark"
+                :data-party="Math.min(party.ordinal, 5)"
+                :title="t('scoreboard.partyTip', { count: party.size })"
+                :aria-label="t('scoreboard.partyTip', { count: party.size })"
+              >
+                <span class="party-strip" aria-hidden="true" />
+              </div>
               <div class="hero-cell">
                 <MatchHeroPortrait :player="player" />
                 <div class="hero-info">
@@ -270,50 +415,90 @@ function onTabKey(event: KeyboardEvent) {
               </div>
             </td>
             <td class="kda">
-              <span>{{ formatNumber(player.kills) }}</span>
+              <MatchBestStat :best="isBest(player, 'kills')">
+                {{ formatNumber(player.kills) }}
+              </MatchBestStat>
               <span class="separator">/</span>
-              <span class="death">{{ formatNumber(player.deaths) }}</span>
+              <MatchBestStat :best="isBest(player, 'deaths')">
+                <span class="death">{{ formatNumber(player.deaths) }}</span>
+              </MatchBestStat>
               <span class="separator">/</span>
-              <span>{{ formatNumber(player.assists) }}</span>
+              <MatchBestStat :best="isBest(player, 'assists')">
+                {{ formatNumber(player.assists) }}
+              </MatchBestStat>
             </td>
             <template v-if="store.view === 'economy'">
               <td class="gold" :title="formatNumber(player.net_worth)">
-                {{ formatShort(player.net_worth) }}
+                <MatchBestStat :best="isBest(player, 'net_worth')">
+                  {{ formatShort(player.net_worth) }}
+                </MatchBestStat>
               </td>
-              <td>{{ formatNumber(player.gold_per_min) }}</td>
-              <td>{{ formatNumber(player.xp_per_min) }}</td>
               <td>
-                {{ formatNumber(player.last_hits)
-                }}<span class="secondary-number">
-                  / {{ formatNumber(player.denies) }}</span
-                >
+                <MatchBestStat :best="isBest(player, 'gold_per_min')">
+                  {{ formatNumber(player.gold_per_min) }}
+                </MatchBestStat>
+              </td>
+              <td>
+                <MatchBestStat :best="isBest(player, 'xp_per_min')">
+                  {{ formatNumber(player.xp_per_min) }}
+                </MatchBestStat>
+              </td>
+              <td>
+                <MatchBestStat :best="isBest(player, 'last_hits')">
+                  {{ formatNumber(player.last_hits) }}
+                </MatchBestStat>
+                <span class="secondary-number"> / </span>
+                <MatchBestStat :best="isBest(player, 'denies')">
+                  {{ formatNumber(player.denies) }}
+                </MatchBestStat>
               </td>
             </template>
             <template v-else-if="store.view === 'combat'">
               <td :title="formatNumber(player.hero_damage)">
-                {{ formatShort(player.hero_damage) }}
+                <MatchBestStat :best="isBest(player, 'hero_damage')">
+                  {{ formatShort(player.hero_damage) }}
+                </MatchBestStat>
               </td>
               <td :title="formatNumber(player.tower_damage)">
-                {{ formatShort(player.tower_damage) }}
+                <MatchBestStat :best="isBest(player, 'tower_damage')">
+                  {{ formatShort(player.tower_damage) }}
+                </MatchBestStat>
               </td>
               <td :title="formatNumber(player.hero_healing)">
-                {{ formatShort(player.hero_healing) }}
+                <MatchBestStat :best="isBest(player, 'hero_healing')">
+                  {{ formatShort(player.hero_healing) }}
+                </MatchBestStat>
               </td>
-              <td>{{ killParticipation(player, group.kills) }}</td>
+              <td>
+                <MatchBestStat :best="isBestParticipation(player, group.kills)">
+                  {{ killParticipation(player, group.kills) }}
+                </MatchBestStat>
+              </td>
             </template>
             <template v-else>
               <td class="gold" :title="formatNumber(player.net_worth)">
-                {{ formatShort(player.net_worth) }}
+                <MatchBestStat :best="isBest(player, 'net_worth')">
+                  {{ formatShort(player.net_worth) }}
+                </MatchBestStat>
               </td>
-              <td>{{ formatNumber(player.gold_per_min) }}</td>
               <td>
-                {{ formatNumber(player.last_hits)
-                }}<span class="secondary-number">
-                  / {{ formatNumber(player.denies) }}</span
-                >
+                <MatchBestStat :best="isBest(player, 'gold_per_min')">
+                  {{ formatNumber(player.gold_per_min) }}
+                </MatchBestStat>
+              </td>
+              <td>
+                <MatchBestStat :best="isBest(player, 'last_hits')">
+                  {{ formatNumber(player.last_hits) }}
+                </MatchBestStat>
+                <span class="secondary-number"> / </span>
+                <MatchBestStat :best="isBest(player, 'denies')">
+                  {{ formatNumber(player.denies) }}
+                </MatchBestStat>
               </td>
               <td :title="formatNumber(player.hero_damage)">
-                {{ formatShort(player.hero_damage) }}
+                <MatchBestStat :best="isBest(player, 'hero_damage')">
+                  {{ formatShort(player.hero_damage) }}
+                </MatchBestStat>
               </td>
             </template>
             <td>
@@ -339,7 +524,7 @@ function onTabKey(event: KeyboardEvent) {
                   "
                   @click="emit('player', playerIndex(player))"
                 >
-                  <AppIcon name="chevron" />
+                  <Icon name="lucide:chevron-right" aria-hidden="true" />
                 </button>
               </div>
             </td>
@@ -348,8 +533,7 @@ function onTabKey(event: KeyboardEvent) {
       </table>
     </div>
     <div class="table-footnote">
-      {{ t('scoreboard.footnote')
-      }}<span class="scroll-hint">{{ t('scoreboard.scrollHint') }}</span>
+      <span class="scroll-hint">{{ t('scoreboard.scrollHint') }}</span>
     </div>
   </div>
 </template>

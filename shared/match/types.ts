@@ -34,6 +34,8 @@ export interface MatchPlayer {
   buyback_count?: number
   aghanims_scepter?: number
   aghanims_shard?: number
+  party_id?: number
+  party_size?: number
   [key: string]: unknown
 }
 

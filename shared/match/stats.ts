@@ -45,6 +45,100 @@ export function kda(player: MatchPlayer): number | null {
   )
 }
 
+/** Higher-is-better scoreboard metrics. */
+export type MaxStatKey =
+  | 'kills'
+  | 'assists'
+  | 'net_worth'
+  | 'gold_per_min'
+  | 'xp_per_min'
+  | 'last_hits'
+  | 'denies'
+  | 'hero_damage'
+  | 'tower_damage'
+  | 'hero_healing'
+
+/** Lower-is-better scoreboard metrics. */
+export type MinStatKey = 'deaths'
+
+export type BestStatKey = MaxStatKey | MinStatKey
+
+/**
+ * Match-wide extreme for a numeric player field.
+ * Ties: every player equal to the extreme is a leader (callers show the badge on all).
+ */
+export function matchStatExtreme(
+  players: MatchPlayer[],
+  key: BestStatKey,
+  mode: 'max' | 'min' = key === 'deaths' ? 'min' : 'max',
+): number | null {
+  const values: number[] = []
+  for (const player of players) {
+    const value = player[key]
+    if (isNum(value)) {
+      values.push(value)
+    }
+  }
+  if (!values.length) {
+    return null
+  }
+  return mode === 'min' ? Math.min(...values) : Math.max(...values)
+}
+
+/**
+ * Whether `value` ties the match extreme.
+ * Max metrics skip a badge when the extreme is ≤ 0 (avoids starring empty healing/etc.).
+ * Min metrics (deaths) always badge ties, including 0.
+ */
+export function isMatchBestStat(
+  value: unknown,
+  extreme: number | null,
+  mode: 'max' | 'min' = 'max',
+): boolean {
+  if (!isNum(value) || extreme === null) {
+    return false
+  }
+  if (mode === 'max' && extreme <= 0) {
+    return false
+  }
+  return value === extreme
+}
+
+/** Kill participation as displayed percent; null when not computable. */
+export function killParticipationPercent(
+  player: MatchPlayer,
+  teamKills: number | null,
+): number | null {
+  if (
+    !isNum(teamKills) ||
+    teamKills <= 0 ||
+    !isNum(player.kills) ||
+    !isNum(player.assists)
+  ) {
+    return null
+  }
+  return Math.round(
+    (((player.kills as number) + (player.assists as number)) / teamKills) * 100,
+  )
+}
+
+export function matchParticipationExtreme(
+  players: MatchPlayer[],
+  teamKillsFor: (player: MatchPlayer) => number | null,
+): number | null {
+  const values: number[] = []
+  for (const player of players) {
+    const value = killParticipationPercent(player, teamKillsFor(player))
+    if (value !== null) {
+      values.push(value)
+    }
+  }
+  if (!values.length) {
+    return null
+  }
+  return Math.max(...values)
+}
+
 export function duration(seconds: unknown): string {
   if (!isNum(seconds) || seconds < 0) {
     return '—'

@@ -48,7 +48,7 @@ watch(
           v-if="store.match && store.match.players.length !== 10"
           class="data-note"
         >
-          <AppIcon name="info" />
+          <Icon name="lucide:info" aria-hidden="true" />
           {{ t('notes.partialPlayers', { count: store.match.players.length }) }}
         </div>
       </MatchScore>
@@ -57,7 +57,7 @@ watch(
         v-if="store.match && store.source && store.source.kind !== 'live'"
         class="data-note"
       >
-        <AppIcon name="info" />
+        <Icon name="lucide:info" aria-hidden="true" />
         <span>
           {{
             t('notes.snapshot', {
@@ -82,7 +82,7 @@ watch(
         "
         class="data-note"
       >
-        <AppIcon name="info" />
+        <Icon name="lucide:info" aria-hidden="true" />
         {{ t('notes.basicParse') }}
       </div>
     </div>

@@ -6,6 +6,7 @@ import {
   formatNumber,
   gameModeLabel,
   lobbyLabel,
+  lobbyTone,
   regionLabel,
 } from '~/utils/matchFormat'
 
@@ -121,7 +122,12 @@ onMounted(() => {
     <div class="match-topline">
       <div class="match-caption">
         <h2>{{ t('score.matchLabel', { id: match.match_id }) }}</h2>
-        <span class="tiny-tag">{{ lobbyLabel(match.lobby_type) }}</span>
+        <span
+          class="tiny-tag"
+          :data-tone="lobbyTone(match.lobby_type) ?? undefined"
+        >
+          {{ lobbyLabel(match.lobby_type) }}
+        </span>
         <span
           class="source-status"
           :title="
@@ -130,12 +136,7 @@ onMounted(() => {
             })
           "
         >
-          OpenDota ·
-          {{
-            store.source.kind === 'live'
-              ? t('score.sourceLive')
-              : t('score.sourceSnapshot')
-          }}
+          OpenDota
         </span>
       </div>
       <div class="match-actions">
@@ -147,7 +148,7 @@ onMounted(() => {
           :disabled="!winner"
           @click="replay"
         >
-          <AppIcon name="sparkles" />
+          <Icon name="lucide:sparkles" aria-hidden="true" />
           <span class="replay-label">{{ t('score.replayShort') }}</span>
         </button>
         <button
@@ -159,7 +160,7 @@ onMounted(() => {
           :aria-pressed="store.isSaved"
           @click="store.toggleSaved()"
         >
-          <AppIcon name="bookmark" />
+          <Icon name="lucide:bookmark" aria-hidden="true" />
         </button>
         <button
           class="icon-button"
@@ -168,7 +169,7 @@ onMounted(() => {
           :aria-label="t('score.refresh')"
           @click="store.loadMatch(String(match.match_id), { sound: true })"
         >
-          <AppIcon name="refresh" />
+          <Icon name="lucide:refresh-cw" aria-hidden="true" />
         </button>
         <button
           class="ghost"
@@ -177,7 +178,7 @@ onMounted(() => {
           :aria-label="t('score.exportAria')"
           @click="store.exportMatch()"
         >
-          <AppIcon name="download" />
+          <Icon name="lucide:download" aria-hidden="true" />
           <span class="export-label">JSON</span>
         </button>
       </div>

@@ -11,13 +11,16 @@ generic esports landing look. When building pages:
 
 ## Tokens (implemented in `app/assets/css/match.css`)
 
-| Token                           | Role                       |
-| ------------------------------- | -------------------------- |
-| `--bg` / `--panel` / `--inset`  | Surfaces                   |
-| `--text` / `--muted` / `--line` | Type and rules             |
-| `--accent` / `--on-accent`      | Brand + primary CTA        |
-| `--green` / `--red` / `--gold`  | Radiant / Dire / net worth |
-| `--display` / `--mono`          | Condensed headings + IDs   |
+| Token                           | Role                                               |
+| ------------------------------- | -------------------------------------------------- |
+| `--bg` / `--panel` / `--inset`  | Surfaces                                           |
+| `--text` / `--muted` / `--line` | Type and rules                                     |
+| `--accent` / `--on-accent`      | Brand + primary CTA                                |
+| `--green` / `--red` / `--gold`  | Radiant / Dire / net worth                         |
+| `--ranked`                      | Ranked lobby (ladder stakes); class `.tone-ranked` |
+| `--party-1` … `--party-5`       | Party strip colors                                 |
+| `--party-strip-width`           | Left-edge strip (`0.1875rem`)                      |
+| `--display` / `--mono`          | Condensed headings + IDs                           |
 
 ## Stack
 
