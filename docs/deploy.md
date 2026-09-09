@@ -22,6 +22,7 @@ Ancient Lens отдаётся **статикой на Cloudflare Pages** (Worker
 ## Что уже сделано в репозитории
 
 - Статическая выкладка: `npm run generate` → `.output/public`. На Workers Builds (`WORKERS_CI=1`) / Pages (`CF_PAGES=1`) Nitro берёт preset `static` (иначе из‑за `wrangler.toml` — `cloudflare-module` и падение deploy на reserved `ASSETS`). Локально и в e2e preset не форсится, чтобы оставался Node-сервер. Можно задать `NITRO_PRESET=static` вручную.
+- Deep links на матчи (`/match/:id`, `/uk/match/:id`) не пререндерятся. В `wrangler.toml` у `[assets]` стоит `not_found_handling = "single-page-application"`, иначе hard refresh / прямой URL даёт CDN 404.
 - `ogImage` выключен, модуль `@nuxt/image` снят — sharp/playwright не тащатся в прод.
 - Sitemap / robots / CSP (`opendota` + Steam CDN) оставлены.
 - GitHub Actions: `ci` гоняет `verify` (`generate` в конце). `pages.yml` — ручной `workflow_dispatch`: generate всегда; деплой через wrangler **только если** в repo задан Actions variable `CLOUDFLARE_ACCOUNT_ID` и secret `CLOUDFLARE_API_TOKEN`.
