@@ -75,7 +75,7 @@ watch(
     >
       <MatchItemHoverCard
         v-for="card in openCards"
-        :key="`${card.sticky ? 'pin' : 'hover'}-${card.itemId}`"
+        :key="card.itemId"
         :item-id="card.itemId"
         :trigger-el="card.triggerEl"
         :sticky="card.sticky"

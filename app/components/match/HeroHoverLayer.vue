@@ -74,7 +74,7 @@ watch(
     >
       <MatchHeroHoverCard
         v-for="card in openCards"
-        :key="`${card.sticky ? 'pin' : 'hover'}-${card.heroId}`"
+        :key="card.heroId"
         :hero-id="card.heroId"
         :match-level="card.matchLevel"
         :trigger-el="card.triggerEl"

@@ -182,9 +182,7 @@ export function useHeroPreview() {
   }
 
   function pin(id: number, el: HTMLElement, matchLevel: number | null = null) {
-    if (hoverSession.value?.heroId === id) {
-      clearHover()
-    }
+    // Promote open hover → sticky in place so TransitionGroup keeps the same card.
     stickySession.value = {
       heroId: id,
       matchLevel,
@@ -193,6 +191,12 @@ export function useHeroPreview() {
       sticky: true,
       cursorX: 0,
       cursorY: 0,
+    }
+    if (hoverSession.value?.heroId === id) {
+      hoverToken += 1
+      clearHoverTimers()
+      clearLeaveTimer()
+      hoverSession.value = null
     }
   }
 

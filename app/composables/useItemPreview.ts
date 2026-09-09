@@ -179,9 +179,7 @@ export function useItemPreview() {
   }
 
   function pin(id: number, el: HTMLElement) {
-    if (hoverSession.value?.itemId === id) {
-      clearHover()
-    }
+    // Promote open hover → sticky in place so TransitionGroup keeps the same card.
     stickySession.value = {
       itemId: id,
       triggerEl: el,
@@ -189,6 +187,12 @@ export function useItemPreview() {
       sticky: true,
       cursorX: 0,
       cursorY: 0,
+    }
+    if (hoverSession.value?.itemId === id) {
+      hoverToken += 1
+      clearHoverTimers()
+      clearLeaveTimer()
+      hoverSession.value = null
     }
   }
 

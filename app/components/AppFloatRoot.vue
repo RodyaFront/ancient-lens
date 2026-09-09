@@ -53,6 +53,26 @@ function readTipSize(el: HTMLElement): FloatTipSize {
   }
 }
 
+function sameTipSize(a: FloatTipSize | null, b: FloatTipSize | null) {
+  if (a === b) {
+    return true
+  }
+  if (!a || !b) {
+    return false
+  }
+  return a.width === b.width && a.height === b.height
+}
+
+function sameStyle(a: Record<string, string>, b: Record<string, string>) {
+  const keys = new Set([...Object.keys(a), ...Object.keys(b)])
+  for (const key of keys) {
+    if (a[key] !== b[key]) {
+      return false
+    }
+  }
+  return true
+}
+
 function place() {
   const el = props.anchorEl
   if (!el || !import.meta.client) {
@@ -68,36 +88,51 @@ function place() {
   if (props.zIndex != null) {
     next['--ui-float-z'] = String(props.zIndex)
   }
+  if (sameStyle(floatStyle.value, next)) {
+    return
+  }
   floatStyle.value = next
 }
 
-function bindSurface(el: Element | ComponentPublicInstance | null) {
+function syncSurface(node: HTMLElement | null) {
   if (resizeObserver) {
     resizeObserver.disconnect()
     resizeObserver = null
   }
-  const node = el instanceof HTMLElement ? el : null
-  surfaceRef.value = node
   if (!node || !import.meta.client) {
-    tipSize.value = null
+    if (tipSize.value !== null) {
+      tipSize.value = null
+    }
     return
   }
 
-  tipSize.value = readTipSize(node)
+  const nextSize = readTipSize(node)
+  if (!sameTipSize(tipSize.value, nextSize)) {
+    tipSize.value = nextSize
+  }
   place()
 
   if (typeof ResizeObserver === 'undefined') {
     return
   }
   resizeObserver = new ResizeObserver(() => {
-    if (!surfaceRef.value) {
+    const current = surfaceRef.value
+    if (!current) {
       return
     }
-    tipSize.value = readTipSize(surfaceRef.value)
+    const size = readTipSize(current)
+    if (sameTipSize(tipSize.value, size)) {
+      return
+    }
+    tipSize.value = size
     place()
   })
   resizeObserver.observe(node)
 }
+
+watch(surfaceRef, (node) => {
+  syncSurface(node)
+})
 
 watch(
   () =>
@@ -141,7 +176,7 @@ defineExpose({ place })
 <template>
   <div class="ui-float" :style="floatStyle">
     <div
-      :ref="bindSurface"
+      ref="surfaceRef"
       class="ui-float__surface"
       :class="[surfaceClass, { 'is-interactive': interactive }]"
       v-bind="attrs"

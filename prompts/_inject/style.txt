@@ -1,0 +1,27 @@
+SHARED STYLE — Ancient Lens / Dota 2 client UI chrome
+(Inject for HUD icons, controls, markers — NOT game-item / loot art.)
+
+Visual language of the Dota 2 game CLIENT interface (scoreboard, HUD buttons,
+minimap chrome), not lore props, shop items, or drop artifacts.
+
+LOOK
+- Flat-to-slightly beveled UI glyph; soft directional lighting on simple geometry.
+- Palette: dark gunmetal / charcoal metal + muted gold or amber accents (HUD tones).
+- Thick dark outline for legibility on busy backgrounds.
+- Bold silhouette readable at ~32–46px; minimal internal detail.
+- Matte / soft-metal materials — not plastic gloss, not jewel sparkle.
+
+COMPOSITION
+- Single centered subject; no scene, no floor, no drop shadow outside the glyph.
+- No UI panels, frames, or extra chrome around the subject (subject IS the chrome).
+
+FORBIDDEN
+- Fantasy jewelry, gems, filigree, runes, ornate artifacts, weapon ornaments.
+- Photorealism, heavy textures, noise, paper-cut collage.
+- Official Valve / Dota logos, emblems, watermarks, readable text.
+- Kids-app candy colors, neon glow blooms, purple-on-white AI defaults.
+- Treating the request as an in-game inventory item unless the subject explicitly
+  asks for a shop/consumable icon.
+
+Subject prompt describes WHAT the control is (e.g. pushpin, mute, settings).
+This inject only sets HOW it should look as Dota-client UI chrome.
