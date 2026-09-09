@@ -12,6 +12,7 @@ const emit = defineEmits<{
   player: [index: number]
 }>()
 
+const { t } = useI18n()
 const store = useMatchStore()
 
 const radiantNet = computed(() => total(store.radiantPlayers, 'net_worth'))
@@ -50,19 +51,25 @@ function fraction(left: number | null, right: number | null) {
 
 function netCaption(left: number | null, right: number | null) {
   if (!isNum(left) || !isNum(right)) {
-    return 'Джерело не надало повних даних для порівняння.'
+    return t('insights.incomplete')
   }
   if (left === right) {
-    return 'Однакова сумарна цінність команд.'
+    return t('insights.equalNet')
   }
-  return `${left > right ? 'Radiant' : 'Dire'}: перевага ${formatNumber(Math.abs(left - right))} золота.`
+  const side = left > right ? 'Radiant' : 'Dire'
+  return t('insights.netLead', {
+    side,
+    amount: formatNumber(Math.abs(left - right)),
+  })
 }
 
 function damageCaption(left: number | null, right: number | null) {
   if (!isNum(left) || !isNum(right)) {
-    return 'Джерело не надало повних даних для порівняння.'
+    return t('insights.incomplete')
   }
-  return `Разом ${formatNumber(left + right)} шкоди від доступних гравців.`
+  return t('insights.damageTotal', {
+    amount: formatNumber(left + right),
+  })
 }
 </script>
 
@@ -70,15 +77,15 @@ function damageCaption(left: number | null, right: number | null) {
   <section
     v-if="store.match"
     class="summary-section"
-    aria-label="Командна статистика"
+    :aria-label="t('insights.aria')"
   >
     <div class="section-heading">
-      <h2>Командні підсумки</h2>
-      <span>На кінець матчу</span>
+      <h2>{{ t('insights.heading') }}</h2>
+      <span>{{ t('insights.asOfEnd') }}</span>
     </div>
     <div class="insight-grid">
       <article class="insight-card">
-        <div class="insight-label">Сумарний net worth</div>
+        <div class="insight-label">{{ t('insights.netWorth') }}</div>
         <div class="insight-values">
           <div>
             <small>Radiant</small>
@@ -110,7 +117,7 @@ function damageCaption(left: number | null, right: number | null) {
         <p class="insight-caption">{{ netCaption(radiantNet, direNet) }}</p>
       </article>
       <article class="insight-card">
-        <div class="insight-label">Шкода героям</div>
+        <div class="insight-label">{{ t('insights.heroDamage') }}</div>
         <div class="insight-values">
           <div>
             <small>Radiant</small>
@@ -148,7 +155,7 @@ function damageCaption(left: number | null, right: number | null) {
         </p>
       </article>
       <article class="insight-card">
-        <div class="insight-label">Найбільше вбивств</div>
+        <div class="insight-label">{{ t('insights.mostKills') }}</div>
         <div v-if="topKiller" class="insight-player">
           <MatchHeroPortrait :player="topKiller" />
           <div>
@@ -164,7 +171,7 @@ function damageCaption(left: number | null, right: number | null) {
           </div>
           <strong class="highlight-value">
             {{ formatNumber(topKiller.kills) }}
-            <small>вбивств</small>
+            <small>{{ t('insights.killsUnit') }}</small>
           </strong>
         </div>
         <p v-if="topKiller" class="insight-caption">
@@ -172,10 +179,12 @@ function damageCaption(left: number | null, right: number | null) {
           {{ formatNumber(topKiller.deaths) }} /
           {{ formatNumber(topKiller.assists) }} ·
           {{ formatKda(topKiller) }} KDA{{
-            sharedLead ? ' · спільне лідерство' : ''
+            sharedLead ? t('insights.sharedLead') : ''
           }}
         </p>
-        <p v-else class="metric-unavailable">Даних недостатньо</p>
+        <p v-else class="metric-unavailable">
+          {{ t('insights.insufficient') }}
+        </p>
       </article>
     </div>
   </section>

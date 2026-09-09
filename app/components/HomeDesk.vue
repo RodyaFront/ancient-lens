@@ -3,6 +3,7 @@ import { duration } from '#shared/match'
 import type { RecentMatch, SavedMatch } from '#shared/match/types'
 import { formatRelativeOpened, savedResultLabel } from '~/utils/matchFormat'
 
+const { t } = useI18n()
 const store = useMatchStore()
 
 onMounted(() => {
@@ -43,9 +44,9 @@ function savedMeta(entry: SavedMatch) {
       <div class="home-block-head">
         <h2 id="home-recent-title">
           <AppIcon name="history" class="home-block-icon" />
-          Недавні
+          {{ t('home.recent') }}
         </h2>
-        <p>Відкриті в цьому браузері</p>
+        <p>{{ t('home.recentHint') }}</p>
       </div>
       <div
         v-for="entry in store.recent"
@@ -59,7 +60,7 @@ function savedMeta(entry: SavedMatch) {
         <button
           class="icon-button"
           type="button"
-          :aria-label="`Прибрати матч ${entry.id} з недавніх`"
+          :aria-label="t('home.removeRecent', { id: entry.id })"
           @click="store.removeRecent(entry.id)"
         >
           <AppIcon name="trash" />
@@ -75,9 +76,9 @@ function savedMeta(entry: SavedMatch) {
       <div class="home-block-head">
         <h2 id="home-saved-title">
           <AppIcon name="bookmark" class="home-block-icon" />
-          Закладки
+          {{ t('home.bookmarks') }}
         </h2>
-        <p>Збережені в цьому браузері</p>
+        <p>{{ t('home.bookmarksHint') }}</p>
       </div>
       <div
         v-for="entry in store.saved"
@@ -91,7 +92,7 @@ function savedMeta(entry: SavedMatch) {
         <button
           class="icon-button"
           type="button"
-          :aria-label="`Видалити матч ${entry.id}`"
+          :aria-label="t('home.removeSaved', { id: entry.id })"
           @click="store.removeSaved(entry.id)"
         >
           <AppIcon name="trash" />

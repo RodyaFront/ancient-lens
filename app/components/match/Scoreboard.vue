@@ -13,26 +13,55 @@ const emit = defineEmits<{
   item: [id: number]
 }>()
 
+const { t } = useI18n()
 const store = useMatchStore()
-const views: { id: ScoreboardView; label: string }[] = [
-  { id: 'overview', label: 'Огляд' },
-  { id: 'economy', label: 'Економіка' },
-  { id: 'combat', label: 'Бій' },
-]
-const filters = [
-  { id: 'all', label: 'Усі' },
-  { id: 'radiant', label: 'Radiant' },
-  { id: 'dire', label: 'Dire' },
-] as const
 
-const heads = computed(() => {
+const views = computed(() => [
+  { id: 'overview' as ScoreboardView, label: t('scoreboard.overview') },
+  { id: 'economy' as ScoreboardView, label: t('scoreboard.economy') },
+  { id: 'combat' as ScoreboardView, label: t('scoreboard.combat') },
+])
+
+const filters = computed(() => [
+  { id: 'all' as const, label: t('scoreboard.all') },
+  { id: 'radiant' as const, label: 'Radiant' },
+  { id: 'dire' as const, label: 'Dire' },
+])
+
+type HeadCol = { label: string; title?: string }
+
+const heads = computed((): HeadCol[] => {
   if (store.view === 'economy') {
-    return ['NET WORTH', 'GPM', 'XPM', 'LH / DN']
+    return [
+      { label: 'NET WORTH' },
+      { label: 'GPM' },
+      { label: 'XPM' },
+      { label: 'LH / DN' },
+    ]
   }
   if (store.view === 'combat') {
-    return ['ШКОДА', 'БУДІВЛІ', 'ЛІКУВАННЯ', 'УЧАСТЬ']
+    return [
+      {
+        label: t('scoreboard.colDamage'),
+        title: t('scoreboard.damageTitle'),
+      },
+      { label: t('scoreboard.colBuildings') },
+      { label: t('scoreboard.colHealing') },
+      {
+        label: t('scoreboard.colParticipation'),
+        title: t('scoreboard.participationTitle'),
+      },
+    ]
   }
-  return ['NET WORTH', 'GPM', 'LH / DN', 'ШКОДА']
+  return [
+    { label: 'NET WORTH' },
+    { label: 'GPM' },
+    { label: 'LH / DN' },
+    {
+      label: t('scoreboard.colDamage'),
+      title: t('scoreboard.damageTitle'),
+    },
+  ]
 })
 
 const groups = computed(() => {
@@ -83,7 +112,7 @@ function killParticipation(player: MatchPlayer, teamKills: number | null) {
   ) {
     return `${Math.round(((player.kills + player.assists) / teamKills) * 100)}%`
   }
-  return '—'
+  return t('format.emDash')
 }
 
 function onTabKey(event: KeyboardEvent) {
@@ -91,7 +120,7 @@ function onTabKey(event: KeyboardEvent) {
     return
   }
   event.preventDefault()
-  const ids = views.map((entry) => entry.id)
+  const ids = views.value.map((entry) => entry.id)
   let index = ids.indexOf(store.view)
   if (event.key === 'Home') {
     index = 0
@@ -115,7 +144,7 @@ function onTabKey(event: KeyboardEvent) {
 <template>
   <div v-if="store.match" class="panel">
     <div class="scoreboard-controls">
-      <div class="tabs" role="tablist" aria-label="Тип статистики">
+      <div class="tabs" role="tablist" :aria-label="t('scoreboard.tabsAria')">
         <button
           v-for="entry in views"
           :id="`tab-${entry.id}`"
@@ -135,7 +164,11 @@ function onTabKey(event: KeyboardEvent) {
         </button>
       </div>
       <div class="control-right">
-        <div class="filter" role="group" aria-label="Фільтр команди">
+        <div
+          class="filter"
+          role="group"
+          :aria-label="t('scoreboard.filterAria')"
+        >
           <button
             v-for="entry in filters"
             :key="entry.id"
@@ -148,13 +181,15 @@ function onTabKey(event: KeyboardEvent) {
             {{ entry.label }}
           </button>
         </div>
-        <label class="sr-only" for="sort">Сортування гравців у команді</label>
+        <label class="sr-only" for="sort">{{
+          t('scoreboard.sortLabel')
+        }}</label>
         <select id="sort" v-model="store.sort" class="sort-select">
-          <option value="slot">За слотом</option>
-          <option value="kills">За вбивствами ↓</option>
-          <option value="net_worth">За цінністю ↓</option>
-          <option value="hero_damage">За шкодою ↓</option>
-          <option value="kda">За KDA ↓</option>
+          <option value="slot">{{ t('scoreboard.sortSlot') }}</option>
+          <option value="kills">{{ t('scoreboard.sortKills') }}</option>
+          <option value="net_worth">{{ t('scoreboard.sortNetWorth') }}</option>
+          <option value="hero_damage">{{ t('scoreboard.sortDamage') }}</option>
+          <option value="kda">{{ t('scoreboard.sortKda') }}</option>
         </select>
       </div>
     </div>
@@ -165,27 +200,23 @@ function onTabKey(event: KeyboardEvent) {
       :aria-labelledby="`tab-${store.view}`"
       tabindex="0"
     >
-      <table aria-label="Статистика гравців">
+      <table :aria-label="t('scoreboard.tableAria')">
         <thead>
           <tr>
-            <th scope="col">ГЕРОЙ / ГРАВЕЦЬ</th>
-            <th scope="col" class="kda-col">K / D / A</th>
+            <th scope="col">{{ t('scoreboard.colHero') }}</th>
+            <th scope="col" class="kda-col">{{ t('scoreboard.colKda') }}</th>
             <th
               v-for="head in heads"
-              :key="head"
+              :key="head.label"
               scope="col"
               class="number-col"
-              :title="
-                head === 'ШКОДА'
-                  ? 'Шкода ворожим героям'
-                  : head === 'УЧАСТЬ'
-                    ? 'Частка командних вбивств за участю гравця'
-                    : head
-              "
+              :title="head.title || head.label"
             >
-              {{ head }}
+              {{ head.label }}
             </th>
-            <th scope="col" class="items-col">ПРЕДМЕТИ</th>
+            <th scope="col" class="items-col">
+              {{ t('scoreboard.colItems') }}
+            </th>
           </tr>
         </thead>
         <tbody v-for="group in groups" :key="String(group.radiant)">
@@ -200,11 +231,15 @@ function onTabKey(event: KeyboardEvent) {
                   "
                   class="winner-label"
                 >
-                  Перемога
+                  {{ t('score.win') }}
                 </span>
                 <span class="team-kills">
-                  {{ group.players.length }} гравців ·
-                  {{ formatNumber(group.kills) }} вбивств
+                  {{
+                    t('scoreboard.playersKills', {
+                      count: group.players.length,
+                      kills: formatNumber(group.kills),
+                    })
+                  }}
                 </span>
               </div>
             </td>
@@ -221,7 +256,11 @@ function onTabKey(event: KeyboardEvent) {
                   <button
                     class="player-name"
                     type="button"
-                    :title="`Відкрити статистику: ${playerDisplayName(player)}`"
+                    :title="
+                      t('scoreboard.openStats', {
+                        name: playerDisplayName(player),
+                      })
+                    "
                     @click="emit('player', playerIndex(player))"
                   >
                     {{ playerDisplayName(player) }}
@@ -293,7 +332,11 @@ function onTabKey(event: KeyboardEvent) {
                 <button
                   class="item more"
                   type="button"
-                  :aria-label="`Деталі ${playerDisplayName(player)}`"
+                  :aria-label="
+                    t('scoreboard.details', {
+                      name: playerDisplayName(player),
+                    })
+                  "
                   @click="emit('player', playerIndex(player))"
                 >
                   <AppIcon name="chevron" />
@@ -305,10 +348,8 @@ function onTabKey(event: KeyboardEvent) {
       </table>
     </div>
     <div class="table-footnote">
-      Натисніть ім’я гравця або предмет, щоб відкрити деталі. LH / DN — добиті /
-      заперечені кріпи.<span class="scroll-hint">
-        Таблиця прокручується горизонтально.</span
-      >
+      {{ t('scoreboard.footnote')
+      }}<span class="scroll-hint">{{ t('scoreboard.scrollHint') }}</span>
     </div>
   </div>
 </template>

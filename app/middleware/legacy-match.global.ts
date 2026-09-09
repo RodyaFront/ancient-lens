@@ -1,5 +1,8 @@
-export default defineNuxtRouteMiddleware((to) => {
-  if (to.path !== '/') {
+﻿export default defineNuxtRouteMiddleware((to) => {
+  const isLocaleRoot =
+    to.path === '/' || /^\/[a-z]{2}$/i.test(to.path.replace(/\/$/, ''))
+
+  if (!isLocaleRoot) {
     return
   }
 
@@ -13,8 +16,9 @@ export default defineNuxtRouteMiddleware((to) => {
     query.snapshot = '1'
   }
 
+  const localePath = useLocalePath()
   return navigateTo({
-    path: `/match/${matchId}`,
+    path: localePath({ name: 'match-id', params: { id: matchId } }),
     query,
   })
 })

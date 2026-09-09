@@ -1,8 +1,9 @@
 <script setup lang="ts">
+const { t } = useI18n()
+
 useSeoMeta({
-  title: 'Ancient Lens — розбір матчів Dota 2',
-  description:
-    'Ancient Lens — статистика матчів Dota 2: результат, гравці, економіка та предмети. Дані OpenDota.',
+  title: () => t('seo.siteTitle'),
+  description: () => t('seo.siteDescription'),
 })
 </script>
 

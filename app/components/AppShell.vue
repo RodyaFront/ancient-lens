@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { MatchDialogState } from '#shared/match/types'
 
+const { t } = useI18n()
 const dialog = ref<MatchDialogState>(null)
 
 function openSources() {
@@ -22,7 +23,7 @@ function openItem(id: number) {
 
 <template>
   <div class="app-shell">
-    <a class="skip-link" href="#match-search">Перейти до пошуку матчу</a>
+    <a class="skip-link" href="#match-search">{{ t('shell.skipToSearch') }}</a>
     <SiteHeader @saved="openSaved" @sources="openSources" />
     <main>
       <slot

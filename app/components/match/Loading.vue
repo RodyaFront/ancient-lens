@@ -1,4 +1,5 @@
 <script setup lang="ts">
+const { t } = useI18n()
 const store = useMatchStore()
 </script>
 
@@ -7,8 +8,8 @@ const store = useMatchStore()
     <div class="loading-title">
       <span class="spinner" aria-hidden="true" />
       <div>
-        <strong>Завантаження матчу</strong>
-        <p>Очікуємо відповідь OpenDota…</p>
+        <strong>{{ t('loading.title') }}</strong>
+        <p>{{ t('loading.body') }}</p>
       </div>
       <button
         id="cancel-load"
@@ -16,7 +17,7 @@ const store = useMatchStore()
         type="button"
         @click="store.cancelLoad()"
       >
-        Скасувати
+        {{ t('loading.cancel') }}
       </button>
     </div>
     <div class="skeleton summary-skeleton" aria-hidden="true" />

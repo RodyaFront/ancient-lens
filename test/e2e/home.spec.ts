@@ -17,9 +17,9 @@ describe('routes', () => {
     const html = await $fetch('/')
 
     expect(html).toContain('Ancient Lens')
-    expect(html).toContain('Розбір матчу')
-    expect(html).toContain('Відкрити матч')
-    expect(html).toContain('ID матчу або URL')
+    expect(html).toContain('Match review')
+    expect(html).toContain('Open match')
+    expect(html).toContain('Match ID or URL')
     expect(html).not.toContain('Еталонний протокол')
     expect(html).not.toContain('Недавні')
     expect(html).not.toContain('score-card')
@@ -29,6 +29,6 @@ describe('routes', () => {
     const html = await $fetch('/match/8961419173?snapshot=1')
 
     expect(html).toContain('Ancient Lens')
-    expect(html).toContain('Розбір матчу')
+    expect(html).toContain('Match review')
   })
 })

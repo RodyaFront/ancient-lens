@@ -5,10 +5,12 @@ import {
   duration,
   kda,
   parseMatchId,
+  ParseMatchIdError,
   radiant,
   total,
   upsertRecentMatch,
   validateMatch,
+  ValidateMatchError,
 } from '../../shared/match'
 
 describe('parseMatchId', () => {
@@ -40,16 +42,24 @@ describe('parseMatchId', () => {
 
   it('rejects bare tokens with the generic ID/link message', () => {
     for (const input of ['abc', 'not-a-url', 'google.com']) {
-      expect(() => parseMatchId(input)).toThrow(
-        /числовий ID або посилання на матч/,
-      )
+      try {
+        parseMatchId(input)
+        expect.fail('expected ParseMatchIdError')
+      } catch (error) {
+        expect(error).toBeInstanceOf(ParseMatchIdError)
+        expect((error as ParseMatchIdError).code).toBe('generic')
+      }
     }
   })
 
   it('still rejects unsupported hosts when the value looks like a URL', () => {
-    expect(() => parseMatchId('evil.test/matches/123')).toThrow(
-      /dotabuff\.com або opendota\.com/,
-    )
+    try {
+      parseMatchId('evil.test/matches/123')
+      expect.fail('expected ParseMatchIdError')
+    } catch (error) {
+      expect(error).toBeInstanceOf(ParseMatchIdError)
+      expect((error as ParseMatchIdError).code).toBe('host')
+    }
   })
 })
 
@@ -112,6 +122,13 @@ describe('verified OpenDota match', () => {
         'net_worth',
       ),
     ).toBe(28467)
-    expect(() => validateMatch(match, '1')).toThrow()
+    expect(() => validateMatch(match, '1')).toThrow(ValidateMatchError)
+    try {
+      validateMatch(match, '1')
+      expect.fail('expected ValidateMatchError')
+    } catch (error) {
+      expect(error).toBeInstanceOf(ValidateMatchError)
+      expect((error as ValidateMatchError).code).toBe('mismatch')
+    }
   })
 })

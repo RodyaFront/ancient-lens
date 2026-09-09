@@ -13,6 +13,7 @@ export default defineNuxtConfig({
     '@vueuse/nuxt',
     '@nuxtjs/seo',
     'nuxt-security',
+    '@nuxtjs/i18n',
   ],
 
   css: [
@@ -27,8 +28,7 @@ export default defineNuxtConfig({
 
   app: {
     head: {
-      htmlAttrs: { lang: 'uk' },
-      title: 'Ancient Lens — розбір матчів Dota 2',
+      title: 'Ancient Lens — Dota 2 match review',
       link: [{ rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' }],
       meta: [{ name: 'theme-color', content: '#171a18' }],
     },
@@ -38,8 +38,29 @@ export default defineNuxtConfig({
     url: process.env.NUXT_PUBLIC_SITE_URL,
     name: 'Ancient Lens',
     description:
-      'Ancient Lens — статистика матчів Dota 2: результат, гравці, економіка та предмети. Дані OpenDota.',
-    defaultLocale: 'uk',
+      'Ancient Lens — Dota 2 match stats: result, players, economy, and items. OpenDota data.',
+    defaultLocale: 'en',
+  },
+
+  i18n: {
+    locales: [
+      { code: 'en', language: 'en', name: 'English', file: 'en.json' },
+      { code: 'uk', language: 'uk', name: 'Українська', file: 'uk.json' },
+    ],
+    defaultLocale: 'en',
+    strategy: 'prefix_except_default',
+    langDir: 'locales',
+    baseUrl:
+      process.env.NUXT_PUBLIC_SITE_URL &&
+      !/localhost|127\.0\.0\.1/i.test(process.env.NUXT_PUBLIC_SITE_URL)
+        ? process.env.NUXT_PUBLIC_SITE_URL
+        : 'https://ancientlens.info',
+    detectBrowserLanguage: {
+      useCookie: true,
+      cookieKey: 'al_locale',
+      redirectOn: 'root',
+      fallbackLocale: 'en',
+    },
   },
 
   fonts: {
@@ -83,7 +104,7 @@ export default defineNuxtConfig({
     compressPublicAssets: true,
     prerender: {
       crawlLinks: true,
-      routes: ['/'],
+      routes: ['/', '/uk'],
     },
   },
 

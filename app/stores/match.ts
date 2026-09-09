@@ -7,9 +7,9 @@ import {
   RECENT_MATCHES_KEY,
   SAVED_MATCHES_KEY,
 } from '#shared/match/constants'
-import { parseMatchId } from '#shared/match/parseMatchId'
+import { parseMatchId, ParseMatchIdError } from '#shared/match/parseMatchId'
 import { upsertRecentMatch } from '#shared/match/recent'
-import { radiant, validateMatch } from '#shared/match/stats'
+import { radiant, validateMatch, ValidateMatchError } from '#shared/match/stats'
 import type {
   HeroEntry,
   ItemEntry,
@@ -183,11 +183,15 @@ export const useMatchStore = defineStore('match', () => {
     }
   }
 
+  function t(key: string, params?: Record<string, unknown>) {
+    return useNuxtApp().$i18n.t(key, params ?? {}) as string
+  }
+
   function removeRecent(id: string) {
     try {
       persistRecent(recent.value.filter((entry) => entry.id !== id))
     } catch {
-      showToast('Не вдалося оновити недавні матчі')
+      showToast(t('errors.recentUpdateFailed'))
     }
   }
 
@@ -202,7 +206,7 @@ export const useMatchStore = defineStore('match', () => {
   function heroName(player: MatchPlayer) {
     return (
       heroById(player.hero_id)?.localized_name ||
-      `Герой #${player.hero_id ?? '?'}`
+      t('format.heroFallback', { id: player.hero_id ?? '?' })
     )
   }
 
@@ -220,7 +224,7 @@ export const useMatchStore = defineStore('match', () => {
   }
 
   function matchPath(id: string) {
-    return `/match/${id}`
+    return useLocalePath()({ name: 'match-id', params: { id } })
   }
 
   function isCurrentMatchRoute(id: string, snapshot = false) {
@@ -252,10 +256,10 @@ export const useMatchStore = defineStore('match', () => {
     } catch (errorValue) {
       inputInvalid.value = true
       const message =
-        errorValue instanceof Error
-          ? errorValue.message
-          : 'Перевірте ID або посилання на матч.'
-      showError('Некоректний запит', message, null, false)
+        errorValue instanceof ParseMatchIdError
+          ? t(`parse.${errorValue.code}`)
+          : t('errors.invalidBody')
+      showError(t('errors.invalidTitle'), message, null, false)
     }
   }
 
@@ -334,12 +338,11 @@ export const useMatchStore = defineStore('match', () => {
     try {
       id = parseMatchId(input)
     } catch (errorValue) {
-      showError(
-        'Перевірте URL або ID',
-        errorValue instanceof Error ? errorValue.message : 'Некоректний запит.',
-        null,
-        false,
-      )
+      const message =
+        errorValue instanceof ParseMatchIdError
+          ? t(`parse.${errorValue.code}`)
+          : t('errors.invalidBody')
+      showError(t('errors.checkUrlTitle'), message, null, false)
       inputInvalid.value = true
       return
     }
@@ -375,9 +378,7 @@ export const useMatchStore = defineStore('match', () => {
       try {
         data = await response.json()
       } catch {
-        throw new Error(
-          'OpenDota повернув відповідь, яку не вдалося прочитати.',
-        )
+        throw new Error(t('errors.unreadable'))
       }
 
       if (data && typeof data === 'object' && 'error' in data) {
@@ -385,7 +386,7 @@ export const useMatchStore = defineStore('match', () => {
         const httpError = new HttpError(
           typeof payload.error === 'string'
             ? payload.error
-            : 'Дані матчу недоступні.',
+            : t('errors.unavailable'),
           404,
         )
         throw httpError
@@ -399,7 +400,7 @@ export const useMatchStore = defineStore('match', () => {
       match.value = next
       source.value = {
         kind: 'live',
-        label: 'OpenDota API — поточний запит',
+        label: t('score.sourceLiveLabel'),
         fetchedAt: new Date().toISOString(),
       }
       filter.value = 'all'
@@ -412,34 +413,36 @@ export const useMatchStore = defineStore('match', () => {
 
       const err = errorValue as HttpError
       if (err.name === 'AbortError' && !timedOut) {
-        showToast('Завантаження скасовано')
+        showToast(t('errors.cancelled'))
         return
       }
 
-      let title = 'Не вдалося отримати матч'
-      let body =
-        'Перевірте з’єднання. OpenDota може бути тимчасово недоступним або блокувати запит із цієї мережі.'
+      let title = t('errors.fetchFailed')
+      let body = t('errors.fetchFailedBody')
 
       if (timedOut) {
-        title = 'Джерело відповідає надто довго'
-        body =
-          'OpenDota не відповів за 25 секунд. Спробуйте ще раз трохи пізніше.'
+        title = t('errors.timeoutTitle')
+        body = t('errors.timeoutBody')
       } else if (err.status === 429) {
-        title = 'Ліміт запитів OpenDota'
+        title = t('errors.rateLimitTitle')
         const retry = Number(err.retry)
-        body = `Сервіс тимчасово обмежив запити. Повторіть ${Number.isFinite(retry) && retry > 0 ? `через ${retry} с` : 'приблизно за хвилину'}.`
+        body = t('errors.rateLimitBody', {
+          when:
+            Number.isFinite(retry) && retry > 0
+              ? t('errors.rateLimitSeconds', { n: retry })
+              : t('errors.rateLimitSoon'),
+        })
       } else if (err.status === 404) {
-        title = 'Матч не знайдено в OpenDota'
-        body =
-          'Перевірте ID. Матч може бути приватним, ще не проіндексованим або недоступним у цьому джерелі.'
+        title = t('errors.notFoundTitle')
+        body = t('errors.notFoundBody')
       } else if (err.status === 403 || err.status === 401) {
-        title = 'Джерело відхилило запит'
-        body =
-          'OpenDota обмежив доступ до API. Спробуйте пізніше або відкрийте матч у джерелі.'
+        title = t('errors.rejectedTitle')
+        body = t('errors.rejectedBody')
       } else if (err.status && err.status >= 500) {
-        title = 'Тимчасова помилка OpenDota'
-        body =
-          'Сервіс повернув помилку. Ваш ID збережено — повторіть запит пізніше.'
+        title = t('errors.tempTitle')
+        body = t('errors.tempBody')
+      } else if (errorValue instanceof ValidateMatchError) {
+        body = t(`errors.validate.${errorValue.code}`)
       } else if (
         err.message !== 'Failed to fetch' &&
         err.message !== 'Load failed' &&
@@ -477,7 +480,7 @@ export const useMatchStore = defineStore('match', () => {
     try {
       const response = await fetch(`/data/match-${EXAMPLE_MATCH_ID}.json`)
       if (!response.ok) {
-        throw new Error('Знімок недоступний')
+        throw new Error(t('errors.snapshotMissing'))
       }
       const data = validateMatch(await response.json(), EXAMPLE_MATCH_ID)
       if (no !== requestNo.value) {
@@ -487,7 +490,7 @@ export const useMatchStore = defineStore('match', () => {
       filter.value = 'all'
       source.value = {
         kind: 'example',
-        label: 'Перевірений знімок OpenDota API',
+        label: t('score.sourceSnapshotLabel'),
         fetchedAt: snapshotMeta.value?.fetched_at || '2026-09-05T05:16:46Z',
       }
       revealNonce.value += 1
@@ -496,8 +499,8 @@ export const useMatchStore = defineStore('match', () => {
         match.value = null
         source.value = null
         showError(
-          'Не вдалося відкрити приклад',
-          'Спробуйте отримати матч безпосередньо з OpenDota.',
+          t('errors.exampleFailedTitle'),
+          t('errors.exampleFailedBody'),
           EXAMPLE_MATCH_ID,
         )
       }
@@ -529,11 +532,9 @@ export const useMatchStore = defineStore('match', () => {
 
     try {
       persistSaved(next)
-      showToast(
-        had ? 'Матч видалено зі збережених' : 'Матч збережено в цьому браузері',
-      )
+      showToast(had ? t('toast.unsaved') : t('toast.saved'))
     } catch {
-      showToast('Браузер не дозволив зберегти матч.')
+      showToast(t('toast.saveBlocked'))
     }
   }
 
@@ -541,7 +542,7 @@ export const useMatchStore = defineStore('match', () => {
     try {
       persistSaved(saved.value.filter((entry) => entry.id !== id))
     } catch {
-      showToast('Браузер не дозволив змінити закладки.')
+      showToast(t('toast.bookmarkBlocked'))
     }
   }
 
@@ -573,7 +574,7 @@ export const useMatchStore = defineStore('match', () => {
     link.download = `dota-match-${match.value.match_id}.json`
     link.click()
     setTimeout(() => URL.revokeObjectURL(link.href), 1000)
-    showToast('JSON підготовлено до завантаження')
+    showToast(t('toast.jsonReady'))
   }
 
   async function bootstrapFromRoute(id: string, snapshot = false) {

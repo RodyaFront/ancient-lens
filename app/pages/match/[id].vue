@@ -3,16 +3,18 @@ import { isNum } from '#shared/match'
 
 const route = useRoute()
 const store = useMatchStore()
+const { t, locale } = useI18n()
 
 const matchId = computed(() => String(route.params.id || ''))
+
+const dateLocale = computed(() => (locale.value === 'uk' ? 'uk-UA' : 'en-US'))
 
 useSeoMeta({
   title: () =>
     matchId.value
-      ? `Матч #${matchId.value} — Ancient Lens`
-      : 'Розбір матчу — Ancient Lens',
-  description:
-    'Статистика матчу Dota 2: результат, гравці, економіка та предмети. Дані OpenDota.',
+      ? t('seo.matchTitle', { id: matchId.value })
+      : t('seo.matchTitleFallback'),
+  description: () => t('seo.matchDescription'),
 })
 
 async function syncRoute() {
@@ -47,8 +49,7 @@ watch(
           class="data-note"
         >
           <AppIcon name="info" />
-          OpenDota надав {{ store.match.players.length }} із 10 гравців.
-          Командні підсумки охоплюють тільки доступних учасників.
+          {{ t('notes.partialPlayers', { count: store.match.players.length }) }}
         </div>
       </MatchScore>
       <MatchInsights @player="openPlayer" />
@@ -58,15 +59,18 @@ watch(
       >
         <AppIcon name="info" />
         <span>
-          Знімок OpenDota від
-          {{ new Date(store.source?.fetchedAt ?? '').toLocaleString('uk-UA') }}.
-          Щоб отримати свіжі дані, натисніть «Відкрити матч» або кнопку
-          оновлення.
+          {{
+            t('notes.snapshot', {
+              when: new Date(store.source?.fetchedAt ?? '').toLocaleString(
+                dateLocale,
+              ),
+            })
+          }}
           <a
             :href="`https://www.opendota.com/matches/${store.match.match_id}`"
             target="_blank"
             rel="noopener noreferrer"
-            >Матч в OpenDota ↗</a
+            >{{ t('notes.opendotaLink') }}</a
           >
         </span>
       </div>
@@ -79,8 +83,7 @@ watch(
         class="data-note"
       >
         <AppIcon name="info" />
-        OpenDota ще не має детально розібраного реплею. Доступні базові
-        показники; відсутні дані позначені «—».
+        {{ t('notes.basicParse') }}
       </div>
     </div>
   </AppShell>

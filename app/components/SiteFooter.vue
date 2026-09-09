@@ -2,13 +2,15 @@
 const emit = defineEmits<{
   sources: []
 }>()
+
+const { t } = useI18n()
 </script>
 
 <template>
   <footer>
     <span
-      >Ancient Lens <span class="footer-divider">/</span> Незалежний інструмент
-      Dota 2</span
+      >Ancient Lens <span class="footer-divider">/</span>
+      {{ t('shell.footerTagline') }}</span
     >
     <button
       id="source-footer"
@@ -16,7 +18,7 @@ const emit = defineEmits<{
       type="button"
       @click="emit('sources')"
     >
-      Дані OpenDota
+      {{ t('shell.footerSources') }}
     </button>
   </footer>
 </template>

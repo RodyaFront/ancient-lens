@@ -1,4 +1,5 @@
 <script setup lang="ts">
+const { t } = useI18n()
 const store = useMatchStore()
 const input = ref(store.lastInput)
 const errorTitle = useTemplateRef<HTMLElement>('errorTitle')
@@ -27,15 +28,12 @@ async function submit() {
     aria-labelledby="search-title"
   >
     <div class="search-heading">
-      <h1 id="search-title">Розбір матчу</h1>
-      <p>
-        Результат, економіка, внесок гравців. Вставте ID або посилання Dotabuff
-        / OpenDota.
-      </p>
+      <h1 id="search-title">{{ t('search.title') }}</h1>
+      <p>{{ t('search.blurb') }}</p>
     </div>
     <div class="search-controls">
       <form id="search-form" novalidate @submit.prevent="submit">
-        <label for="match-input">ID або посилання на матч</label>
+        <label for="match-input">{{ t('search.label') }}</label>
         <div class="search-box">
           <input
             id="match-input"
@@ -44,19 +42,19 @@ async function submit() {
             inputmode="text"
             autocomplete="off"
             spellcheck="false"
-            placeholder="ID матчу або URL"
+            :placeholder="t('search.placeholder')"
             aria-describedby="input-help"
             :aria-invalid="store.inputInvalid ? 'true' : undefined"
             :aria-errormessage="store.error ? 'match-input-error' : undefined"
             :disabled="store.loading"
           />
           <button class="primary" type="submit" :disabled="store.loading">
-            Відкрити матч
+            {{ t('search.submit') }}
           </button>
         </div>
       </form>
       <div class="input-footer">
-        <span id="input-help">Підтримуються Dotabuff і OpenDota</span>
+        <span id="input-help">{{ t('search.help') }}</span>
       </div>
     </div>
     <div
@@ -72,7 +70,7 @@ async function submit() {
           type="button"
           @click="store.openMatchInput(store.error.id || input)"
         >
-          Спробувати ще раз
+          {{ t('search.retry') }}
         </button>
         <a
           v-if="store.error.id"
@@ -80,7 +78,7 @@ async function submit() {
           target="_blank"
           rel="noopener noreferrer"
         >
-          Відкрити OpenDota ↗
+          {{ t('search.openInSource') }}
         </a>
       </div>
     </div>

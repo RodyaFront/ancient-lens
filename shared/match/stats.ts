@@ -1,6 +1,18 @@
 import { isNum } from './parseMatchId'
 import type { MatchData, MatchPlayer } from './types'
 
+export type ValidateMatchErrorCode = 'mismatch' | 'noPlayers'
+
+export class ValidateMatchError extends Error {
+  readonly code: ValidateMatchErrorCode
+
+  constructor(code: ValidateMatchErrorCode) {
+    super(code)
+    this.name = 'ValidateMatchError'
+    this.code = code
+  }
+}
+
 export function radiant(player: MatchPlayer): boolean {
   if (typeof player.isRadiant === 'boolean') {
     return player.isRadiant
@@ -47,12 +59,12 @@ export function validateMatch(data: unknown, id: string): MatchData {
     typeof data !== 'object' ||
     String((data as MatchData).match_id) !== String(id)
   ) {
-    throw new Error('Джерело повернуло некоректні дані матчу.')
+    throw new ValidateMatchError('mismatch')
   }
 
   const match = data as MatchData
   if (!Array.isArray(match.players) || !match.players.length) {
-    throw new Error('У джерелі ще немає даних гравців для цього матчу.')
+    throw new ValidateMatchError('noPlayers')
   }
 
   return match

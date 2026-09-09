@@ -11,6 +11,7 @@ const emit = defineEmits<{
   open: [id: number]
 }>()
 
+const { t } = useI18n()
 const store = useMatchStore()
 const failed = ref(false)
 
@@ -19,12 +20,12 @@ const entry = computed(() =>
 )
 const title = computed(() => {
   if (props.itemId === 0) {
-    return 'Порожній слот'
+    return t('format.emptySlot')
   }
   if (!isNum(props.itemId)) {
-    return 'Дані слота не надано'
+    return t('format.slotUnknown')
   }
-  return entry.value?.dname || `Предмет #${props.itemId}`
+  return entry.value?.dname || t('format.itemFallback', { id: props.itemId })
 })
 const imageUrl = computed(() => steamAssetUrl(entry.value?.img))
 const empty = computed(() => props.itemId === 0 || !isNum(props.itemId))

@@ -13,22 +13,26 @@ import {
 
 const dialog = defineModel<MatchDialogState>({ required: true })
 
+const { t, locale } = useI18n()
 const store = useMatchStore()
 const root = ref<HTMLDialogElement | null>(null)
 
+const dateLocale = computed(() => (locale.value === 'uk' ? 'uk-UA' : 'en-US'))
+
 const title = computed(() => {
   if (dialog.value?.kind === 'sources') {
-    return 'Дані та їхня точність'
+    return t('dialog.sourcesTitle')
   }
   if (dialog.value?.kind === 'saved') {
-    return 'Збережені матчі'
+    return t('dialog.savedTitle')
   }
   if (dialog.value?.kind === 'player') {
     return player.value ? playerDisplayName(player.value) : ''
   }
   if (dialog.value?.kind === 'item') {
     return (
-      store.itemById(dialog.value.id)?.dname || `Предмет #${dialog.value.id}`
+      store.itemById(dialog.value.id)?.dname ||
+      t('format.itemFallback', { id: dialog.value.id })
     )
   }
   return ''
@@ -47,21 +51,21 @@ const playerStats = computed(() => {
     return []
   }
   return [
-    ['Вбивства', current.kills],
-    ['Смерті', current.deaths],
-    ['Асисти', current.assists],
+    [t('dialog.statKills'), current.kills],
+    [t('dialog.statDeaths'), current.deaths],
+    [t('dialog.statAssists'), current.assists],
     ['Net worth', current.net_worth],
     ['GPM', current.gold_per_min],
     ['XPM', current.xp_per_min],
-    ['Шкода героям', current.hero_damage],
-    ['Шкода будівлям', current.tower_damage],
-    ['Лікування героїв', current.hero_healing],
-    ['Добиті кріпи', current.last_hits],
-    ['Заперечені кріпи', current.denies],
-    ['Встановлені Observer', current.obs_placed],
-    ['Встановлені Sentry', current.sen_placed],
-    ['Викупи', current.buyback_count],
-    ['Рівень', current.level],
+    [t('dialog.statHeroDamage'), current.hero_damage],
+    [t('dialog.statTowerDamage'), current.tower_damage],
+    [t('dialog.statHealing'), current.hero_healing],
+    [t('dialog.statLastHits'), current.last_hits],
+    [t('dialog.statDenies'), current.denies],
+    [t('dialog.statObs'), current.obs_placed],
+    [t('dialog.statSen'), current.sen_placed],
+    [t('dialog.statBuyback'), current.buyback_count],
+    [t('dialog.statLevel'), current.level],
   ] as const
 })
 
@@ -131,7 +135,7 @@ function removeSaved(id: string) {
         id="close-dialog"
         class="icon-button"
         type="button"
-        aria-label="Закрити"
+        :aria-label="t('dialog.close')"
         @click="close"
       >
         <AppIcon name="x" />
@@ -139,64 +143,49 @@ function removeSaved(id: string) {
     </div>
     <div id="dialog-content">
       <template v-if="dialog?.kind === 'sources'">
-        <p>
-          Статистика матчів надходить із
-          <a
-            href="https://docs.opendota.com/"
-            target="_blank"
-            rel="noopener noreferrer"
-            >OpenDota API</a
-          >. З URL Dotabuff інструмент читає тільки ID матчу. Статистика
-          завантажується з OpenDota.
-        </p>
-        <p>
-          Доступність і повнота даних залежать від OpenDota та публічності
-          матчу. Імена прихованих гравців можуть бути відсутні. Символ «—»
-          означає, що джерело не надало значення. Нуль означає реальний нуль.
-        </p>
-        <p>
-          «Знімок» — збережена відповідь API з указаним часом отримання.
-          «Отримано з API» — відповідь на поточний запит. Дані не оновлюються
-          безперервно. Збережені матчі — це лише закладки в цьому браузері.
-        </p>
-        <p>
-          Net worth — вартість героя наприкінці матчу. KDA = (вбивства + асисти)
-          / max(1, смерті). GPM / XPM — золото / досвід за хвилину; LH / DN —
-          добиті / заперечені кріпи. Участь у вбивствах = (K + A) / командні
-          вбивства.
-        </p>
-        <p>
-          Довідники героїв і предметів: OpenDota. Зображення: CDN Valve. Назви
-          та зображення можуть відображати новішу версію гри; історичні
-          показники предметів тут не реконструюються. Це незалежний інструмент.
-        </p>
+        <i18n-t keypath="dialog.sourcesP1" tag="p" scope="global">
+          <template #api>
+            <a
+              href="https://docs.opendota.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              >OpenDota API</a
+            >
+          </template>
+        </i18n-t>
+        <p>{{ t('dialog.sourcesP2') }}</p>
+        <p>{{ t('dialog.sourcesP3') }}</p>
+        <p>{{ t('dialog.sourcesP4') }}</p>
+        <p>{{ t('dialog.sourcesP5') }}</p>
         <p v-if="store.source">
-          <strong>Поточний матч:</strong> {{ store.source.label }}. Отримано
-          {{ new Date(store.source.fetchedAt).toLocaleString('uk-UA') }}.
+          <strong>{{ t('dialog.currentMatch') }}</strong>
+          {{ store.source.label }}.
+          {{
+            t('dialog.fetchedAt', {
+              when: new Date(store.source.fetchedAt).toLocaleString(dateLocale),
+            })
+          }}
         </p>
         <div class="dialog-source-links">
           <a
             href="https://docs.opendota.com/"
             target="_blank"
             rel="noopener noreferrer"
-            >Документація ↗</a
+            >{{ t('dialog.docsLink') }}</a
           >
           <a
             v-if="store.match"
             :href="`${OPENDOTA_API}/matches/${store.match.match_id}`"
             target="_blank"
             rel="noopener noreferrer"
-            >Відповідь API ↗</a
+            >{{ t('dialog.apiResponseLink') }}</a
           >
         </div>
       </template>
 
       <template v-else-if="dialog?.kind === 'saved'">
         <template v-if="store.saved.length">
-          <p>
-            Закладки доступні в цьому браузері. Натисніть матч, щоб отримати
-            актуальні дані.
-          </p>
+          <p>{{ t('dialog.savedHint') }}</p>
           <div v-for="entry in store.saved" :key="entry.id" class="saved-row">
             <button
               class="saved-open"
@@ -211,17 +200,14 @@ function removeSaved(id: string) {
             <button
               class="icon-button"
               type="button"
-              :aria-label="`Видалити матч ${entry.id}`"
+              :aria-label="t('dialog.removeSaved', { id: entry.id })"
               @click="removeSaved(entry.id)"
             >
               <AppIcon name="trash" />
             </button>
           </div>
         </template>
-        <p v-else>
-          Поки що немає збережених матчів. Відкрийте матч і натисніть значок
-          закладки поруч із його номером.
-        </p>
+        <p v-else>{{ t('dialog.savedEmpty') }}</p>
       </template>
 
       <template v-else-if="dialog?.kind === 'player' && player">
@@ -245,7 +231,7 @@ function removeSaved(id: string) {
             <strong>{{ formatNumber(value) }}</strong>
           </div>
         </div>
-        <div class="detail-heading">Основний інвентар</div>
+        <div class="detail-heading">{{ t('dialog.inventoryMain') }}</div>
         <div class="detail-items">
           <MatchItemSlot
             v-for="slot in 6"
@@ -254,7 +240,7 @@ function removeSaved(id: string) {
             @open="openItem"
           />
         </div>
-        <div class="detail-heading">Рюкзак</div>
+        <div class="detail-heading">{{ t('dialog.inventoryBackpack') }}</div>
         <div class="detail-items">
           <MatchItemSlot
             v-for="slot in 3"
@@ -263,14 +249,18 @@ function removeSaved(id: string) {
             @open="openItem"
           />
         </div>
-        <div class="detail-heading">Нейтральні слоти</div>
+        <div class="detail-heading">{{ t('dialog.inventoryNeutral') }}</div>
         <div class="detail-items">
           <MatchItemSlot :item-id="player.item_neutral" @open="openItem" />
           <MatchItemSlot :item-id="player.item_neutral2" @open="openItem" />
         </div>
         <p>
-          Aghanim’s Scepter: {{ flagLabel(player.aghanims_scepter) }} · Shard:
-          {{ flagLabel(player.aghanims_shard) }}
+          {{
+            t('dialog.aghanimsLine', {
+              scepter: flagLabel(player.aghanims_scepter),
+              shard: flagLabel(player.aghanims_shard),
+            })
+          }}
         </p>
         <p
           v-if="
@@ -282,10 +272,10 @@ function removeSaved(id: string) {
             :href="`https://www.opendota.com/players/${player.account_id}`"
             target="_blank"
             rel="noopener noreferrer"
-            >Профіль в OpenDota ↗</a
+            >{{ t('dialog.opendotaProfile') }}</a
           >
         </p>
-        <p v-else>Публічний ID гравця не надано джерелом.</p>
+        <p v-else>{{ t('dialog.noPublicId') }}</p>
       </template>
 
       <template v-else-if="dialog?.kind === 'item'">
@@ -293,16 +283,10 @@ function removeSaved(id: string) {
           <MatchItemSlot :item-id="dialog.id" />
         </div>
         <p>
-          ID предмета: <strong>{{ dialog.id }}</strong>
+          {{ t('dialog.itemId') }} <strong>{{ dialog.id }}</strong>
         </p>
-        <p>
-          Предмет у фінальному інвентарі. Назва та іконка — з довідника
-          OpenDota.
-        </p>
-        <p>
-          Клацніть ім’я гравця в таблиці, щоб переглянути основні слоти, рюкзак
-          та нейтральні предмети.
-        </p>
+        <p>{{ t('dialog.itemBody') }}</p>
+        <p>{{ t('dialog.itemHint') }}</p>
       </template>
     </div>
   </dialog>

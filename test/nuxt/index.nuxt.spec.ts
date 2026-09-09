@@ -6,6 +6,6 @@ describe('index page', () => {
   it('renders the match review heading', async () => {
     const wrapper = await mountSuspended(IndexPage)
 
-    expect(wrapper.text()).toContain('Розбір матчу')
+    expect(wrapper.text()).toContain('Match review')
   })
 })
