@@ -1475,7 +1475,8 @@ th .app-tooltip-trigger {
 }
 .item-hover-card__body {
   max-height: min(70vh, 32rem);
-  overflow: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
   overscroll-behavior: contain;
 }
 .item-hover-card.is-pinned {
@@ -1559,6 +1560,7 @@ th .app-tooltip-trigger {
   letter-spacing: 0.02em;
   line-height: 1.2;
   text-transform: uppercase;
+  overflow-wrap: anywhere;
 }
 .item-hover-card__cost {
   display: inline-flex;
@@ -1619,6 +1621,7 @@ th .app-tooltip-trigger {
   font-size: 0.75rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+  overflow-wrap: anywhere;
 }
 .item-hover-card__meta p {
   margin: 0;
@@ -1633,6 +1636,7 @@ th .app-tooltip-trigger {
 }
 .item-hover-card__stats li {
   color: var(--muted);
+  overflow-wrap: anywhere;
 }
 .item-hover-card__stats li + li {
   margin-top: 0.125rem;
@@ -1666,9 +1670,12 @@ th .app-tooltip-trigger {
   justify-content: space-between;
   gap: var(--space-2);
   margin-bottom: var(--space-2);
+  min-width: 0;
 }
 .item-hover-card__ability-head strong {
+  min-width: 0;
   font-weight: 600;
+  overflow-wrap: anywhere;
 }
 .item-hover-card__ability:is(
     [data-kind='active'],
@@ -1729,11 +1736,13 @@ th .app-tooltip-trigger {
   margin: 0;
   color: var(--muted);
   white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 .item-hover-card__ability-kv {
   margin: var(--space-1) 0 0;
   color: var(--muted);
   font-size: 0.75rem;
+  overflow-wrap: anywhere;
 }
 .item-hover-card__ability-kv > span:first-child {
   margin-right: 0.25rem;
@@ -1743,6 +1752,7 @@ th .app-tooltip-trigger {
   color: var(--muted);
   font-size: 0.75rem;
   font-style: italic;
+  overflow-wrap: anywhere;
 }
 .hero-hover-card {
   position: relative;
