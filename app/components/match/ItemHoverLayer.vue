@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { UI_RISE_TRANSITION } from '~/utils/uiMotion'
+
 const {
   openCards,
   showRing,
@@ -64,11 +66,19 @@ watch(
     :y="ringCursor.y"
     :duration-ms="ringMs"
   />
-  <MatchItemHoverCard
-    v-for="card in openCards"
-    :key="`${card.sticky ? 'pin' : 'hover'}-${card.itemId}`"
-    :item-id="card.itemId"
-    :trigger-el="card.triggerEl"
-    :sticky="card.sticky"
-  />
+  <Teleport to="body">
+    <TransitionGroup
+      :name="UI_RISE_TRANSITION"
+      tag="div"
+      class="ui-float-layer"
+    >
+      <MatchItemHoverCard
+        v-for="card in openCards"
+        :key="`${card.sticky ? 'pin' : 'hover'}-${card.itemId}`"
+        :item-id="card.itemId"
+        :trigger-el="card.triggerEl"
+        :sticky="card.sticky"
+      />
+    </TransitionGroup>
+  </Teleport>
 </template>

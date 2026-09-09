@@ -44,7 +44,7 @@ When the user asks to continue Dotabuff parity / match functionality progress:
 
 Highest product gap vs Dotabuff: encyclopedia detail lives on hover.
 
-- [x] **Item hover card** — name, cost, stats, active/passive, lore (from OpenDota/item dictionary + CDN); armed hover (150ms + 300ms cursor ring = 450ms); click pins tip (sticky, Esc/outside/toggle); no item modal. Surface B depth. Content modules: [`docs/item-hover-patterns.md`](./item-hover-patterns.md). Notes/recipe (surface A) still open.
+- [x] **Item hover card** — name, cost, stats, active/passive, lore (from OpenDota/item dictionary + CDN); armed hover (150ms + 300ms cursor ring = 450ms); click pins tip (sticky, Esc/outside/toggle); enter/leave rise motion; no item modal. Surface B depth. Content modules: [`docs/item-hover-patterns.md`](./item-hover-patterns.md). Notes/recipe (surface A) still open.
 - [ ] **Hero portrait hover** — name + level (compact)
 - [x] **Scoreboard header tooltips** — plain-language definitions for K/D/A, NET, LH/DN, GPM, XPM, DMG, HEAL, BLD, Items (i18n)
 - [ ] **Ability hover card** (needed once builds exist) — name, hotkey, description, key numbers
@@ -91,7 +91,7 @@ Do **not** treat as Ancient Lens parity goals unless product direction changes:
 
 1. ~~Header column tooltips~~ (done)
 2. ~~Item hover cards on `MatchItemSlot`~~ (surface B done; A notes/recipe later)
-3. Hero portrait hover
+3. Hero portrait hover ← **next**
 4. Draft strip
 5. Team totals row
 6. Advantage chart (XP/Gold from OpenDota)
@@ -104,11 +104,13 @@ Do **not** treat as Ancient Lens parity goals unless product direction changes:
 
 ## Progress log
 
-| Date       | Note                                                                                                          |
-| ---------- | ------------------------------------------------------------------------------------------------------------- |
-| 2026-09-09 | Inventory captured; backlog created                                                                           |
-| 2026-09-09 | Best-stat badge + tooltip on value+star shipped                                                               |
-| 2026-09-09 | Item hover patterns: split surface A (web/encyclopedia) vs B (in-game + ALT) in `docs/item-hover-patterns.md` |
-| 2026-09-09 | Item hover card (surface B) + armed cursor ring; `npm run sync:items` enriches `public/data/items.json`       |
+| Date       | Note                                                                                                                                                                                                                                                                        |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-09-09 | Inventory captured; backlog created                                                                                                                                                                                                                                         |
+| 2026-09-09 | Best-stat badge + tooltip on value+star shipped                                                                                                                                                                                                                             |
+| 2026-09-09 | Item hover patterns: split surface A (web/encyclopedia) vs B (in-game + ALT) in `docs/item-hover-patterns.md`                                                                                                                                                               |
+| 2026-09-09 | Item hover card (surface B) + armed cursor ring; `npm run sync:items` enriches `public/data/items.json`                                                                                                                                                                     |
+| 2026-09-09 | **Migrated (Dotabuff P0):** item hover pin + rise motion (`ui-rise` / `AppFloatRoot`); header tooltips already done. **AL polish (not Dotabuff):** score whoosh + ambient fire (scroll/HRTF/mute); embers hearth; linear coal fade; removed Replay + OpenDota topline label |
+| 2026-09-09 | **Next P0:** hero portrait hover (name + level)                                                                                                                                                                                                                             |
 
 Update this table when a chunk of work merges or is clearly done.

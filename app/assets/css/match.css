@@ -214,6 +214,14 @@ span svg {
   padding-left: var(--space-4);
   border-left: 1px solid var(--line);
 }
+.nav-mute {
+  gap: 0;
+  padding-inline: var(--space-3);
+}
+.nav-mute .iconify {
+  width: 1rem;
+  height: 1rem;
+}
 .locale-link {
   font-family: var(--mono);
   font-size: 0.75rem;
@@ -538,10 +546,6 @@ h1 {
 .tone-ranked {
   color: var(--ranked);
 }
-.source-status {
-  color: var(--muted);
-  font-size: 0.75rem;
-}
 .match-actions {
   display: flex;
   gap: var(--space-2);
@@ -578,16 +582,6 @@ h1 {
   color: var(--gold);
   border-color: var(--gold);
 }
-.replay-score {
-  color: #c9d5bf;
-  border-color: #566150;
-}
-.replay-score svg {
-  color: var(--gold);
-}
-.replay-score:hover {
-  border-color: var(--gold);
-}
 .score-card {
   --verdict-delay: 0.14s;
   --verdict-duration: 1.18s;
@@ -610,6 +604,10 @@ h1 {
   z-index: 1;
 }
 .score-embers-canvas {
+  /* Hearth radial: (0,0) = winner corner. Scale tuned for soft skirt inside the card. */
+  --hearth-x: 0;
+  --hearth-y: 0;
+  --hearth-scale: 4;
   position: absolute;
   inset: 0;
   z-index: 0;
@@ -1365,7 +1363,6 @@ th .app-tooltip-trigger {
   border-color: var(--gold);
 }
 .item-hover-card {
-  z-index: 70;
   width: min(20rem, calc(100vw - 1.5rem));
   max-height: min(70vh, 32rem);
   overflow: auto;
@@ -2416,9 +2413,6 @@ dialog::backdrop {
     padding: 0;
     border: 0;
   }
-  .source-status {
-    width: 100%;
-  }
   .match-actions {
     gap: 5px;
   }
@@ -2427,9 +2421,6 @@ dialog::backdrop {
     min-height: 36px;
     width: 36px;
     padding: 7px;
-  }
-  .replay-label {
-    display: none;
   }
   .export-label {
     display: none;

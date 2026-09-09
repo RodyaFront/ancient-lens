@@ -13,7 +13,9 @@
     "overview": "Огляд",
     "saved": "Збережені",
     "sources": "Про дані",
-    "language": "Мова"
+    "language": "Мова",
+    "mute": "Вимкнути звук",
+    "unmute": "Увімкнути звук"
   },
   "shell": {
     "skipToSearch": "Перейти до пошуку матчу",
@@ -137,9 +139,6 @@
     "sourceLive": "отримано з API",
     "sourceSnapshot": "знімок",
     "fetchedAt": "Отримано {when}",
-    "replayTitle": "Повторити появу рахунку зі звуком",
-    "replayDisabled": "Результат матчу не надано",
-    "replayAria": "Повторити анімацію рахунку зі звуком",
     "save": "Зберегти матч",
     "unsave": "Видалити зі збережених",
     "refresh": "Оновити з OpenDota",
@@ -155,7 +154,6 @@
     "statsBasic": "Базова",
     "sourceLiveLabel": "OpenDota API — поточний запит",
     "sourceSnapshotLabel": "Перевірений знімок OpenDota API",
-    "replayShort": "Повтор",
     "verdictBanner": "ПЕРЕМОЖЕЦЬ МАТЧУ",
     "radiantSide": "СИЛИ СВІТЛА",
     "direSide": "СИЛИ ТЕМРЯВИ",

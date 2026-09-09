@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { UI_RISE_TRANSITION } from '~/utils/uiMotion'
+
 const props = defineProps<{
   text: string
   label?: string
@@ -6,27 +8,9 @@ const props = defineProps<{
 
 const open = ref(false)
 const triggerRef = ref<HTMLElement | null>(null)
-const tipStyle = ref<Record<string, string>>({})
 const tipId = useId()
 
-function place() {
-  const el = triggerRef.value
-  if (!el) {
-    return
-  }
-  const rect = el.getBoundingClientRect()
-  const gap = 8
-  const preferAbove = rect.top > 40
-  tipStyle.value = {
-    position: 'fixed',
-    left: `${rect.left + rect.width / 2}px`,
-    top: preferAbove ? `${rect.top - gap}px` : `${rect.bottom + gap}px`,
-    transform: preferAbove ? 'translate(-50%, -100%)' : 'translate(-50%, 0)',
-  }
-}
-
 function show() {
-  place()
   open.value = true
 }
 
@@ -39,19 +23,6 @@ function onKeydown(event: KeyboardEvent) {
     hide()
   }
 }
-
-watch(open, (isOpen, _previous, onCleanup) => {
-  if (!isOpen || !import.meta.client) {
-    return
-  }
-  const update = () => place()
-  window.addEventListener('scroll', update, true)
-  window.addEventListener('resize', update)
-  onCleanup(() => {
-    window.removeEventListener('scroll', update, true)
-    window.removeEventListener('resize', update)
-  })
-})
 </script>
 
 <template>
@@ -70,14 +41,17 @@ watch(open, (isOpen, _previous, onCleanup) => {
     <slot />
   </span>
   <Teleport to="body">
-    <div
-      v-if="open"
-      :id="tipId"
-      role="tooltip"
-      class="app-tooltip"
-      :style="tipStyle"
-    >
-      {{ props.text }}
-    </div>
+    <Transition :name="UI_RISE_TRANSITION">
+      <AppFloatRoot
+        v-if="open"
+        :id="tipId"
+        role="tooltip"
+        :anchor-el="triggerRef"
+        surface-class="app-tooltip"
+        :z-index="60"
+      >
+        {{ props.text }}
+      </AppFloatRoot>
+    </Transition>
   </Teleport>
 </template>

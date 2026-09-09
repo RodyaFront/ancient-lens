@@ -244,6 +244,8 @@ export const useMatchStore = defineStore('match', () => {
     input: string,
     options: { snapshot?: boolean } = {},
   ) {
+    // User gesture: unlock so reveal whoosh can play after the async fetch.
+    useScoreAudio().unlock()
     inputInvalid.value = false
     error.value = null
     try {
@@ -271,6 +273,7 @@ export const useMatchStore = defineStore('match', () => {
   }
 
   function openExampleMatch() {
+    useScoreAudio().unlock()
     lastInput.value = EXAMPLE_MATCH_ID
     inputInvalid.value = false
     error.value = null
@@ -625,10 +628,10 @@ export const useMatchStore = defineStore('match', () => {
     await loadLookups()
     lastInput.value = id
     if (snapshot && id === EXAMPLE_MATCH_ID) {
-      await loadExample()
+      await loadExample({ sound: true })
       return
     }
-    await loadMatch(id)
+    await loadMatch(id, { sound: true })
   }
 
   return {

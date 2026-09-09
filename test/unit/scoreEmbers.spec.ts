@@ -8,6 +8,7 @@ import {
   SCORE_EMBERS_SPARK_COUNT,
   fillHearth,
   scoreEmbersIntroFade,
+  scoreEmbersLocalUvX,
   scoreEmbersWinnerUniform,
 } from '../../app/utils/scoreEmbers'
 
@@ -53,6 +54,13 @@ describe('winner-only ambient fire', () => {
   it('mirrors that column onto the winner via the shader uniform', () => {
     expect(scoreEmbersWinnerUniform('radiant')).toBe(0)
     expect(scoreEmbersWinnerUniform('dire')).toBe(1)
+  })
+
+  it('maps both winner corners to local UV origin for the hearth', () => {
+    expect(scoreEmbersLocalUvX(0, 'radiant')).toBe(0)
+    expect(scoreEmbersLocalUvX(1, 'dire')).toBe(0)
+    expect(scoreEmbersLocalUvX(0.25, 'radiant')).toBe(0.25)
+    expect(scoreEmbersLocalUvX(0.25, 'dire')).toBeCloseTo(0.75)
   })
 
   it('stays dark until the score is already on screen', () => {

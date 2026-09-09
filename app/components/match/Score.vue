@@ -10,18 +10,12 @@ import {
   regionLabel,
 } from '~/utils/matchFormat'
 
-const { t, locale } = useI18n()
+const { t } = useI18n()
 const store = useMatchStore()
 const audio = useScoreAudio()
 const card = ref<HTMLElement | null>(null)
 const vfx = ref<{ play: () => Promise<void> | void } | null>(null)
 let revealGeneration = 0
-
-const dateLocale = computed(() => (locale.value === 'uk' ? 'uk-UA' : 'en-US'))
-
-function formatFetchedAt(when: string | number) {
-  return new Date(when).toLocaleString(dateLocale.value)
-}
 
 const match = computed(() => store.match)
 const winner = computed(() => {
@@ -88,11 +82,6 @@ function startReveal(withSound = false) {
   }, 3600)
 }
 
-function replay() {
-  audio.unlock()
-  window.setTimeout(() => startReveal(true), 20)
-}
-
 function onAnimationEnd(event: AnimationEvent) {
   const el = card.value
   if (
@@ -135,29 +124,8 @@ onMounted(() => {
         >
           {{ lobbyLabel(match.lobby_type) }}
         </span>
-        <span
-          class="source-status"
-          :title="
-            t('score.fetchedAt', {
-              when: formatFetchedAt(store.source.fetchedAt),
-            })
-          "
-        >
-          OpenDota
-        </span>
       </div>
       <div class="match-actions">
-        <button
-          class="ghost replay-score"
-          type="button"
-          :title="winner ? t('score.replayTitle') : t('score.replayDisabled')"
-          :aria-label="t('score.replayAria')"
-          :disabled="!winner"
-          @click="replay"
-        >
-          <Icon name="lucide:sparkles" aria-hidden="true" />
-          <span class="replay-label">{{ t('score.replayShort') }}</span>
-        </button>
         <button
           class="icon-button"
           :class="{ 'is-saved': store.isSaved }"

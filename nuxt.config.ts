@@ -21,13 +21,20 @@ export default defineNuxtConfig({
     clientBundle: {
       scan: true,
       // Dynamic tab icons in Scoreboard.vue are not string-literal scanned.
-      icons: ['lucide:layout-list', 'lucide:coins', 'lucide:swords'],
+      icons: [
+        'lucide:layout-list',
+        'lucide:coins',
+        'lucide:swords',
+        'lucide:volume-2',
+        'lucide:volume-x',
+      ],
     },
   },
 
   css: [
     '~/assets/css/main.css',
     '~/assets/css/app.scss',
+    '~/assets/css/ui-motion.css',
     '~/assets/css/match.css',
   ],
 
