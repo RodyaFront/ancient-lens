@@ -106,6 +106,7 @@ export interface MatchSource {
 export type ScoreboardView = 'overview' | 'economy' | 'combat'
 export type TeamFilter = 'all' | 'radiant' | 'dire'
 export type PlayerSort = 'slot' | 'kills' | 'net_worth' | 'hero_damage' | 'kda'
+export type MatchLoadPhase = 'idle' | 'resolve' | 'fetch' | 'build'
 
 export type MatchDialogState =
   | { kind: 'sources' }

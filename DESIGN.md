@@ -39,6 +39,9 @@ surface for players, not an analytics product landing page.
 - Keep the Ukrainian interface and existing match, filter, sort, bookmark, export,
   source and detail flows. Use data from the existing OpenDota pipeline; do not add
   invented insights, performance claims or a decorative MVP score.
+- Match open ritual: scorebook-shaped loading skeleton + stage copy
+  (resolve → fetch → build); climax remains the score card reveal / VFX — do not
+  add a second full-page analyze spectacle or artificial post-fetch delay.
 
 Future edits should follow this direction rather than adding generic dashboard
 chrome or changing only the accent color.

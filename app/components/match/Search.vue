@@ -32,9 +32,14 @@ async function submit() {
       <p>{{ t('search.blurb') }}</p>
     </div>
     <div class="search-controls">
-      <form id="search-form" novalidate @submit.prevent="submit">
+      <form
+        id="search-form"
+        novalidate
+        :aria-busy="store.loading ? 'true' : undefined"
+        @submit.prevent="submit"
+      >
         <label for="match-input">{{ t('search.label') }}</label>
-        <div class="search-box">
+        <div class="search-box" :class="{ 'is-busy': store.loading }">
           <input
             id="match-input"
             v-model="input"
@@ -49,7 +54,7 @@ async function submit() {
             :disabled="store.loading"
           />
           <button class="primary" type="submit" :disabled="store.loading">
-            {{ t('search.submit') }}
+            {{ store.loading ? t('search.submitting') : t('search.submit') }}
           </button>
         </div>
       </form>

@@ -26,6 +26,7 @@
     "label": "ID або посилання на матч",
     "placeholder": "ID матчу або URL",
     "submit": "Відкрити матч",
+    "submitting": "Відкриваємо…",
     "help": "Підтримуються Dotabuff і OpenDota",
     "retry": "Спробувати ще раз",
     "openInSource": "Відкрити в джерелі ↗"
@@ -41,7 +42,13 @@
   "loading": {
     "title": "Завантаження матчу",
     "body": "Очікуємо відповідь OpenDota…",
-    "cancel": "Скасувати"
+    "cancel": "Скасувати",
+    "stageResolveTitle": "Розпізнаємо матч",
+    "stageResolveBody": "Читаємо ID і відкриваємо scorebook…",
+    "stageFetchTitle": "Запит до OpenDota",
+    "stageFetchBody": "Отримуємо живу статистику матчу…",
+    "stageBuildTitle": "Збираємо scorebook",
+    "stageBuildBody": "Команди, економіка та предмети…"
   },
   "format": {
     "emDash": "—",

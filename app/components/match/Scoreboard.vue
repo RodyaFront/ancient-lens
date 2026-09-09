@@ -27,6 +27,51 @@ const emit = defineEmits<{
 const { t } = useI18n()
 const store = useMatchStore()
 
+const scoreboardPending = ref(true)
+const scoreboardEnter = ref(false)
+
+watch(
+  () => store.revealDoneNonce,
+  async (nonce) => {
+    if (!nonce) {
+      return
+    }
+    if (
+      import.meta.client &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    ) {
+      scoreboardPending.value = false
+      scoreboardEnter.value = false
+      return
+    }
+    if (scoreboardPending.value) {
+      scoreboardPending.value = false
+      await nextTick()
+      scoreboardEnter.value = true
+      return
+    }
+    scoreboardEnter.value = false
+    await nextTick()
+    scoreboardEnter.value = true
+  },
+)
+
+function rowEnterDelay(player: MatchPlayer) {
+  if (!scoreboardEnter.value) {
+    return undefined
+  }
+  let index = 0
+  for (const group of groups.value) {
+    for (const entry of ordered(group.players)) {
+      if (entry === player) {
+        return `${Math.min(index, 12) * 30}ms`
+      }
+      index += 1
+    }
+  }
+  return '0ms'
+}
+
 const views = computed(() => [
   {
     id: 'overview' as ScoreboardView,
@@ -383,7 +428,16 @@ function onTabKey(event: KeyboardEvent) {
             v-for="{ player, party } in orderedRows(group.players)"
             :key="playerIndex(player)"
             class="player-row"
-            :class="{ 'has-party': !!party }"
+            :class="{
+              'has-party': !!party,
+              'scoreboard-pending': scoreboardPending,
+              'scoreboard-enter': scoreboardEnter,
+            }"
+            :style="
+              scoreboardEnter
+                ? { '--row-delay': rowEnterDelay(player) }
+                : undefined
+            "
           >
             <td>
               <div

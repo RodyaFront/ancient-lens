@@ -10,7 +10,9 @@ comparisons. Working surface — not a dashboard landing.
 ## Layout
 
 1. Compact search strip above results (secondary to the scorebook).
-2. Score card → scoreboard (sticky player column + horizontal scroll) → insights.
+2. While loading: scorebook-shaped skeleton + stage copy; then score card →
+   scoreboard (sticky player column + horizontal scroll) → insights. Score reveal
+   is the climax; table rows may stagger once after reveal.
 3. Keep player column sticky while scrolling metrics/items.
 4. Filter chips expose `aria-pressed`; view tabs use arrow keys.
 

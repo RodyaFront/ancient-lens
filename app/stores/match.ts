@@ -22,6 +22,7 @@ import type {
   ScoreboardView,
   SnapshotMeta,
   TeamFilter,
+  MatchLoadPhase,
 } from '#shared/match/types'
 
 class HttpError extends Error {
@@ -42,6 +43,7 @@ export const useMatchStore = defineStore('match', () => {
   const filter = ref<TeamFilter>('all')
   const sort = ref<PlayerSort>('slot')
   const loading = ref(false)
+  const loadPhase = ref<MatchLoadPhase>('idle')
   const error = ref<{
     title: string
     body: string
@@ -59,8 +61,12 @@ export const useMatchStore = defineStore('match', () => {
   const requestNo = ref(0)
   const revealNonce = ref(0)
   const revealWithSound = ref(false)
+  const revealDoneNonce = ref(0)
   let controller: AbortController | null = null
   let toastTimer: ReturnType<typeof setTimeout> | null = null
+  let buildPhaseTimer: ReturnType<typeof setTimeout> | null = null
+
+  const BUILD_PHASE_AFTER_MS = 400
 
   const itemMap = computed(() => {
     const map: Record<number, ItemEntry> = {}
@@ -216,7 +222,7 @@ export const useMatchStore = defineStore('match', () => {
     match.value = null
     source.value = null
     error.value = null
-    loading.value = false
+    setLoading(false)
     inputInvalid.value = false
     view.value = 'overview'
     filter.value = 'all'
@@ -245,6 +251,7 @@ export const useMatchStore = defineStore('match', () => {
       const id = parseMatchId(input)
       lastInput.value = id
       const snapshot = Boolean(options.snapshot)
+      beginLoad('resolve')
       if (isCurrentMatchRoute(id, snapshot)) {
         await bootstrapFromRoute(id, snapshot)
         return
@@ -254,6 +261,7 @@ export const useMatchStore = defineStore('match', () => {
         query: snapshot ? { snapshot: '1' } : {},
       })
     } catch (errorValue) {
+      setLoading(false)
       inputInvalid.value = true
       const message =
         errorValue instanceof ParseMatchIdError
@@ -285,8 +293,37 @@ export const useMatchStore = defineStore('match', () => {
     error.value = { title, body, id, actions }
   }
 
+  function clearBuildPhaseTimer() {
+    if (buildPhaseTimer) {
+      clearTimeout(buildPhaseTimer)
+      buildPhaseTimer = null
+    }
+  }
+
   function setLoading(value: boolean) {
     loading.value = value
+    if (!value) {
+      loadPhase.value = 'idle'
+      clearBuildPhaseTimer()
+    }
+  }
+
+  function beginLoad(phase: MatchLoadPhase) {
+    loading.value = true
+    loadPhase.value = phase
+  }
+
+  function scheduleBuildPhase(requestId: number) {
+    clearBuildPhaseTimer()
+    buildPhaseTimer = setTimeout(() => {
+      if (requestNo.value === requestId && loading.value) {
+        loadPhase.value = 'build'
+      }
+    }, BUILD_PHASE_AFTER_MS)
+  }
+
+  function markRevealDone() {
+    revealDoneNonce.value += 1
   }
 
   function cancelLoad() {
@@ -359,7 +396,9 @@ export const useMatchStore = defineStore('match', () => {
       thisController.abort()
     }, MATCH_FETCH_TIMEOUT_MS)
     error.value = null
-    setLoading(true)
+    beginLoad('resolve')
+    loadPhase.value = 'fetch'
+    scheduleBuildPhase(no)
 
     try {
       const response = await fetch(`${OPENDOTA_API}/matches/${id}`, {
@@ -392,6 +431,9 @@ export const useMatchStore = defineStore('match', () => {
         throw httpError
       }
 
+      if (no === requestNo.value) {
+        loadPhase.value = 'build'
+      }
       const next = validateMatch(data, id)
       if (no !== requestNo.value) {
         return
@@ -472,7 +514,9 @@ export const useMatchStore = defineStore('match', () => {
     const no = ++requestNo.value
     controller?.abort()
     controller = null
-    setLoading(true)
+    beginLoad('resolve')
+    loadPhase.value = 'fetch'
+    scheduleBuildPhase(no)
     error.value = null
     inputInvalid.value = false
     lastInput.value = EXAMPLE_MATCH_ID
@@ -481,6 +525,9 @@ export const useMatchStore = defineStore('match', () => {
       const response = await fetch(`/data/match-${EXAMPLE_MATCH_ID}.json`)
       if (!response.ok) {
         throw new Error(t('errors.snapshotMissing'))
+      }
+      if (no === requestNo.value) {
+        loadPhase.value = 'build'
       }
       const data = validateMatch(await response.json(), EXAMPLE_MATCH_ID)
       if (no !== requestNo.value) {
@@ -596,6 +643,7 @@ export const useMatchStore = defineStore('match', () => {
     filter,
     sort,
     loading,
+    loadPhase,
     error,
     toast,
     lastInput,
@@ -604,6 +652,7 @@ export const useMatchStore = defineStore('match', () => {
     recent,
     revealNonce,
     revealWithSound,
+    revealDoneNonce,
     radiantPlayers,
     direPlayers,
     isSaved,
@@ -613,6 +662,7 @@ export const useMatchStore = defineStore('match', () => {
     itemById,
     heroName,
     showToast,
+    markRevealDone,
     loadMatch,
     loadExample,
     cancelLoad,

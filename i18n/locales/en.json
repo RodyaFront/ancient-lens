@@ -26,6 +26,7 @@
     "label": "Match ID or link",
     "placeholder": "Match ID or URL",
     "submit": "Open match",
+    "submitting": "Opening…",
     "help": "Dotabuff and OpenDota are supported",
     "retry": "Try again",
     "openInSource": "Open in source ↗"
@@ -41,7 +42,13 @@
   "loading": {
     "title": "Loading match",
     "body": "Waiting for OpenDota…",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "stageResolveTitle": "Resolving match",
+    "stageResolveBody": "Reading the ID and opening the scorebook…",
+    "stageFetchTitle": "Fetching OpenDota",
+    "stageFetchBody": "Pulling live match statistics…",
+    "stageBuildTitle": "Building scorebook",
+    "stageBuildBody": "Assembling teams, economy, and items…"
   },
   "format": {
     "emDash": "—",
