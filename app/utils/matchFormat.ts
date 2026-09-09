@@ -1,10 +1,5 @@
 import { isNum, kda } from '#shared/match'
-import {
-  GAME_MODES,
-  LOBBY_LABELS,
-  REGIONS,
-  STEAM_CDN,
-} from '#shared/match/constants'
+import { GAME_MODES, LOBBY_LABELS, REGIONS } from '#shared/match/constants'
 import type { MatchPlayer } from '#shared/match/types'
 
 function i18n() {
@@ -121,11 +116,28 @@ export function regionLabel(region: unknown): string {
 }
 
 export function steamAssetUrl(path: string | undefined): string | null {
-  if (!path?.startsWith('/apps/dota2/')) {
+  const clean = normalizeSteamAssetPath(path)
+  if (!clean) {
     return null
   }
 
-  return `${STEAM_CDN}${path}`
+  // Same-origin proxy: Chrome (+ extensions) may enforce CSP that blocks
+  // cdn.cloudflare.steamstatic.com even when listed in img-src.
+  return `/cdn/steam${clean}`
+}
+
+/** OpenDota paths often end with a bare "?"; strip query for stable URLs. */
+export function normalizeSteamAssetPath(
+  path: string | undefined,
+): string | null {
+  if (!path?.startsWith('/apps/dota2/')) {
+    return null
+  }
+  const clean = path.split('?')[0]
+  if (!clean?.startsWith('/apps/dota2/') || clean.includes('..')) {
+    return null
+  }
+  return clean
 }
 
 /** npc_dota_hero_lone_druid → lone_druid */
@@ -146,7 +158,9 @@ export function steamHeroRenderUrl(name: string | undefined): string | null {
   if (!slug) {
     return null
   }
-  return `${STEAM_CDN}/apps/dota2/videos/dota_react/heroes/renders/${slug}.png`
+  return steamAssetUrl(
+    `/apps/dota2/videos/dota_react/heroes/renders/${slug}.png`,
+  )
 }
 
 export function initials(text: string, length = 2): string {
