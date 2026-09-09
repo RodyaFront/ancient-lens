@@ -24,8 +24,18 @@ logs
 .env.*
 !.env.example
 
+# Image gen outputs / scratch prompts
+output/
+prompts/_scratch/*
+!prompts/_scratch/.gitkeep
+
 # Tests
 coverage
 playwright-report
 test-results
 blob-report
+
+# Python
+__pycache__/
+*.py[cod]
+

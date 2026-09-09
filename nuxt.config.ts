@@ -1,4 +1,4 @@
-import tailwindcss from '@tailwindcss/vite'
+﻿import tailwindcss from '@tailwindcss/vite'
 
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
@@ -25,6 +25,11 @@ export default defineNuxtConfig({
         'lucide:layout-list',
         'lucide:coins',
         'lucide:swords',
+        'lucide:shield',
+        'lucide:footprints',
+        'lucide:timer',
+        'lucide:waves',
+        'lucide:crosshair',
         'lucide:volume-2',
         'lucide:volume-x',
       ],
@@ -44,7 +49,7 @@ export default defineNuxtConfig({
 
   app: {
     head: {
-      title: 'Ancient Lens — Dota 2 match review',
+      title: 'Ancient Lens вЂ” Dota 2 match review',
       link: [{ rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' }],
       meta: [{ name: 'theme-color', content: '#171a18' }],
     },
@@ -54,14 +59,19 @@ export default defineNuxtConfig({
     url: process.env.NUXT_PUBLIC_SITE_URL,
     name: 'Ancient Lens',
     description:
-      'Ancient Lens — Dota 2 match stats: result, players, economy, and items. OpenDota data.',
+      'Ancient Lens вЂ” Dota 2 match stats: result, players, economy, and items. OpenDota data.',
     defaultLocale: 'en',
   },
 
   i18n: {
     locales: [
       { code: 'en', language: 'en', name: 'English', file: 'en.json' },
-      { code: 'uk', language: 'uk', name: 'Українська', file: 'uk.json' },
+      {
+        code: 'uk',
+        language: 'uk',
+        name: 'РЈРєСЂР°С—РЅСЃСЊРєР°',
+        file: 'uk.json',
+      },
     ],
     defaultLocale: 'en',
     strategy: 'prefix_except_default',
@@ -111,7 +121,7 @@ export default defineNuxtConfig({
   nitro: {
     // On Workers Builds, wrangler.toml would otherwise pick cloudflare-module
     // and `wrangler pages deploy` fails on reserved ASSETS. Do not hardcode
-    // static — that removes the Node server and breaks @nuxt/test-utils e2e.
+    // static вЂ” that removes the Node server and breaks @nuxt/test-utils e2e.
     preset:
       process.env.NITRO_PRESET ||
       (process.env.WORKERS_CI === '1' || process.env.CF_PAGES === '1'

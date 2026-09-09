@@ -10,6 +10,7 @@ const props = defineProps<{
 }>()
 
 const { t } = useI18n()
+const teleportTo = useFloatTeleportTo()
 
 const OFFSET_REM = 0.5
 
@@ -25,7 +26,7 @@ const style = computed(() => {
 </script>
 
 <template>
-  <Teleport to="body">
+  <Teleport :to="teleportTo">
     <div
       class="app-cursor-progress"
       role="status"

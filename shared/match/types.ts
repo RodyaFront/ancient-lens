@@ -66,6 +66,76 @@ export interface HeroEntry {
   localized_name: string
   img?: string
   icon?: string
+  /** OpenDota: `str` | `agi` | `int` | `all` (universal). */
+  primary_attr?: string
+  attack_type?: string
+  roles?: string[]
+  base_str?: number
+  base_agi?: number
+  base_int?: number
+  str_gain?: number
+  agi_gain?: number
+  int_gain?: number
+  move_speed?: number
+  base_armor?: number
+  base_health?: number
+  base_health_regen?: number
+  base_mana?: number
+  base_mana_regen?: number
+  base_attack_min?: number
+  base_attack_max?: number
+  /** OpenDota BAT / attack interval (seconds). Prefer over `base_attack_time`. */
+  attack_rate?: number
+  attack_range?: number
+  /** Base magic resistance percent (typically 25). */
+  base_mr?: number
+}
+
+/** Live pub meta from OpenDota `/heroStats` (not in static heroes.json). */
+export interface HeroMetaEntry {
+  id: number
+  pub_pick: number
+  pub_win: number
+}
+
+export interface HeroMetaSnapshot {
+  fetched_at: string
+  byId: Record<string, HeroMetaEntry>
+}
+
+/** UI-agnostic profile DTO for hover, dialog, draft, etc. */
+export interface HeroProfile {
+  id: number
+  name: string
+  img?: string
+  icon?: string
+  primaryAttr?: string
+  /** i18n key suffix under `heroHover.attr.*` / `heroHover.primary.*`. */
+  primaryAttrKey?: 'str' | 'agi' | 'int' | 'all'
+  attackType: string | null
+  attrs: {
+    str: { base: number; gain: number }
+    agi: { base: number; gain: number }
+    int: { base: number; gain: number }
+  } | null
+  moveSpeed: number | null
+  /** Derived armor at base stats (base_armor + agi * ARMOR_PER_AGI). */
+  armor: number | null
+  damage: { min: number; max: number } | null
+  attackRate: number | null
+  attackRange: number | null
+  magicResist: number | null
+  health: { value: number; regen: number } | null
+  mana: { value: number; regen: number } | null
+  /** Role tags only (attack type is separate). */
+  roles: string[]
+  matchLevel: number | null
+  meta: {
+    popularityRank: number | null
+    winRate: number | null
+    pubPick: number
+    pubWin: number
+  } | null
 }
 
 export interface ItemAttrib {
@@ -93,6 +163,8 @@ export interface ItemEntry {
   attrib?: ItemAttrib[]
   abilities?: ItemAbility[]
   mc?: number
+  /** Health cost when present (e.g. Soul Ring). */
+  hc?: number
   cd?: number
   lore?: string
   notes?: string

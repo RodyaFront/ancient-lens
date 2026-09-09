@@ -80,11 +80,47 @@
     "affects": "Діє: {value}",
     "active": "Активне: {name}",
     "passive": "Пасивне: {name}",
+    "use": "Використання: {name}",
+    "toggle": "Перемикання: {name}",
+    "upgrade": "Покращення: {name}",
     "costAria": "{cost} золота",
     "mana": "Мана {n}",
+    "health": "Здоровʼя {n}",
     "cooldown": "Перезарядка {n}",
     "ringAria": "Завантаження деталей предмета",
     "tier": "Артефакт {n}-го розряду"
+  },
+  "heroHover": {
+    "primary": {
+      "str": "Сила",
+      "agi": "Спритність",
+      "int": "Інтелект",
+      "all": "Універсал"
+    },
+    "attr": {
+      "str": "СИЛ",
+      "agi": "СПР",
+      "int": "ІНТ"
+    },
+    "attack": {
+      "melee": "Ближній бій",
+      "ranged": "Далекий бій"
+    },
+    "level": "Рівень {n}",
+    "moveSpeed": "Швидкість",
+    "armor": "Броня",
+    "damage": "Урон",
+    "attackRate": "Швидкість атаки",
+    "magicResist": "Опір магії",
+    "attackRange": "Дальність",
+    "health": "Здоровʼя",
+    "mana": "Мана",
+    "healthDetail": "Здоровʼя {n}, реген {regen}",
+    "manaDetail": "Мана {n}, реген {regen}",
+    "popularity": "Популярність",
+    "winRate": "Перемоги",
+    "meta": "{rank}-е місце · {rate} перемог",
+    "winRateOnly": "{rate} перемог"
   },
   "parse": {
     "generic": "Вставте числовий ID або посилання на матч Dotabuff / OpenDota.",
@@ -198,7 +234,7 @@
     "tipBuildings": "Шкода ворожим будівлям",
     "tipHealing": "Лікування союзних героїв",
     "tipParticipation": "Частка командних вбивств за участю гравця",
-    "tipItems": "Фінальний інвентар, рюкзак і нейтральний предмет",
+    "tipItems": "Фінальний інвентар, рюкзак, лісовий предмет, зачарування та Aghanim",
     "openStats": "Відкрити статистику: {name}",
     "details": "Деталі {name}",
     "playersKills": "{count} гравців · {kills} вбивств",
@@ -251,13 +287,16 @@
     "savedEmpty": "Поки що немає збережених матчів. Відкрийте матч і натисніть значок закладки поруч із його номером.",
     "inventoryMain": "Основний інвентар",
     "inventoryBackpack": "Рюкзак",
-    "inventoryNeutral": "Нейтральні слоти",
-    "aghanimsLine": "Aghanim’s Scepter: {scepter} · Shard: {shard}",
+    "inventoryNeutral": "Лісовий предмет і зачарування",
+    "inventoryAghanims": "Aghanim’s Scepter і Shard",
+    "aghanimScepter": "Aghanim’s Scepter",
+    "aghanimShard": "Aghanim’s Shard",
+    "aghanimMissing": "{name}: немає",
     "opendotaProfile": "Профіль в OpenDota ↗",
     "noPublicId": "Публічний ID гравця не надано джерелом.",
     "itemId": "ID предмета:",
     "itemBody": "Предмет у фінальному інвентарі. Назва та іконка — з довідника OpenDota.",
-    "itemHint": "Клацніть ім’я гравця в таблиці, щоб переглянути основні слоти, рюкзак та нейтральні предмети."
+    "itemHint": "Клацніть ім’я гравця в таблиці, щоб переглянути основні слоти, рюкзак, лісові предмети та Aghanim."
   },
   "notes": {
     "partialPlayers": "OpenDota надав {count} із 10 гравців. Командні підсумки охоплюють тільки доступних учасників.",

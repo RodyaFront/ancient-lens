@@ -9,6 +9,7 @@ const {
   stickySession,
   dismissSticky,
 } = useItemPreview()
+const teleportTo = useFloatTeleportTo()
 
 watch(
   stickySession,
@@ -66,7 +67,7 @@ watch(
     :y="ringCursor.y"
     :duration-ms="ringMs"
   />
-  <Teleport to="body">
+  <Teleport :to="teleportTo">
     <TransitionGroup
       :name="UI_RISE_TRANSITION"
       tag="div"
@@ -74,7 +75,7 @@ watch(
     >
       <MatchItemHoverCard
         v-for="card in openCards"
-        :key="`${card.sticky ? 'pin' : 'hover'}-${card.itemId}`"
+        :key="card.itemId"
         :item-id="card.itemId"
         :trigger-el="card.triggerEl"
         :sticky="card.sticky"

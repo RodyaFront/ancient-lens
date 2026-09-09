@@ -7,6 +7,7 @@ import {
   RECENT_MATCHES_KEY,
   SAVED_MATCHES_KEY,
 } from '#shared/match/constants'
+import { buildHeroProfile } from '#shared/match/heroCatalog'
 import { parseMatchId, ParseMatchIdError } from '#shared/match/parseMatchId'
 import { upsertRecentMatch } from '#shared/match/recent'
 import { radiant, validateMatch, ValidateMatchError } from '#shared/match/stats'
@@ -213,6 +214,16 @@ export const useMatchStore = defineStore('match', () => {
       heroById(player.hero_id)?.localized_name ||
       t('format.heroFallback', { id: player.hero_id ?? '?' })
     )
+  }
+
+  function heroProfile(id: number | undefined, matchLevel?: number | null) {
+    const entry = heroById(id)
+    if (!entry) {
+      return null
+    }
+    const { metaById, snapshot } = useHeroMeta()
+    const meta = metaById(id)
+    return buildHeroProfile(entry, meta, matchLevel, snapshot.value?.byId)
   }
 
   function prepareHome() {
@@ -658,6 +669,7 @@ export const useMatchStore = defineStore('match', () => {
     heroById,
     itemById,
     heroName,
+    heroProfile,
     showToast,
     loadMatch,
     loadExample,

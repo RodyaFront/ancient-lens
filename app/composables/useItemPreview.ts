@@ -1,6 +1,9 @@
-const QUIET_MS = 150
-const RING_MS = 300
-const REDUCED_QUIET_MS = 450
+﻿import {
+  PREVIEW_LEAVE_GRACE_MS,
+  PREVIEW_QUIET_MS,
+  PREVIEW_REDUCED_QUIET_MS,
+  PREVIEW_RING_MS,
+} from '~/utils/previewTiming'
 
 export type ItemPreviewPhase = 'quiet' | 'ring' | 'open'
 
@@ -20,8 +23,6 @@ let quietTimer: ReturnType<typeof setTimeout> | null = null
 let ringTimer: ReturnType<typeof setTimeout> | null = null
 let leaveTimer: ReturnType<typeof setTimeout> | null = null
 let hoverToken = 0
-
-const LEAVE_GRACE_MS = 120
 
 function clearHoverTimers() {
   if (quietTimer) {
@@ -116,7 +117,7 @@ export function useItemPreview() {
       if (hoverSession.value?.itemId === forId) {
         clearHover()
       }
-    }, LEAVE_GRACE_MS)
+    }, PREVIEW_LEAVE_GRACE_MS)
   }
 
   /** Keep hover open while the pointer moves onto the tip (for scroll). */
@@ -149,7 +150,7 @@ export function useItemPreview() {
     }
 
     const reduced = prefersReducedMotion()
-    const quietMs = reduced ? REDUCED_QUIET_MS : QUIET_MS
+    const quietMs = reduced ? PREVIEW_REDUCED_QUIET_MS : PREVIEW_QUIET_MS
 
     quietTimer = setTimeout(() => {
       if (run !== hoverToken) {
@@ -165,7 +166,7 @@ export function useItemPreview() {
           return
         }
         patchHover({ phase: 'open' })
-      }, RING_MS)
+      }, PREVIEW_RING_MS)
     }, quietMs)
   }
 
@@ -178,9 +179,7 @@ export function useItemPreview() {
   }
 
   function pin(id: number, el: HTMLElement) {
-    if (hoverSession.value?.itemId === id) {
-      clearHover()
-    }
+    // Promote open hover → sticky in place so TransitionGroup keeps the same card.
     stickySession.value = {
       itemId: id,
       triggerEl: el,
@@ -188,6 +187,12 @@ export function useItemPreview() {
       sticky: true,
       cursorX: 0,
       cursorY: 0,
+    }
+    if (hoverSession.value?.itemId === id) {
+      hoverToken += 1
+      clearHoverTimers()
+      clearLeaveTimer()
+      hoverSession.value = null
     }
   }
 
@@ -209,7 +214,7 @@ export function useItemPreview() {
     openCards,
     showRing,
     ringCursor,
-    ringMs: RING_MS,
+    ringMs: PREVIEW_RING_MS,
     start,
     move,
     leave,

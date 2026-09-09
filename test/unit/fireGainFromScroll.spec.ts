@@ -3,7 +3,17 @@ import {
   FIRE_GAIN_MAX,
   fireGainFromScroll,
   firePositionFromElement,
+  isAudioOutputSilenced,
 } from '../../app/composables/useScoreAudio'
+
+describe('isAudioOutputSilenced', () => {
+  it('silences when the user muted or the tab is hidden', () => {
+    expect(isAudioOutputSilenced(false, false)).toBe(false)
+    expect(isAudioOutputSilenced(true, false)).toBe(true)
+    expect(isAudioOutputSilenced(false, true)).toBe(true)
+    expect(isAudioOutputSilenced(true, true)).toBe(true)
+  })
+})
 
 describe('fireGainFromScroll', () => {
   it('is at peak at the top of the page', () => {
