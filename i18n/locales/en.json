@@ -197,10 +197,14 @@
     "metaMode": "Mode",
     "metaStart": "Started",
     "metaRegion": "Region",
-    "metaStats": "Stats"
+    "metaStats": "Stats",
+    "mvpStamp": "MVP",
+    "mvpAria": "Match MVP: {player} ({hero})",
+    "mvpNw": "NW",
+    "mvpKdaAria": "KDA {kills} / {deaths} / {assists}"
   },
   "scoreboard": {
-    "tabsAria": "Stat view",
+    "tabsAria": "Stat column groups",
     "filterAria": "Team filter",
     "tableAria": "Player statistics",
     "overview": "Overview",

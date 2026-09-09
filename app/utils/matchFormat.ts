@@ -128,6 +128,27 @@ export function steamAssetUrl(path: string | undefined): string | null {
   return `${STEAM_CDN}${path}`
 }
 
+/** npc_dota_hero_lone_druid → lone_druid */
+export function heroSteamSlug(name: string | undefined): string | null {
+  if (!name?.startsWith('npc_dota_hero_')) {
+    return null
+  }
+  const slug = name.slice('npc_dota_hero_'.length)
+  return slug || null
+}
+
+/**
+ * Official HD hero render (dota2.com), ~1440² transparent PNG.
+ * Falls back to null when the hero internal name is missing.
+ */
+export function steamHeroRenderUrl(name: string | undefined): string | null {
+  const slug = heroSteamSlug(name)
+  if (!slug) {
+    return null
+  }
+  return `${STEAM_CDN}/apps/dota2/videos/dota_react/heroes/renders/${slug}.png`
+}
+
 export function initials(text: string, length = 2): string {
   return text.slice(0, length).toUpperCase()
 }

@@ -197,10 +197,14 @@
     "metaMode": "Режим",
     "metaStart": "Початок",
     "metaRegion": "Регіон",
-    "metaStats": "Статистика"
+    "metaStats": "Статистика",
+    "mvpStamp": "MVP",
+    "mvpAria": "MVP матчу: {player} ({hero})",
+    "mvpNw": "NW",
+    "mvpKdaAria": "KDA {kills} / {deaths} / {assists}"
   },
   "scoreboard": {
-    "tabsAria": "Тип статистики",
+    "tabsAria": "Групи колонок статистики",
     "filterAria": "Фільтр команди",
     "tableAria": "Статистика гравців",
     "overview": "Огляд",

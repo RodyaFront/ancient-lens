@@ -46,7 +46,9 @@ surface for players, not an analytics product landing page.
   and retain visible keyboard focus, native dialog behavior and arrow-key tabs.
 - Keep the Ukrainian interface and existing match, filter, sort, bookmark, export,
   source and detail flows. Use data from the existing OpenDota pipeline; do not add
-  invented insights, performance claims or a decorative MVP score.
+  invented insights or performance claims. A single Match MVP panel beside the score
+  banner (winning team, composite from real match fields) is allowed — not contenders,
+  share cards, or decorative MVP widgets elsewhere.
 - Match open ritual: scorebook-shaped loading skeleton + stage copy
   (resolve → fetch → build); climax remains the score card reveal / VFX — do not
   add a second full-page analyze spectacle or artificial post-fetch delay.
