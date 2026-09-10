@@ -91,27 +91,28 @@ Do **not** treat as Ancient Lens parity goals unless product direction changes:
 
 1. ~~Header column tooltips~~ (done)
 2. ~~Item hover cards on `MatchItemSlot`~~ (surface B done; A notes/recipe later)
-3. Hero portrait hover ← **next**
-4. Draft strip
+3. ~~Hero portrait hover~~ (done)
+4. Draft strip ← **next P1**
 5. Team totals row
 6. Advantage chart (XP/Gold from OpenDota)
 7. Towers & barracks
-8. Ability builds + ability/talent tooltips
-9. Parse-limited extras when data exists
+8. Ability builds + ability/talent tooltips (then Ability/Talent hover from P0)
+9. Parse-state messaging + parse-limited extras when data exists
 10. Item hover surface A (notes + recipe tree / expand)
 
 ---
 
 ## Progress log
 
-| Date       | Note                                                                                                                                                                                                                                                                        |
-| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-09-09 | Inventory captured; backlog created                                                                                                                                                                                                                                         |
-| 2026-09-09 | Best-stat badge + tooltip on value+star shipped                                                                                                                                                                                                                             |
-| 2026-09-09 | Item hover patterns: split surface A (web/encyclopedia) vs B (in-game + ALT) in `docs/item-hover-patterns.md`                                                                                                                                                               |
-| 2026-09-09 | Item hover card (surface B) + armed cursor ring; `npm run sync:items` enriches `public/data/items.json`                                                                                                                                                                     |
-| 2026-09-09 | **Migrated (Dotabuff P0):** item hover pin + rise motion (`ui-rise` / `AppFloatRoot`); header tooltips already done. **AL polish (not Dotabuff):** score whoosh + ambient fire (scroll/HRTF/mute); embers hearth; linear coal fade; removed Replay + OpenDota topline label |
-| 2026-09-09 | **Layer 1 shipped:** hero catalog (`sync:heroes`, `buildHeroProfile`, meta via `/heroStats`). **Layer 2 UI removed** for redesign (no Dotabuff visual clone).                                                                                                               |
-| 2026-09-09 | **Hero portrait hover (Layer 2):** scorebook tip + attr icons; pin/armed hover parity with items; meta fail-soft via `useHeroMeta`.                                                                                                                                         |
+| Date       | Note                                                                                                                                                                                                                                                                             |
+| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-09-09 | Inventory captured; backlog created                                                                                                                                                                                                                                              |
+| 2026-09-09 | Best-stat badge + tooltip on value+star shipped                                                                                                                                                                                                                                  |
+| 2026-09-09 | Item hover patterns: split surface A (web/encyclopedia) vs B (in-game + ALT) in `docs/item-hover-patterns.md`                                                                                                                                                                    |
+| 2026-09-09 | Item hover card (surface B) + armed cursor ring; `npm run sync:items` enriches `public/data/items.json`                                                                                                                                                                          |
+| 2026-09-09 | **Migrated (Dotabuff P0):** item hover pin + rise motion (`ui-rise` / `AppFloatRoot`); header tooltips already done. **AL polish (not Dotabuff):** score whoosh + ambient fire (scroll/HRTF/mute); embers hearth; linear coal fade; removed Replay + OpenDota topline label      |
+| 2026-09-09 | **Layer 1 shipped:** hero catalog (`sync:heroes`, `buildHeroProfile`, meta via `/heroStats`). **Layer 2 UI removed** for redesign (no Dotabuff visual clone).                                                                                                                    |
+| 2026-09-09 | **Hero portrait hover (Layer 2):** scorebook tip + attr icons; pin/armed hover parity with items; meta fail-soft via `useHeroMeta`.                                                                                                                                              |
+| 2026-09-10 | **P0 hover layer mostly done** (item + hero + header tips). Remaining P0: ability/talent hovers (blocked on builds). **Next resume:** P1 draft strip. Unrelated later work (MVP panel, Steam CDN proxy, SEO hubs) is **not** Dotabuff parity — do not confuse with this backlog. |
 
 Update this table when a chunk of work merges or is clearly done.

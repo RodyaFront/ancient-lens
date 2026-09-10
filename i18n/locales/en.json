@@ -417,18 +417,22 @@
     "back": "All heroes"
   },
   "matchesPage": {
-    "title": "Recent public matches",
-    "description": "Recent public Dota 2 matches for scorebook review on Ancient Lens.",
-    "lead": "Anonymous public games from OpenDota. Open any row to load the Ancient Lens scorebook.",
+    "title": "Recent matches",
+    "description": "Recent public Dota 2 matches — open any row in the Ancient Lens scorebook.",
+    "lead": "Live public games from OpenDota. Pick a match to open the scorebook.",
     "loading": "Loading public matches…",
     "error": "Could not load public matches. Try again later.",
     "retry": "Retry",
+    "refresh": "Refresh",
+    "empty": "No completed public matches in this batch. Try refresh.",
     "colId": "Match",
-    "colScore": "Result",
+    "colMode": "Mode",
+    "colResult": "Result",
     "colDuration": "Duration",
-    "colMmr": "Avg MMR",
-    "open": "Open",
-    "examplesHeading": "Stable examples"
+    "colRadiant": "Radiant",
+    "colDire": "Dire",
+    "radiantWin": "Radiant Victory",
+    "direWin": "Dire Victory"
   },
   "aboutPage": {
     "title": "About Ancient Lens",

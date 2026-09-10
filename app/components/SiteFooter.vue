@@ -9,7 +9,7 @@ const localePath = useLocalePath()
 const links = computed(() => [
   {
     to: localePath({ name: 'guides-how-to-read-a-dota-2-match' }),
-    label: t('nav.guides'),
+    label: t('hubs.linkReadMatch'),
   },
   { to: localePath({ name: 'heroes' }), label: t('nav.heroes') },
   { to: localePath({ name: 'matches' }), label: t('nav.matches') },

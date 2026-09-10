@@ -32,7 +32,7 @@
     "blurb": "Результат, паті, внесок і економіка в tournament scorebook.",
     "embeddedTitle": "Відкрити матч",
     "embeddedBlurb": "Вставте ID матчу або посилання Dotabuff / OpenDota.",
-    "label": "ID або посилання на матч",
+    "label": "ID матчу або посилання",
     "placeholder": "ID матчу або URL",
     "submit": "Відкрити матч",
     "submitting": "Відкриваємо…",
@@ -417,18 +417,22 @@
     "back": "Усі герої"
   },
   "matchesPage": {
-    "title": "Недавні публічні матчі",
-    "description": "Недавні публічні матчі Dota 2 для розбору в scorebook Ancient Lens.",
-    "lead": "Анонімні публічні ігри з OpenDota. Відкрийте рядок, щоб завантажити scorebook Ancient Lens.",
+    "title": "Недавні матчі",
+    "description": "Недавні публічні матчі Dota 2 — відкрийте рядок у scorebook Ancient Lens.",
+    "lead": "Живі публічні ігри з OpenDota. Оберіть матч, щоб відкрити scorebook.",
     "loading": "Завантаження публічних матчів…",
     "error": "Не вдалося завантажити публічні матчі. Спробуйте пізніше.",
     "retry": "Повторити",
+    "refresh": "Оновити",
+    "empty": "У цій партії немає завершених публічних матчів. Спробуйте оновити.",
     "colId": "Матч",
-    "colScore": "Результат",
+    "colMode": "Режим",
+    "colResult": "Результат",
     "colDuration": "Тривалість",
-    "colMmr": "Сер. MMR",
-    "open": "Відкрити",
-    "examplesHeading": "Стабільні приклади"
+    "colRadiant": "Radiant",
+    "colDire": "Dire",
+    "radiantWin": "Перемога Radiant",
+    "direWin": "Перемога Dire"
   },
   "aboutPage": {
     "title": "Про Ancient Lens",
