@@ -31,27 +31,32 @@ export function toRoman(n: number): string {
 /**
  * Marks players who share a `party_id` with at least one other player.
  * Solo queues get `null`. Ordinals follow first appearance in `players` order.
+ *
+ * OpenDota also stamps the whole lobby as one `party_id` (often `0`) with
+ * `party_size` 10 in practice/custom games. That is not a queue party — skip
+ * groups of the entire match, and groups larger than a Dota party (5).
  */
 export function buildPartyMarks(
   players: MatchPlayer[],
 ): Array<PartyMark | null> {
   const counts = new Map<number, number>()
   for (const player of players) {
-    const id = player.party_id
-    if (typeof id !== 'number' || !Number.isFinite(id)) {
+    const id = finitePartyId(player.party_id)
+    if (id === null) {
       continue
     }
     counts.set(id, (counts.get(id) ?? 0) + 1)
   }
 
+  const matchSize = players.length
   const ordinalByPartyId = new Map<number, number>()
   let next = 1
   for (const player of players) {
-    const id = player.party_id
-    if (typeof id !== 'number' || !Number.isFinite(id)) {
+    const id = finitePartyId(player.party_id)
+    if (id === null) {
       continue
     }
-    if ((counts.get(id) ?? 0) < 2) {
+    if (!isScoreboardPartySize(counts.get(id) ?? 0, matchSize)) {
       continue
     }
     if (!ordinalByPartyId.has(id)) {
@@ -60,8 +65,8 @@ export function buildPartyMarks(
   }
 
   return players.map((player) => {
-    const id = player.party_id
-    if (typeof id !== 'number' || !Number.isFinite(id)) {
+    const id = finitePartyId(player.party_id)
+    if (id === null) {
       return null
     }
     const ordinal = ordinalByPartyId.get(id)
@@ -75,4 +80,13 @@ export function buildPartyMarks(
       partyId: id,
     }
   })
+}
+
+function finitePartyId(id: unknown): number | null {
+  return typeof id === 'number' && Number.isFinite(id) ? id : null
+}
+
+/** Queue parties are 2–5. A group that is the whole lobby is not a party. */
+function isScoreboardPartySize(size: number, matchSize: number): boolean {
+  return size >= 2 && size <= 5 && size < matchSize
 }
