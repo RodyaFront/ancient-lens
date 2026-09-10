@@ -125,10 +125,42 @@ Oracle Always Free / Docker / Nginx — только если Pages принци
 
 ---
 
+## SEO / Google
+
+After each production deploy that touches `NUXT_*SITE_URL` or the Worker shell:
+
+1. Confirm generate baked the apex host:
+   ```bash
+   curl -s https://ancientlens.info/ | findstr /i "canonical duckdns ancientlens.info"
+   curl -s https://ancientlens.info/robots.txt
+   curl -sL https://ancientlens.info/sitemap_index.xml
+   ```
+   Canonical, sitemap `<loc>`, and robots `Sitemap:` must use `https://ancientlens.info` (not duckdns).
+2. Match HTML for bots (Worker enrichment):
+   ```bash
+   curl -s -H "Sec-Fetch-Mode: navigate" -H "Accept: text/html" "https://ancientlens.info/match/8990366825" | findstr /i "seo-match-summary Match #"
+   ```
+3. Unknown path → real 404 (not empty 200 shell).
+4. Google Search Console: property `https://ancientlens.info` → submit `https://ancientlens.info/sitemap_index.xml` → URL Inspection on a sample match.
+5. **www → apex:** Cloudflare Dashboard → Rules → Redirect Rules → `www.ancientlens.info/*` 301 to `https://ancientlens.info/${1}` (or Dynamic redirect). Keep Custom Domain on both hostnames or only apex + proxied www DNS as in the domain section above.
+
+CI (`.github/workflows/ci.yml`) and Workers Builds must set:
+
+```
+NUXT_PUBLIC_SITE_URL=https://ancientlens.info
+NUXT_SITE_URL=https://ancientlens.info
+```
+
+Default share image: `/og-default.png`.
+
+---
+
 ## Проверки после выкладки
 
 - [ ] `https://ancientlens.info` открывается (или пока workers.dev URL из билда).
 - [ ] Snapshot и live ID с OpenDota.
-- [ ] Иконки Steam CDN, VFX счёта, fire только на стороне победителя.
+- [ ] Иконки Steam CDN (`/cdn/steam/...`), VFX счёта, fire только на стороне победителя.
 - [ ] `prefers-reduced-motion`: без WebGL.
-- [ ] Canonical / sitemap смотрят на `https://ancientlens.info`, не на localhost.
+- [ ] Canonical / sitemap / robots смотрят на `https://ancientlens.info`, не на duckdns/localhost.
+- [ ] `/match/{id}` HTML содержит title со счётом и блок `#seo-match-summary`.
+- [ ] Несуществующий путь отдаёт HTTP 404.

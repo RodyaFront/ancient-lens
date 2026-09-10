@@ -52,7 +52,17 @@ export default defineNuxtConfig({
       // Plain ASCII separators; Nuxt SEO appends `| Ancient Lens`.
       title: 'Dota 2 match review',
       link: [{ rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' }],
-      meta: [{ name: 'theme-color', content: '#171a18' }],
+      meta: [
+        { name: 'theme-color', content: '#171a18' },
+        {
+          property: 'og:image',
+          content: 'https://ancientlens.info/og-default.png',
+        },
+        {
+          name: 'twitter:image',
+          content: 'https://ancientlens.info/og-default.png',
+        },
+      ],
     },
   },
 

@@ -1,20 +1,67 @@
 <script setup lang="ts">
-import { isNum } from '#shared/match'
+import { buildMatchSeoCopy, isNum, type SeoLocale } from '#shared/match'
 
 const route = useRoute()
 const store = useMatchStore()
 const { t, locale } = useI18n()
+const siteConfig = useSiteConfig()
 
 const matchId = computed(() => String(route.params.id || ''))
 
 const dateLocale = computed(() => (locale.value === 'uk' ? 'uk-UA' : 'en-US'))
 
+const seoLocale = computed<SeoLocale>(() =>
+  locale.value === 'uk' ? 'uk' : 'en',
+)
+
+const seoCopy = computed(() => {
+  const heroes: Record<string, { localized_name?: string }> = {}
+  for (const player of store.match?.players ?? []) {
+    if (!isNum(player.hero_id)) {
+      continue
+    }
+    const entry = store.heroById(player.hero_id)
+    if (entry) {
+      heroes[String(player.hero_id)] = entry
+    }
+  }
+  return buildMatchSeoCopy(store.match, {
+    matchId: matchId.value || '0',
+    locale: seoLocale.value,
+    heroes,
+  })
+})
+
+const ogImage = computed(() => {
+  const base = String(siteConfig.url || 'https://ancientlens.info').replace(
+    /\/$/,
+    '',
+  )
+  return `${base}/og-default.png`
+})
+
 useSeoMeta({
   title: () =>
-    matchId.value
-      ? t('seo.matchTitle', { id: matchId.value })
-      : t('seo.matchTitleFallback'),
-  description: () => t('seo.matchDescription'),
+    store.match
+      ? seoCopy.value.title
+      : matchId.value
+        ? t('seo.matchTitle', { id: matchId.value })
+        : t('seo.matchTitleFallback'),
+  description: () =>
+    store.match ? seoCopy.value.description : t('seo.matchDescription'),
+  ogTitle: () =>
+    store.match
+      ? seoCopy.value.title
+      : matchId.value
+        ? t('seo.matchTitle', { id: matchId.value })
+        : t('seo.matchTitleFallback'),
+  ogDescription: () =>
+    store.match ? seoCopy.value.description : t('seo.matchDescription'),
+  ogImage: () => ogImage.value,
+  twitterCard: 'summary_large_image',
+  twitterImage: () => ogImage.value,
+  robots: () =>
+    route.query.snapshot === '1' ? 'noindex, nofollow' : 'index, follow',
 })
 
 async function syncRoute() {
