@@ -36,6 +36,12 @@ export {
   ValidateMatchError,
 } from './stats'
 export { matchMvpScore, pickMatchMvp } from './mvp'
+export {
+  buildMatchSeoCopy,
+  formatPlayerSeoLine,
+  matchAbsoluteUrl,
+} from './seoMeta'
+export type { MatchSeoCopy, SeoLocale } from './seoMeta'
 export type {
   BestStatKey,
   MaxStatKey,
