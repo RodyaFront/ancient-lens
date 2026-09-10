@@ -1,5 +1,6 @@
 import { isNum, kda } from '#shared/match'
 import { GAME_MODES, LOBBY_LABELS, REGIONS } from '#shared/match/constants'
+import { clusterRegionId } from '#shared/match/publicMatches'
 import type { MatchPlayer } from '#shared/match/types'
 
 function i18n() {
@@ -59,6 +60,14 @@ export function formatRelativeOpened(openedAt: unknown): string {
   )
 }
 
+/** OpenDota unix seconds → relative label (e.g. publicMatches.start_time). */
+export function formatRelativeUnix(seconds: unknown): string {
+  if (!isNum(seconds)) {
+    return ''
+  }
+  return formatRelativeOpened(seconds * 1000)
+}
+
 export function playerDisplayName(player: MatchPlayer): string {
   return (
     player.personaname ||
@@ -113,6 +122,13 @@ export function regionLabel(region: unknown): string {
   }
 
   return REGIONS[region] ?? i18n().t('format.notProvided')
+}
+
+export function clusterLabel(cluster: unknown): string {
+  const regionId = clusterRegionId(cluster)
+  return regionId == null
+    ? i18n().t('format.notProvided')
+    : regionLabel(regionId)
 }
 
 export function steamAssetUrl(path: string | undefined): string | null {

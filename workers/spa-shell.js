@@ -1,10 +1,11 @@
 /**
  * Document fallback for non-prerendered routes (e.g. /match/:id), plus
- * same-origin Steam CDN proxy for hero/item art (CSP-safe).
+ * same-origin Steam CDN proxy for hero/item art (CSP-safe), and a cached
+ * `/api/public-matches` proxy (avoids browser OpenDota 429 on /matches).
  * Match documents are enriched with OpenDota meta + crawlable summary.
  *
  * Cloudflare asset binding serves static files first; this Worker handles
- * misses (deep links, /cdn/steam, unknown paths).
+ * misses (deep links, /cdn/steam, /api/public-matches, unknown paths).
  *
  * @param {Request} request
  * @param {{ ASSETS: { fetch: typeof fetch } }} env
@@ -21,8 +22,12 @@ import {
 
 const STEAM_CDN = 'https://cdn.cloudflare.steamstatic.com'
 const OPENDOTA_MATCH = 'https://api.opendota.com/api/matches'
+const OPENDOTA_PUBLIC_MATCHES = 'https://api.opendota.com/api/publicMatches'
 const MATCH_FETCH_MS = 8_000
+const PUBLIC_MATCHES_FETCH_MS = 10_000
 const CACHE_OK_SECONDS = 3_600
+const PUBLIC_MATCHES_CACHE_SECONDS = 90
+const PUBLIC_MATCHES_LIMIT = 40
 const SITE_ORIGIN_FALLBACK = 'https://ancientlens.info'
 
 export default {
@@ -31,6 +36,13 @@ export default {
 
     if (url.pathname.startsWith('/cdn/steam/')) {
       return proxySteamAsset(url, request)
+    }
+
+    if (
+      url.pathname === '/api/public-matches' ||
+      url.pathname === '/api/public-matches/'
+    ) {
+      return servePublicMatches(request, ctx, url)
     }
 
     if (!isDocumentRequest(request)) {
@@ -142,6 +154,116 @@ async function serveMatchDocument(request, env, ctx, url, matchRoute) {
   }
 
   return response
+}
+
+/**
+ * Cached OpenDota publicMatches list for /matches page (avoids browser 429).
+ * @param {Request} request
+ * @param {ExecutionContext | undefined} ctx
+ * @param {URL} url
+ */
+async function servePublicMatches(request, ctx, url) {
+  if (request.method !== 'GET' && request.method !== 'HEAD') {
+    return new Response('Method Not Allowed', { status: 405 })
+  }
+
+  const origin = siteOrigin(url)
+  const cacheKey = new Request(`${origin}/__api-cache/public-matches`, {
+    method: 'GET',
+  })
+  const cache = typeof caches !== 'undefined' ? caches.default : null
+  if (cache) {
+    const hit = await cache.match(cacheKey)
+    if (hit) {
+      const headers = new Headers(hit.headers)
+      headers.set('X-Public-Matches-Cache', 'HIT')
+      return new Response(hit.body, { status: hit.status, headers })
+    }
+  }
+
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), PUBLIC_MATCHES_FETCH_MS)
+  try {
+    const upstream = await fetch(OPENDOTA_PUBLIC_MATCHES, {
+      signal: controller.signal,
+      headers: { Accept: 'application/json' },
+    })
+    if (!upstream.ok) {
+      if (cache) {
+        const stale = await cache.match(cacheKey)
+        if (stale) {
+          const headers = new Headers(stale.headers)
+          headers.set('X-Public-Matches-Cache', 'STALE')
+          return new Response(stale.body, { status: 200, headers })
+        }
+      }
+      return new Response(
+        JSON.stringify({
+          error: upstream.status === 429 ? 'rate_limit' : 'upstream_error',
+        }),
+        {
+          status: upstream.status === 429 ? 429 : 502,
+          headers: { 'Content-Type': 'application/json' },
+        },
+      )
+    }
+
+    const list = await upstream.json()
+    const rows = Array.isArray(list)
+      ? list.filter(isUsablePublicMatchRow).slice(0, PUBLIC_MATCHES_LIMIT)
+      : []
+    const body = JSON.stringify(rows)
+    const headers = new Headers({
+      'Content-Type': 'application/json; charset=utf-8',
+      'Cache-Control': `public, max-age=${PUBLIC_MATCHES_CACHE_SECONDS}`,
+      'X-Public-Matches-Cache': 'MISS',
+    })
+    const response = new Response(body, { status: 200, headers })
+    if (cache && ctx?.waitUntil) {
+      ctx.waitUntil(cache.put(cacheKey, response.clone()))
+    }
+    return response
+  } catch {
+    if (cache) {
+      const stale = await cache.match(cacheKey)
+      if (stale) {
+        const headers = new Headers(stale.headers)
+        headers.set('X-Public-Matches-Cache', 'STALE')
+        return new Response(stale.body, { status: 200, headers })
+      }
+    }
+    return new Response(JSON.stringify({ error: 'upstream_error' }), {
+      status: 502,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
+/**
+ * @param {unknown} row
+ */
+function isUsablePublicMatchRow(row) {
+  if (!row || typeof row !== 'object') {
+    return false
+  }
+  const match =
+    /** @type {{ match_id?: unknown, duration?: unknown, radiant_team?: unknown, dire_team?: unknown }} */ (
+      row
+    )
+  if (typeof match.match_id !== 'number' || !Number.isFinite(match.match_id)) {
+    return false
+  }
+  if (typeof match.duration !== 'number' || match.duration <= 0) {
+    return false
+  }
+  const radiant = Array.isArray(match.radiant_team) ? match.radiant_team : []
+  const dire = Array.isArray(match.dire_team) ? match.dire_team : []
+  const heroes = [...radiant, ...dire].filter(
+    (id) => typeof id === 'number' && id > 0,
+  )
+  return heroes.length >= 8
 }
 
 /**

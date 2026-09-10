@@ -71,3 +71,10 @@ export type {
   MatchLoadPhase,
 } from './types'
 export { HEROES_BY_ID } from './heroesData'
+export {
+  CLUSTER_REGION,
+  clusterRegionId,
+  isUsablePublicMatch,
+  publicMatchHeroPlayer,
+} from './publicMatches'
+export type { PublicMatchSummary } from './publicMatches'
