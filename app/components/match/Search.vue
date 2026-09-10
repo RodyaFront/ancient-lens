@@ -1,4 +1,12 @@
 <script setup lang="ts">
+withDefaults(
+  defineProps<{
+    /** Hub pages use h2 so the article keeps a single h1. */
+    embedded?: boolean
+  }>(),
+  { embedded: false },
+)
+
 const { t } = useI18n()
 const store = useMatchStore()
 const input = ref(store.lastInput)
@@ -25,11 +33,18 @@ async function submit() {
   <section
     id="match-search"
     class="search-section"
+    :class="{ 'search-section--embedded': embedded }"
     aria-labelledby="search-title"
   >
     <div class="search-heading">
-      <h1 id="search-title">{{ t('search.title') }}</h1>
-      <p>{{ t('search.blurb') }}</p>
+      <component
+        :is="embedded ? 'h2' : 'h1'"
+        id="search-title"
+        class="search-heading__title"
+      >
+        {{ embedded ? t('search.embeddedTitle') : t('search.title') }}
+      </component>
+      <p>{{ embedded ? t('search.embeddedBlurb') : t('search.blurb') }}</p>
     </div>
     <div class="search-controls">
       <form

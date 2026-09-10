@@ -29,10 +29,10 @@ const COPY = {
       dur: string,
       heroes: string,
     ) =>
-      `Dota 2 match #${id}: ${winner} win ${score} in ${dur}. ${heroes} OpenDota stats on Ancient Lens.`,
+      `Dota 2 match #${id}: ${winner} win ${score} in ${dur}. ${heroes} Scorebook review on Ancient Lens.`,
     fallbackTitle: (id: string) => `Match #${id} | Ancient Lens`,
     fallbackDescription:
-      'Dota 2 match stats: result, players, economy, and items. OpenDota data.',
+      'Dota 2 match scorebook: result, party, contribution, economy, and items.',
   },
   uk: {
     siteName: 'Ancient Lens',
@@ -48,10 +48,10 @@ const COPY = {
       dur: string,
       heroes: string,
     ) =>
-      `Матч Dota 2 #${id}: перемога ${winner} ${score} за ${dur}. ${heroes} Статистика OpenDota на Ancient Lens.`,
+      `Матч Dota 2 #${id}: перемога ${winner} ${score} за ${dur}. ${heroes} Scorebook-розбір на Ancient Lens.`,
     fallbackTitle: (id: string) => `Матч #${id} | Ancient Lens`,
     fallbackDescription:
-      'Статистика матчу Dota 2: результат, гравці, економіка та предмети. Дані OpenDota.',
+      'Scorebook матчу Dota 2: результат, паті, внесок, економіка та предмети.',
   },
 } as const
 

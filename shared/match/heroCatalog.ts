@@ -1,6 +1,41 @@
 import type { HeroEntry, HeroMetaEntry, HeroProfile } from './types'
 
 /**
+ * URL slug from OpenDota `npc_dota_hero_*` name (e.g. queen_of_pain → queen-of-pain).
+ */
+export function heroSlug(
+  entry: Pick<HeroEntry, 'name' | 'localized_name'>,
+): string {
+  const raw = entry.name?.trim() || ''
+  const fromName = /^npc_dota_hero_(.+)$/i.exec(raw)?.[1]
+  const base = (fromName || entry.localized_name || 'hero')
+    .trim()
+    .toLowerCase()
+    .replace(/_/g, '-')
+    .replace(/[^a-z0-9-]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+  return base || 'hero'
+}
+
+/** Sorted hero list for catalogs and prerender. */
+export function listHeroesSorted(
+  heroes: Record<string, HeroEntry>,
+): HeroEntry[] {
+  return Object.values(heroes).sort((a, b) =>
+    a.localized_name.localeCompare(b.localized_name, 'en'),
+  )
+}
+
+export function findHeroBySlug(
+  heroes: Record<string, HeroEntry>,
+  slug: string,
+): HeroEntry | undefined {
+  const want = slug.trim().toLowerCase()
+  return Object.values(heroes).find((entry) => heroSlug(entry) === want)
+}
+
+/**
  * Dota armor from agility (Valve: 1 armor per 6 agi).
  * Display armor at base stats ≈ base_armor + base_agi / 6.
  */
