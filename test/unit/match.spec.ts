@@ -172,6 +172,44 @@ describe('party marks', () => {
     expect(marks[0]?.size).toBe(2)
     expect(marks[3]?.size).toBe(3)
   })
+
+  it('does not paint a whole-lobby party_id (practice / 10-stack)', () => {
+    const marks = buildPartyMarks(
+      Array.from({ length: 10 }, (_, slot) => ({
+        party_id: 0,
+        party_size: 10,
+        player_slot: slot < 5 ? slot : slot + 123,
+      })),
+    )
+    expect(marks.every((mark) => mark === null)).toBe(true)
+  })
+
+  it('still paints two 5-stacks in the same match', () => {
+    const marks = buildPartyMarks([
+      { party_id: 1, player_slot: 0 },
+      { party_id: 1, player_slot: 1 },
+      { party_id: 1, player_slot: 2 },
+      { party_id: 1, player_slot: 3 },
+      { party_id: 1, player_slot: 4 },
+      { party_id: 2, player_slot: 128 },
+      { party_id: 2, player_slot: 129 },
+      { party_id: 2, player_slot: 130 },
+      { party_id: 2, player_slot: 131 },
+      { party_id: 2, player_slot: 132 },
+    ])
+    expect(marks.map((mark) => mark?.roman ?? null)).toEqual([
+      'I',
+      'I',
+      'I',
+      'I',
+      'I',
+      'II',
+      'II',
+      'II',
+      'II',
+      'II',
+    ])
+  })
 })
 
 describe('verified OpenDota match', () => {
