@@ -12,7 +12,11 @@ const store = useMatchStore()
 const { muted, toggleMute } = useScoreAudio()
 
 const homePath = computed(() => localePath({ name: 'index' }))
+const guidesPath = computed(() =>
+  localePath({ name: 'guides-how-to-read-a-dota-2-match' }),
+)
 const onRoot = computed(() => route.path === homePath.value)
+const onGuides = computed(() => route.path.includes('/guides/'))
 
 const availableLocales = computed(() =>
   (locales.value as Array<{ code: 'en' | 'uk'; name?: string }>).map(
@@ -47,6 +51,12 @@ const availableLocales = computed(() =>
         }}</span>
         <NuxtLink v-else class="nav-item" :to="homePath">{{
           t('nav.overview')
+        }}</NuxtLink>
+        <span v-if="onGuides" class="nav-item active" aria-current="page">{{
+          t('nav.guides')
+        }}</span>
+        <NuxtLink v-else class="nav-item" :to="guidesPath">{{
+          t('nav.guides')
         }}</NuxtLink>
         <button
           id="saved-nav"

@@ -143,6 +143,7 @@ After each production deploy that touches `NUXT_*SITE_URL` or the Worker shell:
 3. Unknown path → real 404 (not empty 200 shell).
 4. Google Search Console: property `https://ancientlens.info` → submit `https://ancientlens.info/sitemap_index.xml` → URL Inspection on a sample match.
 5. **www → apex:** Cloudflare Dashboard → Rules → Redirect Rules → `www.ancientlens.info/*` 301 to `https://ancientlens.info/${1}` (or Dynamic redirect). Keep Custom Domain on both hostnames or only apex + proxied www DNS as in the domain section above.
+6. Category hubs / growth checklist: [seo-growth.md](./seo-growth.md).
 
 CI (`.github/workflows/ci.yml`) and Workers Builds must set:
 

@@ -20,6 +20,26 @@ export function parseMatchDocumentPath(pathname) {
   return null
 }
 
+/** Keep in sync with shared/seo/staticRoutes.ts (+ hero slug pattern). */
+const KNOWN_SHELL_PATHS = new Set([
+  '/',
+  '/uk',
+  '/about',
+  '/uk/about',
+  '/guides/how-to-read-a-dota-2-match',
+  '/uk/guides/how-to-read-a-dota-2-match',
+  '/guides/dota-2-match-stats',
+  '/uk/guides/dota-2-match-stats',
+  '/compare/opendota',
+  '/uk/compare/opendota',
+  '/compare/dotabuff',
+  '/uk/compare/dotabuff',
+  '/heroes',
+  '/uk/heroes',
+  '/matches',
+  '/uk/matches',
+])
+
 /**
  * Document paths that should get the Nuxt client shell without match enrichment.
  * Unknown document paths should 404.
@@ -30,7 +50,10 @@ export function isKnownSpaShellPath(pathname) {
     return true
   }
   const clean = pathname.replace(/\/+$/, '') || '/'
-  return clean === '/' || clean === '/uk'
+  if (KNOWN_SHELL_PATHS.has(clean)) {
+    return true
+  }
+  return /^\/(?:uk\/)?heroes\/[a-z0-9-]+$/.test(clean)
 }
 
 function isNum(value) {
@@ -83,7 +106,7 @@ export function buildMatchSeoCopy(match, options) {
       return {
         title: `Матч #${id} | Ancient Lens`,
         description:
-          'Статистика матчу Dota 2: результат, гравці, економіка та предмети. Дані OpenDota.',
+          'Scorebook матчу Dota 2: результат, паті, внесок, економіка та предмети.',
         winnerLabel: '',
         scoreLine: '',
         durationLabel: '',
@@ -108,7 +131,7 @@ export function buildMatchSeoCopy(match, options) {
       .join(' vs ')
     return {
       title: `Матч #${id} — ${winnerTeam} ${scoreLine} | Ancient Lens`,
-      description: `Матч Dota 2 #${id}: перемога ${winnerTeam} ${scoreLine} за ${dur}. ${heroesBlurb ? `${heroesBlurb}. ` : ''}Статистика OpenDota на Ancient Lens.`,
+      description: `Матч Dota 2 #${id}: перемога ${winnerTeam} ${scoreLine} за ${dur}. ${heroesBlurb ? `${heroesBlurb}. ` : ''}Scorebook-розбір на Ancient Lens.`,
       winnerLabel: `перемога ${winnerTeam}`,
       scoreLine,
       durationLabel: dur,
@@ -119,7 +142,7 @@ export function buildMatchSeoCopy(match, options) {
     return {
       title: `Match #${id} | Ancient Lens`,
       description:
-        'Dota 2 match stats: result, players, economy, and items. OpenDota data.',
+        'Dota 2 match scorebook: result, party, contribution, economy, and items.',
       winnerLabel: '',
       scoreLine: '',
       durationLabel: '',
@@ -146,7 +169,7 @@ export function buildMatchSeoCopy(match, options) {
 
   return {
     title: `Match #${id} — ${winnerTeam} ${scoreLine} | Ancient Lens`,
-    description: `Dota 2 match #${id}: ${winnerTeam} win ${scoreLine} in ${dur}. ${heroesBlurb ? `${heroesBlurb}. ` : ''}OpenDota stats on Ancient Lens.`,
+    description: `Dota 2 match #${id}: ${winnerTeam} win ${scoreLine} in ${dur}. ${heroesBlurb ? `${heroesBlurb}. ` : ''}Scorebook review on Ancient Lens.`,
     winnerLabel: `${winnerTeam} victory`,
     scoreLine,
     durationLabel: dur,

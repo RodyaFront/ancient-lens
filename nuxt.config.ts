@@ -1,4 +1,5 @@
 ﻿import tailwindcss from '@tailwindcss/vite'
+import { buildPrerenderRoutes } from './shared/seo/prerenderRoutes'
 
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
@@ -50,7 +51,7 @@ export default defineNuxtConfig({
   app: {
     head: {
       // Plain ASCII separators; Nuxt SEO appends `| Ancient Lens`.
-      title: 'Dota 2 match review',
+      title: 'Dota 2 match scorebook',
       link: [{ rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' }],
       meta: [
         { name: 'theme-color', content: '#171a18' },
@@ -70,7 +71,7 @@ export default defineNuxtConfig({
     url: process.env.NUXT_PUBLIC_SITE_URL,
     name: 'Ancient Lens',
     description:
-      'Dota 2 match stats: result, players, economy, and items. OpenDota data.',
+      'Tournament-style Dota 2 match review: result, party, contribution, economy, and items.',
     defaultLocale: 'en',
   },
 
@@ -141,7 +142,7 @@ export default defineNuxtConfig({
     compressPublicAssets: true,
     prerender: {
       crawlLinks: true,
-      routes: ['/', '/uk'],
+      routes: buildPrerenderRoutes(),
     },
   },
 
@@ -151,6 +152,7 @@ export default defineNuxtConfig({
 
   sitemap: {
     zeroRuntime: true,
+    sources: ['/api/__sitemap__/urls'],
   },
 
   ogImage: {

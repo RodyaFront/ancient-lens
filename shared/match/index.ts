@@ -14,6 +14,9 @@ export {
   displayDamage,
   displayHealth,
   displayMana,
+  findHeroBySlug,
+  heroSlug,
+  listHeroesSorted,
   popularityRank,
   primaryAttrI18nKey,
   primaryAttrIconSrc,
@@ -67,3 +70,4 @@ export type {
   MatchDialogState,
   MatchLoadPhase,
 } from './types'
+export { HEROES_BY_ID } from './heroesData'

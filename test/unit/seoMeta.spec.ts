@@ -30,6 +30,8 @@ describe('buildMatchSeoCopy', () => {
     expect(copy.title).toContain('35:33')
     expect(copy.description).toContain('Phantom Lancer')
     expect(copy.description).toContain('Puck')
+    expect(copy.description).toContain('Scorebook')
+    expect(copy.description).not.toMatch(/OpenDota stats on Ancient Lens/i)
     expect(copy.durationLabel).toBe('36:58')
   })
 
@@ -37,5 +39,6 @@ describe('buildMatchSeoCopy', () => {
     const copy = buildMatchSeoCopy(null, { matchId: '1', locale: 'en' })
     expect(copy.title).toBe('Match #1 | Ancient Lens')
     expect(copy.description.length).toBeGreaterThan(20)
+    expect(copy.description).not.toMatch(/OpenDota data/i)
   })
 })
