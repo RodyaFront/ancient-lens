@@ -699,6 +699,7 @@ export const useMatchStore = defineStore('match', () => {
     toggleSaved,
     removeSaved,
     removeRecent,
+    loadSaved,
     exportMatch,
     prepareHome,
     ensureLookups,

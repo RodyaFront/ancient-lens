@@ -31,6 +31,7 @@ export default defineNuxtConfig({
         'lucide:timer',
         'lucide:waves',
         'lucide:crosshair',
+        'lucide:bookmark',
         'lucide:volume-2',
         'lucide:volume-x',
       ],
@@ -73,6 +74,11 @@ export default defineNuxtConfig({
     description:
       'Tournament-style Dota 2 match review: result, party, contribution, economy, and items.',
     defaultLocale: 'en',
+  },
+
+  routeRules: {
+    '/matches/v2': { redirect: { to: '/matches', statusCode: 301 } },
+    '/uk/matches/v2': { redirect: { to: '/uk/matches', statusCode: 301 } },
   },
 
   i18n: {

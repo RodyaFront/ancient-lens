@@ -38,6 +38,8 @@ const KNOWN_SHELL_PATHS = new Set([
   '/uk/heroes',
   '/matches',
   '/uk/matches',
+  '/saved',
+  '/uk/saved',
 ])
 
 /**

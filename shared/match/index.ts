@@ -78,3 +78,17 @@ export {
   publicMatchHeroPlayer,
 } from './publicMatches'
 export type { PublicMatchSummary } from './publicMatches'
+export {
+  RANK_MEDAL_KEYS,
+  buildPublicMatchBatchLens,
+  matchPassesFacet,
+  parseRankTier,
+  rankTierIconId,
+  rankTierIconSrc,
+} from './publicMatchLens'
+export type {
+  PublicMatchBatchLens,
+  PublicMatchFacet,
+  RankMedalKey,
+  RankTierParts,
+} from './publicMatchLens'

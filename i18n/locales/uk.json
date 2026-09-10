@@ -13,10 +13,12 @@
     "overview": "Огляд",
     "guides": "Гайди",
     "heroes": "Герої",
-    "matches": "Матчі",
+    "matches": "Недавні матчі",
     "about": "Про проєкт",
     "saved": "Збережені",
+    "savedAria": "Збережені матчі, {count}",
     "sources": "Про дані",
+    "tools": "Інструменти",
     "language": "Мова",
     "mute": "Вимкнути звук",
     "unmute": "Увімкнути звук"
@@ -47,6 +49,13 @@
     "bookmarksHint": "Збережені в цьому браузері",
     "removeRecent": "Прибрати матч {id} з недавніх",
     "removeSaved": "Видалити матч {id}"
+  },
+  "savedPage": {
+    "title": "Збережені матчі",
+    "description": "Матчі, збережені в цьому браузері — відкрийте один, щоб завантажити scorebook.",
+    "lead": "Закладки лише в цьому браузері. Відкрийте матч, щоб отримати актуальні дані.",
+    "empty": "Поки що немає збережених матчів. Відкрийте матч і натисніть значок закладки поруч із його номером.",
+    "remove": "Видалити матч {id}"
   },
   "loading": {
     "title": "Завантаження матчу",
@@ -80,7 +89,18 @@
     "heroFallback": "Герой #{id}",
     "itemFallback": "Предмет #{id}",
     "emptySlot": "Порожній слот",
-    "slotUnknown": "Дані слота не надано"
+    "slotUnknown": "Дані слота не надано",
+    "rankTierStars": "{medal} {stars}★",
+    "rankMedal": {
+      "herald": "Herald",
+      "guardian": "Guardian",
+      "crusader": "Crusader",
+      "archon": "Archon",
+      "legend": "Legend",
+      "ancient": "Ancient",
+      "divine": "Divine",
+      "immortal": "Immortal"
+    }
   },
   "itemHover": {
     "type": "Тип: {value}",
@@ -270,9 +290,7 @@
   },
   "dialog": {
     "sourcesTitle": "Дані та їхня точність",
-    "savedTitle": "Збережені матчі",
     "close": "Закрити",
-    "removeSaved": "Видалити матч {id}",
     "statKills": "Вбивства",
     "statDeaths": "Смерті",
     "statAssists": "Асисти",
@@ -294,8 +312,6 @@
     "fetchedAt": "Отримано {when}.",
     "docsLink": "Документація ↗",
     "apiResponseLink": "Відповідь API ↗",
-    "savedHint": "Закладки доступні в цьому браузері. Натисніть матч, щоб отримати актуальні дані.",
-    "savedEmpty": "Поки що немає збережених матчів. Відкрийте матч і натисніть значок закладки поруч із його номером.",
     "inventoryMain": "Основний інвентар",
     "inventoryBackpack": "Рюкзак",
     "inventoryNeutral": "Лісовий предмет і зачарування",
@@ -418,21 +434,31 @@
   },
   "matchesPage": {
     "title": "Недавні матчі",
-    "description": "Недавні публічні матчі Dota 2 — відкрийте рядок у scorebook Ancient Lens.",
-    "lead": "Живі публічні ігри з OpenDota. Оберіть матч, щоб відкрити scorebook.",
+    "description": "Недавні публічні матчі Dota 2 — відкрийте гру в scorebook Ancient Lens.",
+    "lead": "Живі публічні ігри. Оберіть одну, щоб відкрити scorebook.",
     "loading": "Завантаження публічних матчів…",
     "error": "Не вдалося завантажити публічні матчі. Спробуйте пізніше.",
     "retry": "Повторити",
     "refresh": "Оновити",
-    "empty": "У цій партії немає завершених публічних матчів. Спробуйте оновити.",
-    "colId": "Матч",
-    "colMode": "Режим",
-    "colResult": "Результат",
-    "colDuration": "Тривалість",
+    "empty": "Немає матчів у цьому фільтрі.",
+    "emptyBatch": "Зараз немає публічних матчів.",
+    "clearFacet": "Показати всі матчі",
+    "facetAll": "Усі",
+    "facetRanked": "Ranked",
+    "facetUnranked": "Unranked",
+    "facetTurbo": "Turbo",
+    "facetAllPick": "All Pick",
+    "facetLong": "Довгі (40хв+)",
+    "facetsLabel": "Фільтр матчів",
+    "showing": "{shown} з {total}",
+    "openAria": "Відкрити матч {id}, {result}, {mode}",
     "colRadiant": "Radiant",
     "colDire": "Dire",
     "radiantWin": "Перемога Radiant",
-    "direWin": "Перемога Dire"
+    "direWin": "Перемога Dire",
+    "rankAvg": "Середній {rank}",
+    "rankAvgShort": "Сер.",
+    "rankAvgSample": "Середній {rank} — за {n} гравцями з відомим рангом"
   },
   "aboutPage": {
     "title": "Про Ancient Lens",

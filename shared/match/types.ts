@@ -207,7 +207,4 @@ export type PlayerSort = 'slot' | 'kills' | 'net_worth' | 'hero_damage' | 'kda'
 export type MatchLoadPhase = 'idle' | 'resolve' | 'fetch' | 'build'
 
 export type MatchDialogState =
-  | { kind: 'sources' }
-  | { kind: 'saved' }
-  | { kind: 'player'; index: number }
-  | null
+  { kind: 'sources' } | { kind: 'player'; index: number } | null

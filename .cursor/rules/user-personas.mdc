@@ -1,0 +1,23 @@
+---
+description: Product audience — build for player personas (Danylo/Ira/Taras), not maintainer curiosity or batch analysts
+alwaysApply: true
+---
+
+# User personas (product audience)
+
+Canon: [`docs/user-personas.md`](../../docs/user-personas.md). Read it when inventing UI, copy, list-page chrome, or “helpful” stats.
+
+## Who we build for
+
+1. **Danylo** — just finished a game; open match → skim result/draft/items. No jargon.
+2. **Ira** — stack with friends; party marks, shareable scorebook, phone-friendly.
+3. **Taras** — learning to read a match; plain language, honest OpenDota fields only.
+
+## Who we do not optimize for
+
+- **Batch analyst** — cohort bars, API field tours, cryptic `n=` / schema notes on primary surfaces.
+- **The maintainer** — lab disclosures and experiment chrome are not the product.
+
+## Rule of thumb
+
+Match **scorebook** depth is welcome. Discovery/list pages stay **scannable recent matches**, not analytics. If a normal player needs a tooltip to know what a label means, rewrite or remove it from the primary UI.
