@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { duration, radiant } from '#shared/match'
+import { radiant } from '#shared/match'
 import { OPENDOTA_API } from '#shared/match/constants'
 import type { MatchDialogState, MatchPlayer } from '#shared/match/types'
 import {
@@ -7,7 +7,6 @@ import {
   formatNumber,
   playerDisplayName,
   playerItemId,
-  savedResultLabel,
 } from '~/utils/matchFormat'
 
 const dialog = defineModel<MatchDialogState>({ required: true })
@@ -24,9 +23,6 @@ const dateLocale = computed(() => (locale.value === 'uk' ? 'uk-UA' : 'en-US'))
 const title = computed(() => {
   if (dialog.value?.kind === 'sources') {
     return t('dialog.sourcesTitle')
-  }
-  if (dialog.value?.kind === 'saved') {
-    return t('dialog.savedTitle')
   }
   if (dialog.value?.kind === 'player') {
     return player.value ? playerDisplayName(player.value) : ''
@@ -106,15 +102,6 @@ function onBackdropClick(event: MouseEvent) {
     el.close()
   }
 }
-
-function openSaved(id: string) {
-  close()
-  void store.openMatchInput(id)
-}
-
-function removeSaved(id: string) {
-  store.removeSaved(id)
-}
 </script>
 
 <template>
@@ -180,33 +167,6 @@ function removeSaved(id: string) {
               >{{ t('dialog.apiResponseLink') }}</a
             >
           </div>
-        </template>
-
-        <template v-else-if="dialog?.kind === 'saved'">
-          <template v-if="store.saved.length">
-            <p>{{ t('dialog.savedHint') }}</p>
-            <div v-for="entry in store.saved" :key="entry.id" class="saved-row">
-              <button
-                class="saved-open"
-                type="button"
-                @click="openSaved(entry.id)"
-              >
-                <strong>#{{ entry.id }}</strong>
-                <small>
-                  {{ savedResultLabel(entry) }} · {{ duration(entry.duration) }}
-                </small>
-              </button>
-              <button
-                class="icon-button"
-                type="button"
-                :aria-label="t('dialog.removeSaved', { id: entry.id })"
-                @click="removeSaved(entry.id)"
-              >
-                <Icon name="lucide:trash" aria-hidden="true" />
-              </button>
-            </div>
-          </template>
-          <p v-else>{{ t('dialog.savedEmpty') }}</p>
         </template>
 
         <template v-else-if="dialog?.kind === 'player' && player">

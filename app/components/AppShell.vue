@@ -13,10 +13,6 @@ function openSources() {
   dialog.value = { kind: 'sources' }
 }
 
-function openSaved() {
-  dialog.value = { kind: 'saved' }
-}
-
 function openPlayer(index: number) {
   dialog.value = { kind: 'player', index }
 }
@@ -25,7 +21,7 @@ function openPlayer(index: number) {
 <template>
   <div class="app-shell">
     <a class="skip-link" href="#match-search">{{ t('shell.skipToSearch') }}</a>
-    <SiteHeader @saved="openSaved" @sources="openSources" />
+    <SiteHeader @sources="openSources" />
     <main :class="`page-${pageKind}`">
       <slot :open-player="openPlayer" :open-sources="openSources" />
       <SiteFooter @sources="openSources" />

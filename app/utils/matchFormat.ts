@@ -1,6 +1,10 @@
 import { isNum, kda } from '#shared/match'
 import { GAME_MODES, LOBBY_LABELS, REGIONS } from '#shared/match/constants'
 import { clusterRegionId } from '#shared/match/publicMatches'
+import {
+  parseRankTier,
+  type RankTierParts,
+} from '#shared/match/publicMatchLens'
 import type { MatchPlayer } from '#shared/match/types'
 
 function i18n() {
@@ -100,6 +104,28 @@ export function lobbyTone(lobbyType: unknown): LobbyTone | null {
   }
 }
 
+export type GameModeTone = 'all-pick' | 'turbo'
+
+/**
+ * Game mode color tone — All Pick / Turbo (`--mode-all-pick` / `--mode-turbo`).
+ * Distinct from lobby `--ranked`.
+ */
+export function gameModeTone(mode: unknown): GameModeTone | null {
+  if (!isNum(mode)) {
+    return null
+  }
+
+  switch (mode) {
+    case 1:
+    case 22:
+      return 'all-pick'
+    case 23:
+      return 'turbo'
+    default:
+      return null
+  }
+}
+
 export function lobbyLabel(lobbyType: unknown): string {
   if (!isNum(lobbyType)) {
     return i18n().t('format.dotaMatch')
@@ -129,6 +155,23 @@ export function clusterLabel(cluster: unknown): string {
   return regionId == null
     ? i18n().t('format.notProvided')
     : regionLabel(regionId)
+}
+
+/** Human label for OpenDota avg_rank_tier (batch average when present). */
+export function rankTierLabel(raw: unknown): string {
+  const parts = parseRankTier(raw)
+  if (!parts) {
+    return ''
+  }
+  return formatRankTierParts(parts)
+}
+
+export function formatRankTierParts(parts: RankTierParts): string {
+  const medal = i18n().t(`format.rankMedal.${parts.medal}`)
+  if (parts.medal === 'immortal' || parts.stars < 1) {
+    return medal
+  }
+  return i18n().t('format.rankTierStars', { medal, stars: parts.stars })
 }
 
 export function steamAssetUrl(path: string | undefined): string | null {

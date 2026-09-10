@@ -19,6 +19,8 @@ export const SEO_STATIC_DOCUMENT_PATHS = [
   '/uk/heroes',
   '/matches',
   '/uk/matches',
+  '/saved',
+  '/uk/saved',
 ] as const
 
 export type SeoStaticDocumentPath = (typeof SEO_STATIC_DOCUMENT_PATHS)[number]

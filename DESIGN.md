@@ -4,6 +4,12 @@ A Dota match review should feel like a tournament scorebook: immediate results,
 recognizable heroes, legible statistics, and deliberate typography. It is a working
 surface for players, not an analytics product landing page.
 
+Audience (personas): see `docs/user-personas.md` — build for post-game players and
+stacks; do not optimize list chrome for batch analysts or maintainer lab notes.
+
+Interaction: compact controls and list rows reuse the scoreboard **UI press** pattern
+(`.ui-press` / `.ui-press-row`, tokens `--ui-press-*`) — see `.cursor/rules/ui-press.mdc`.
+
 ## Decisions
 
 | Previous pattern                                                         | Replacement                                                                       | Purpose                                                                   |
@@ -23,7 +29,9 @@ surface for players, not an analytics product landing page.
 - Charcoal background, neutral text and vermilion for brand and the primary action.
   Green/red encode Radiant/Dire; gold identifies net worth; amber `--ranked` marks
   Ranked (competitive ladder) lobby — reuse `.tone-ranked` / `data-tone="ranked"`,
-  do not overload gold or accent for that meaning. Multi-player queue groups use a
+  do not overload gold or accent for that meaning. Game modes All Pick / Turbo use
+  `--mode-all-pick` / `--mode-turbo` (`.tone-all-pick` / `.tone-turbo`), separate from
+  lobby tones. Multi-player queue groups use a
   left-edge party color strip (`--party-strip-width`, `--party-1`…`--party-5`).
   Item hover encyclopedia cues (flat, no glow): `--item-active` (client
   periwinkle) for Active/Toggle/Upgrade, `--item-use` (client lime, not Radiant

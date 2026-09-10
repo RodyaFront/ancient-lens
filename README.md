@@ -2,6 +2,8 @@
 
 Dota 2 match review with a Ukrainian interface. Live stats come from OpenDota; the visual language follows `DESIGN.md` (tournament scorebook, not a marketing dashboard).
 
+**Who it’s for:** player personas in [docs/user-personas.md](docs/user-personas.md) — post-game readers and stacks, not batch analysts.
+
 ## Stack
 
 | Layer         | Choice                                               |

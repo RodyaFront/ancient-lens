@@ -1,0 +1,49 @@
+---
+description: Scorebook UI press pattern — hover/active/tap scale + row wash (match page canon)
+alwaysApply: true
+---
+
+# UI press pattern (scorebook)
+
+Canon lives in `app/assets/css/match.css` (tokens `--ui-press-*`, selectors `.ui-press` / `.ui-press-row`). Source of truth is the **match scoreboard** chrome (tabs, filters, hero/item buttons, player name, player rows).
+
+## Tokens
+
+| Token | Role |
+| --- | --- |
+| `--ui-press-hover` | `1.06` — fine-pointer hover scale |
+| `--ui-press-active` | `0.94` — active/tap scale |
+| `--ui-press-duration` | `120ms` |
+| `--ui-press-ease` | `cubic-bezier(0.22, 1, 0.36, 1)` |
+
+## Two shapes
+
+### 1. Compact control — `.ui-press`
+
+Use on chips, tabs, icon buttons, inline name/id links, facet filters.
+
+- Transition includes `transform` (plus color/border as needed).
+- Set `transform-origin` appropriately (`center`, `center bottom`, or `left center` for start-aligned text).
+- **Hover scale** only inside `@media (hover: hover) and (pointer: fine)`.
+- **Active scale** always (covers tap).
+- Under `prefers-reduced-motion: reduce`: no transform on hover/active.
+
+### 2. Row / surface — `.ui-press-row`
+
+Use on full match rows, bout slips, scoreboard player rows (background on the row or its `td`s).
+
+- Hover / active → `background: var(--hover)` (or the same wash on `td`).
+- Hover wash only on fine pointer when sticky-hover would be wrong; active always for tap.
+- Do **not** scale the whole row.
+
+## Do not
+
+- Invent a third press language (random opacity-only, glow, shadow pop) for scorebook lists.
+- Apply scale to full-width rows or large bout cards.
+- Use hover-only affordances that never fire an `:active` on touch.
+
+## Reuse
+
+1. Prefer adding class `ui-press` or `ui-press-row` on the control.
+2. Or append the selector to the shared press blocks in `match.css` (keep one list).
+3. Match page elements already listed in those blocks remain the reference.

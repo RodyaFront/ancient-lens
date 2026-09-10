@@ -45,6 +45,16 @@ export default {
       return servePublicMatches(request, ctx, url)
     }
 
+    if (url.pathname === '/matches/v2' || url.pathname === '/matches/v2/') {
+      return Response.redirect(new URL('/matches', url).toString(), 301)
+    }
+    if (
+      url.pathname === '/uk/matches/v2' ||
+      url.pathname === '/uk/matches/v2/'
+    ) {
+      return Response.redirect(new URL('/uk/matches', url).toString(), 301)
+    }
+
     if (!isDocumentRequest(request)) {
       return new Response('Not Found', { status: 404 })
     }

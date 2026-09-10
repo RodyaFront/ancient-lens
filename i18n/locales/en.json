@@ -13,10 +13,12 @@
     "overview": "Overview",
     "guides": "Guides",
     "heroes": "Heroes",
-    "matches": "Matches",
+    "matches": "Recent matches",
     "about": "About",
     "saved": "Saved",
+    "savedAria": "Saved matches, {count}",
     "sources": "About data",
+    "tools": "Tools",
     "language": "Language",
     "mute": "Mute sound",
     "unmute": "Unmute sound"
@@ -47,6 +49,13 @@
     "bookmarksHint": "Saved in this browser",
     "removeRecent": "Remove match {id} from recent",
     "removeSaved": "Delete match {id}"
+  },
+  "savedPage": {
+    "title": "Saved matches",
+    "description": "Matches bookmarked in this browser — open one to load the scorebook.",
+    "lead": "Bookmarks stay in this browser only. Open a match to fetch current data.",
+    "empty": "No saved matches yet. Open a match and tap the bookmark icon next to its number.",
+    "remove": "Delete match {id}"
   },
   "loading": {
     "title": "Loading match",
@@ -80,7 +89,18 @@
     "heroFallback": "Hero #{id}",
     "itemFallback": "Item #{id}",
     "emptySlot": "Empty slot",
-    "slotUnknown": "Slot data not provided"
+    "slotUnknown": "Slot data not provided",
+    "rankTierStars": "{medal} {stars}★",
+    "rankMedal": {
+      "herald": "Herald",
+      "guardian": "Guardian",
+      "crusader": "Crusader",
+      "archon": "Archon",
+      "legend": "Legend",
+      "ancient": "Ancient",
+      "divine": "Divine",
+      "immortal": "Immortal"
+    }
   },
   "itemHover": {
     "type": "Type: {value}",
@@ -270,9 +290,7 @@
   },
   "dialog": {
     "sourcesTitle": "Data and accuracy",
-    "savedTitle": "Saved matches",
     "close": "Close",
-    "removeSaved": "Delete match {id}",
     "statKills": "Kills",
     "statDeaths": "Deaths",
     "statAssists": "Assists",
@@ -294,8 +312,6 @@
     "fetchedAt": "Fetched {when}.",
     "docsLink": "Documentation ↗",
     "apiResponseLink": "API response ↗",
-    "savedHint": "Bookmarks are available in this browser. Open a match to fetch current data.",
-    "savedEmpty": "No saved matches yet. Open a match and tap the bookmark icon next to its number.",
     "inventoryMain": "Main inventory",
     "inventoryBackpack": "Backpack",
     "inventoryNeutral": "Neutral item and enchantment",
@@ -418,21 +434,31 @@
   },
   "matchesPage": {
     "title": "Recent matches",
-    "description": "Recent public Dota 2 matches — open any row in the Ancient Lens scorebook.",
-    "lead": "Live public games from OpenDota. Pick a match to open the scorebook.",
+    "description": "Recent public Dota 2 matches — open any game in the Ancient Lens scorebook.",
+    "lead": "Live public games. Pick one to open the scorebook.",
     "loading": "Loading public matches…",
     "error": "Could not load public matches. Try again later.",
     "retry": "Retry",
     "refresh": "Refresh",
-    "empty": "No completed public matches in this batch. Try refresh.",
-    "colId": "Match",
-    "colMode": "Mode",
-    "colResult": "Result",
-    "colDuration": "Duration",
+    "empty": "No matches in this filter.",
+    "emptyBatch": "No public matches right now.",
+    "clearFacet": "Show all matches",
+    "facetAll": "All",
+    "facetRanked": "Ranked",
+    "facetUnranked": "Unranked",
+    "facetTurbo": "Turbo",
+    "facetAllPick": "All Pick",
+    "facetLong": "Long (40m+)",
+    "facetsLabel": "Filter matches",
+    "showing": "{shown} of {total}",
+    "openAria": "Open match {id}, {result}, {mode}",
     "colRadiant": "Radiant",
     "colDire": "Dire",
-    "radiantWin": "Radiant Victory",
-    "direWin": "Dire Victory"
+    "radiantWin": "Radiant win",
+    "direWin": "Dire win",
+    "rankAvg": "Average {rank}",
+    "rankAvgShort": "Avg",
+    "rankAvgSample": "Average {rank} — from {n} players with a known rank"
   },
   "aboutPage": {
     "title": "About Ancient Lens",
