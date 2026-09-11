@@ -131,3 +131,14 @@ export function isUsablePublicMatch(row: PublicMatchSummary): boolean {
 export function publicMatchHeroPlayer(heroId: number): MatchPlayer {
   return { hero_id: heroId }
 }
+
+/**
+ * Always five draft slots for public-match strips (pad / trim team ids).
+ * Invalid or missing entries become `null` placeholders.
+ */
+export function heroSlots(ids: number[] | undefined): Array<number | null> {
+  const known = (ids || [])
+    .filter((id): id is number => typeof id === 'number' && id > 0)
+    .slice(0, 5)
+  return Array.from({ length: 5 }, (_, index) => known[index] ?? null)
+}

@@ -2,6 +2,12 @@ export { EXAMPLE_MATCH_ID, OPENDOTA_API, STEAM_CDN } from './constants'
 export { isNum, parseMatchId, ParseMatchIdError } from './parseMatchId'
 export type { ParseMatchIdErrorCode } from './parseMatchId'
 export { upsertRecentMatch } from './recent'
+export {
+  refreshSavedMatchMeta,
+  sanitizeRecentMatches,
+  sanitizeSavedMatches,
+  upsertSavedMatch,
+} from './localLists'
 export { buildPartyMarks, toRoman } from './party'
 export type { PartyMark } from './party'
 export {
@@ -74,6 +80,7 @@ export { HEROES_BY_ID } from './heroesData'
 export {
   CLUSTER_REGION,
   clusterRegionId,
+  heroSlots,
   isUsablePublicMatch,
   publicMatchHeroPlayer,
 } from './publicMatches'
@@ -85,10 +92,13 @@ export {
   parseRankTier,
   rankTierIconId,
   rankTierIconSrc,
+  sortPublicMatches,
 } from './publicMatchLens'
 export type {
   PublicMatchBatchLens,
   PublicMatchFacet,
+  PublicMatchSortDir,
+  PublicMatchSortKey,
   RankMedalKey,
   RankTierParts,
 } from './publicMatchLens'

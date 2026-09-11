@@ -10,6 +10,12 @@ import {
 import { buildHeroProfile } from '#shared/match/heroCatalog'
 import { parseMatchId, ParseMatchIdError } from '#shared/match/parseMatchId'
 import { upsertRecentMatch } from '#shared/match/recent'
+import {
+  refreshSavedMatchMeta,
+  sanitizeRecentMatches,
+  sanitizeSavedMatches,
+  upsertSavedMatch,
+} from '#shared/match/localLists'
 import { radiant, validateMatch, ValidateMatchError } from '#shared/match/stats'
 import type {
   HeroEntry,
@@ -90,7 +96,9 @@ export const useMatchStore = defineStore('match', () => {
   const isSaved = computed(() =>
     Boolean(
       match.value &&
-      saved.value.some((entry) => entry.id === String(match.value?.match_id)),
+      saved.value.some(
+        (entry) => String(entry.id) === String(match.value?.match_id),
+      ),
     ),
   )
 
@@ -113,16 +121,7 @@ export const useMatchStore = defineStore('match', () => {
       const parsed = JSON.parse(
         localStorage.getItem(SAVED_MATCHES_KEY) || '[]',
       ) as unknown
-      if (Array.isArray(parsed)) {
-        saved.value = parsed
-          .filter(
-            (entry): entry is SavedMatch =>
-              Boolean(entry) &&
-              typeof entry === 'object' &&
-              /^\d{1,16}$/.test(String((entry as SavedMatch).id)),
-          )
-          .slice(0, MAX_SAVED_MATCHES)
-      }
+      saved.value = sanitizeSavedMatches(parsed, MAX_SAVED_MATCHES)
     } catch {
       saved.value = []
     }
@@ -131,18 +130,6 @@ export const useMatchStore = defineStore('match', () => {
   function persistSaved(next: SavedMatch[]) {
     localStorage.setItem(SAVED_MATCHES_KEY, JSON.stringify(next))
     saved.value = next
-  }
-
-  function isRecentMatch(entry: unknown): entry is RecentMatch {
-    if (!entry || typeof entry !== 'object') {
-      return false
-    }
-    const value = entry as RecentMatch
-    return (
-      /^\d{1,16}$/.test(String(value.id)) &&
-      typeof value.openedAt === 'number' &&
-      Number.isFinite(value.openedAt)
-    )
   }
 
   function loadRecent() {
@@ -154,17 +141,7 @@ export const useMatchStore = defineStore('match', () => {
       const parsed = JSON.parse(
         localStorage.getItem(RECENT_MATCHES_KEY) || '[]',
       ) as unknown
-      if (Array.isArray(parsed)) {
-        recent.value = parsed
-          .filter(isRecentMatch)
-          .map((entry) => ({
-            id: String(entry.id),
-            radiant_win: entry.radiant_win,
-            duration: entry.duration,
-            openedAt: entry.openedAt,
-          }))
-          .slice(0, MAX_RECENT_MATCHES)
-      }
+      recent.value = sanitizeRecentMatches(parsed, MAX_RECENT_MATCHES)
     } catch {
       recent.value = []
     }
@@ -173,6 +150,21 @@ export const useMatchStore = defineStore('match', () => {
   function persistRecent(next: RecentMatch[]) {
     localStorage.setItem(RECENT_MATCHES_KEY, JSON.stringify(next))
     recent.value = next
+  }
+
+  function hydrateLocalLists() {
+    loadSaved()
+    loadRecent()
+  }
+
+  if (import.meta.client) {
+    window.addEventListener('storage', (event) => {
+      if (event.key === SAVED_MATCHES_KEY) {
+        loadSaved()
+      } else if (event.key === RECENT_MATCHES_KEY) {
+        loadRecent()
+      }
+    })
   }
 
   function rememberRecent(data: MatchData) {
@@ -194,13 +186,35 @@ export const useMatchStore = defineStore('match', () => {
     }
   }
 
+  function refreshSavedFromMatch(data: MatchData) {
+    if (!import.meta.client) {
+      return
+    }
+
+    const next = refreshSavedMatchMeta(saved.value, String(data.match_id), {
+      radiant_win: data.radiant_win,
+      duration: data.duration,
+      start_time: data.start_time,
+    })
+    if (!next) {
+      return
+    }
+
+    try {
+      persistSaved(next)
+    } catch {
+      // Ignore quota / private-mode write failures.
+    }
+  }
+
   function t(key: string, params?: Record<string, unknown>) {
     return useNuxtApp().$i18n.t(key, params ?? {}) as string
   }
 
   function removeRecent(id: string) {
+    const target = String(id)
     try {
-      persistRecent(recent.value.filter((entry) => entry.id !== id))
+      persistRecent(recent.value.filter((entry) => String(entry.id) !== target))
     } catch {
       showToast(t('errors.recentUpdateFailed'))
     }
@@ -232,8 +246,7 @@ export const useMatchStore = defineStore('match', () => {
   }
 
   function prepareHome() {
-    loadSaved()
-    loadRecent()
+    hydrateLocalLists()
     match.value = null
     source.value = null
     error.value = null
@@ -462,6 +475,7 @@ export const useMatchStore = defineStore('match', () => {
       filter.value = 'all'
       revealNonce.value += 1
       rememberRecent(next)
+      refreshSavedFromMatch(next)
     } catch (errorValue) {
       if (no !== requestNo.value) {
         return
@@ -578,30 +592,45 @@ export const useMatchStore = defineStore('match', () => {
     }
 
     const id = String(match.value.match_id)
-    const had = saved.value.some((entry) => entry.id === id)
-    const next = had
-      ? saved.value.filter((entry) => entry.id !== id)
-      : [
-          {
-            id,
-            radiant_win: match.value.radiant_win,
-            duration: match.value.duration,
-            start_time: match.value.start_time,
-          },
-          ...saved.value,
-        ].slice(0, MAX_SAVED_MATCHES)
+    const had = saved.value.some((entry) => String(entry.id) === id)
+    if (had) {
+      try {
+        persistSaved(saved.value.filter((entry) => String(entry.id) !== id))
+        showToast(t('toast.unsaved'))
+      } catch {
+        showToast(t('toast.saveBlocked'))
+      }
+      return
+    }
+
+    const entry: SavedMatch = {
+      id,
+      radiant_win: match.value.radiant_win,
+      duration: match.value.duration,
+      start_time: match.value.start_time,
+    }
+    const { next, evicted } = upsertSavedMatch(
+      saved.value,
+      entry,
+      MAX_SAVED_MATCHES,
+    )
 
     try {
       persistSaved(next)
-      showToast(had ? t('toast.unsaved') : t('toast.saved'))
+      showToast(
+        evicted
+          ? t('toast.savedEvicted', { max: MAX_SAVED_MATCHES })
+          : t('toast.saved'),
+      )
     } catch {
       showToast(t('toast.saveBlocked'))
     }
   }
 
   function removeSaved(id: string) {
+    const target = String(id)
     try {
-      persistSaved(saved.value.filter((entry) => entry.id !== id))
+      persistSaved(saved.value.filter((entry) => String(entry.id) !== target))
     } catch {
       showToast(t('toast.bookmarkBlocked'))
     }
@@ -639,8 +668,7 @@ export const useMatchStore = defineStore('match', () => {
   }
 
   async function bootstrapFromRoute(id: string, snapshot = false) {
-    loadSaved()
-    loadRecent()
+    hydrateLocalLists()
     await loadLookups()
     lastInput.value = id
     if (snapshot && id === EXAMPLE_MATCH_ID) {
@@ -700,6 +728,7 @@ export const useMatchStore = defineStore('match', () => {
     removeSaved,
     removeRecent,
     loadSaved,
+    hydrateLocalLists,
     exportMatch,
     prepareHome,
     ensureLookups,

@@ -2,10 +2,12 @@
 import {
   clusterRegionId,
   duration,
-  HEROES_BY_ID,
   matchPassesFacet,
   parseRankTier,
+  sortPublicMatches,
   type PublicMatchFacet,
+  type PublicMatchSortDir,
+  type PublicMatchSortKey,
   type PublicMatchSummary,
 } from '#shared/match'
 import {
@@ -15,7 +17,6 @@ import {
   lobbyLabel,
   lobbyTone,
   gameModeTone,
-  steamAssetUrl,
 } from '~/utils/matchFormat'
 
 const FACET_IDS: PublicMatchFacet[] = [
@@ -26,6 +27,9 @@ const FACET_IDS: PublicMatchFacet[] = [
   'allPick',
   'long',
 ]
+
+const SORT_KEYS: PublicMatchSortKey[] = ['time', 'rank']
+const SORT_DIRS: PublicMatchSortDir[] = ['asc', 'desc']
 
 const { t } = useI18n()
 const localePath = useLocalePath()
@@ -55,6 +59,7 @@ useSeoMeta({
 })
 
 const loadError = ref<'rate' | 'generic' | null>(null)
+const refreshFailed = ref<'rate' | 'generic' | null>(null)
 
 function parseFacetQuery(raw: unknown): PublicMatchFacet {
   const value = Array.isArray(raw) ? raw[0] : raw
@@ -67,16 +72,68 @@ function parseFacetQuery(raw: unknown): PublicMatchFacet {
   return 'all'
 }
 
+function parseSortKeyQuery(raw: unknown): PublicMatchSortKey {
+  const value = Array.isArray(raw) ? raw[0] : raw
+  if (
+    typeof value === 'string' &&
+    SORT_KEYS.includes(value as PublicMatchSortKey)
+  ) {
+    return value as PublicMatchSortKey
+  }
+  return 'time'
+}
+
+function parseSortDirQuery(raw: unknown): PublicMatchSortDir {
+  const value = Array.isArray(raw) ? raw[0] : raw
+  if (
+    typeof value === 'string' &&
+    SORT_DIRS.includes(value as PublicMatchSortDir)
+  ) {
+    return value as PublicMatchSortDir
+  }
+  return 'desc'
+}
+
+function patchQuery(patch: Record<string, string | undefined>) {
+  const next: Record<string, string | string[]> = {}
+  for (const [key, value] of Object.entries(route.query)) {
+    if (key in patch && patch[key] == null) {
+      continue
+    }
+    if (typeof value === 'string') {
+      next[key] = value
+    } else if (Array.isArray(value)) {
+      next[key] = value.filter(
+        (part): part is string => typeof part === 'string',
+      )
+    }
+  }
+  for (const [key, value] of Object.entries(patch)) {
+    if (value != null) {
+      next[key] = value
+    }
+  }
+  void router.replace({ query: next })
+}
+
 const facet = computed({
   get: () => parseFacetQuery(route.query.facet),
   set: (next: PublicMatchFacet) => {
-    const query = { ...route.query }
-    if (next === 'all') {
-      delete query.facet
-    } else {
-      query.facet = next
-    }
-    void router.replace({ query })
+    patchQuery({ facet: next === 'all' ? undefined : next })
+  },
+})
+
+const sortKey = computed({
+  get: () => parseSortKeyQuery(route.query.sort),
+  set: (next: PublicMatchSortKey) => {
+    patchQuery({ sort: next === 'time' ? undefined : next })
+  },
+})
+
+const sortDir = computed({
+  get: () => parseSortDirQuery(route.query.order),
+  set: (next: PublicMatchSortDir) => {
+    patchQuery({ order: next === 'desc' ? undefined : next })
   },
 })
 
@@ -89,6 +146,7 @@ const {
   'public-matches',
   async () => {
     loadError.value = null
+    refreshFailed.value = null
     try {
       const list = await $fetch<PublicMatchSummary[]>('/api/public-matches', {
         timeout: 12_000,
@@ -107,35 +165,101 @@ const {
               typeof (err as { status?: unknown }).status === 'number'
             ? (err as { status: number }).status
             : 0
-      loadError.value = statusCode === 429 ? 'rate' : 'generic'
+      const kind = statusCode === 429 ? ('rate' as const) : ('generic' as const)
+      // Keep the current feed on refresh failure (stale-while-revalidate).
+      if ((rows.value?.length ?? 0) > 0) {
+        refreshFailed.value = kind
+        throw err instanceof Error
+          ? err
+          : new Error('public-matches fetch failed')
+      }
+      loadError.value = kind
       return []
     }
   },
   { server: false },
 )
 
-const showLoading = computed(
-  () => pending.value || status.value === 'idle' || status.value === 'pending',
+const hasRows = computed(() => (rows.value?.length ?? 0) > 0)
+
+/** First paint only — never replace an existing feed with the skeleton. */
+const showInitialLoading = computed(
+  () =>
+    !hasRows.value &&
+    (pending.value || status.value === 'idle' || status.value === 'pending'),
 )
 
+/** Covers network pending + a short floor so a fast refresh still feels intentional. */
+const refreshBusy = ref(false)
+const refreshJustDone = ref(false)
+let refreshDoneTimer: ReturnType<typeof setTimeout> | null = null
+
+const isRefreshing = computed(
+  () => refreshBusy.value || (hasRows.value && pending.value),
+)
+
+const REFRESH_MIN_MS = 480
+const REFRESH_DONE_MS = 1600
+
+async function onRefresh() {
+  if (showInitialLoading.value || refreshBusy.value) {
+    return
+  }
+  refreshFailed.value = null
+  refreshJustDone.value = false
+  if (refreshDoneTimer) {
+    clearTimeout(refreshDoneTimer)
+    refreshDoneTimer = null
+  }
+  refreshBusy.value = true
+  const started = Date.now()
+  try {
+    await refresh()
+  } finally {
+    const wait = REFRESH_MIN_MS - (Date.now() - started)
+    if (wait > 0) {
+      await new Promise<void>((resolve) => {
+        setTimeout(resolve, wait)
+      })
+    }
+    refreshBusy.value = false
+    if (!refreshFailed.value) {
+      refreshJustDone.value = true
+      refreshDoneTimer = setTimeout(() => {
+        refreshJustDone.value = false
+        refreshDoneTimer = null
+      }, REFRESH_DONE_MS)
+    }
+  }
+}
+
+onBeforeUnmount(() => {
+  if (refreshDoneTimer) {
+    clearTimeout(refreshDoneTimer)
+  }
+})
+
 const errorMessage = computed(() => {
-  if (loadError.value === 'rate') {
+  const kind = loadError.value || refreshFailed.value
+  if (kind === 'rate') {
     return t('errors.rateLimitBody', { when: t('errors.rateLimitSoon') })
   }
-  if (loadError.value === 'generic') {
+  if (kind === 'generic') {
     return t('matchesPage.error')
   }
   return ''
 })
 
 const errorTitle = computed(() =>
-  loadError.value === 'rate'
-    ? t('errors.rateLimitTitle')
-    : t('matchesPage.error'),
+  loadError.value === 'rate' ? t('errors.rateLimitTitle') : '',
 )
 
 const filtered = computed(() =>
   (rows.value || []).filter((row) => matchPassesFacet(row, facet.value)),
+)
+
+const sorted = computed(() =>
+  sortPublicMatches(filtered.value, sortKey.value, sortDir.value),
 )
 
 function facetCount(id: PublicMatchFacet) {
@@ -159,6 +283,11 @@ const facets = computed(() => {
     .map((entry) => ({ ...entry, count: facetCount(entry.id) }))
     .filter((entry) => entry.id === 'all' || entry.count > 0)
 })
+
+const sortOptions = computed(() => [
+  { id: 'time' as const, label: t('matchesPage.sortTime') },
+  { id: 'rank' as const, label: t('matchesPage.sortRank') },
+])
 
 watch(
   () => [rows.value, facet.value] as const,
@@ -184,20 +313,6 @@ const showingLabel = computed(() => {
 
 function matchPath(id: number | string) {
   return localePath({ name: 'match-id', params: { id: String(id) } })
-}
-
-function heroIds(ids: number[] | undefined) {
-  return (ids || [])
-    .filter((id) => typeof id === 'number' && id > 0)
-    .slice(0, 5)
-}
-
-function heroImg(heroId: number) {
-  return steamAssetUrl(HEROES_BY_ID[String(heroId)]?.img) || undefined
-}
-
-function heroName(heroId: number) {
-  return HEROES_BY_ID[String(heroId)]?.localized_name || `Hero ${heroId}`
 }
 
 function resultTone(row: PublicMatchSummary): 'radiant' | 'dire' | null {
@@ -241,7 +356,41 @@ function setFacet(next: PublicMatchFacet) {
   facet.value = next
 }
 
+function setSort(next: PublicMatchSortKey) {
+  const query = { ...route.query }
+  if (sortKey.value === next) {
+    const nextDir: PublicMatchSortDir =
+      sortDir.value === 'desc' ? 'asc' : 'desc'
+    if (nextDir === 'desc') {
+      delete query.order
+    } else {
+      query.order = nextDir
+    }
+  } else {
+    if (next === 'time') {
+      delete query.sort
+    } else {
+      query.sort = next
+    }
+    delete query.order
+  }
+  void router.replace({ query })
+}
+
+function sortAria(key: PublicMatchSortKey) {
+  const dir = sortKey.value === key ? sortDir.value : 'desc'
+  if (key === 'time') {
+    return dir === 'desc'
+      ? t('matchesPage.sortTimeDesc')
+      : t('matchesPage.sortTimeAsc')
+  }
+  return dir === 'desc'
+    ? t('matchesPage.sortRankDesc')
+    : t('matchesPage.sortRankAsc')
+}
+
 const skeletonSlots = [0, 1, 2, 3]
+const heroSkelSlots = [0, 1, 2, 3, 4]
 </script>
 
 <template>
@@ -255,17 +404,36 @@ const skeletonSlots = [0, 1, 2, 3]
         <div class="matches-v2__actions">
           <button
             type="button"
-            class="text-button"
-            :disabled="showLoading"
-            @click="refresh()"
+            class="text-button matches-v2__refresh ui-press"
+            :class="{ 'is-done': refreshJustDone }"
+            :disabled="showInitialLoading || isRefreshing"
+            :aria-busy="isRefreshing ? 'true' : undefined"
+            @click="onRefresh()"
           >
-            {{ t('matchesPage.refresh') }}
+            <Icon
+              :name="refreshJustDone ? 'lucide:check' : 'lucide:refresh-cw'"
+              class="matches-v2__refresh-icon"
+              :class="{ 'is-spinning': isRefreshing }"
+              aria-hidden="true"
+            />
+            {{
+              refreshJustDone
+                ? t('matchesPage.refreshed')
+                : t('matchesPage.refresh')
+            }}
           </button>
+          <p
+            v-if="refreshFailed"
+            class="matches-v2__refresh-fail"
+            role="status"
+          >
+            {{ errorMessage }}
+          </p>
         </div>
       </header>
 
       <div
-        v-if="showLoading"
+        v-if="showInitialLoading"
         class="matches-v2__skeleton"
         aria-busy="true"
         :aria-label="t('matchesPage.loading')"
@@ -288,9 +456,23 @@ const skeletonSlots = [0, 1, 2, 3]
               </div>
             </div>
             <div class="matches-v2__skel-draft">
-              <div class="matches-v2__skel-heroes" />
+              <div class="matches-v2__skel-heroes">
+                <span
+                  v-for="hero in heroSkelSlots"
+                  :key="`r-${hero}`"
+                  class="matches-v2__skel-hero"
+                />
+              </div>
               <div class="matches-v2__skel-spine" />
-              <div class="matches-v2__skel-heroes" />
+              <div
+                class="matches-v2__skel-heroes matches-v2__skel-heroes--dire"
+              >
+                <span
+                  v-for="hero in heroSkelSlots"
+                  :key="`d-${hero}`"
+                  class="matches-v2__skel-hero"
+                />
+              </div>
             </div>
             <div class="matches-v2__skel-aside">
               <div class="matches-v2__skel-line matches-v2__skel-line--aside" />
@@ -299,8 +481,12 @@ const skeletonSlots = [0, 1, 2, 3]
           </div>
         </div>
       </div>
-      <div v-else-if="loadError" class="matches-v2__status" role="alert">
-        <p>
+      <div
+        v-else-if="loadError && !hasRows"
+        class="matches-v2__status"
+        role="alert"
+      >
+        <p v-if="errorTitle">
           <strong>{{ errorTitle }}</strong>
         </p>
         <p>{{ errorMessage }}</p>
@@ -310,31 +496,58 @@ const skeletonSlots = [0, 1, 2, 3]
       </div>
       <template v-else>
         <div class="matches-v2__toolbar">
+          <div class="matches-v2__toolbar-start">
+            <div
+              class="matches-v2__facets"
+              role="group"
+              :aria-label="t('matchesPage.facetsLabel')"
+            >
+              <button
+                v-for="entry in facets"
+                :key="entry.id"
+                type="button"
+                class="matches-v2__facet ui-press"
+                :aria-pressed="facet === entry.id"
+                @click="setFacet(entry.id)"
+              >
+                <span>{{ entry.label }}</span>
+                <span class="matches-v2__facet-count">{{ entry.count }}</span>
+              </button>
+            </div>
+            <p
+              v-if="showingLabel"
+              class="matches-v2__showing"
+              role="status"
+              aria-atomic="true"
+            >
+              {{ showingLabel }}
+            </p>
+          </div>
           <div
-            class="matches-v2__facets"
+            class="matches-v2__sorts"
             role="group"
-            :aria-label="t('matchesPage.facetsLabel')"
+            :aria-label="t('matchesPage.sortLabel')"
           >
             <button
-              v-for="entry in facets"
+              v-for="entry in sortOptions"
               :key="entry.id"
               type="button"
-              class="matches-v2__facet ui-press"
-              :aria-pressed="facet === entry.id"
-              @click="setFacet(entry.id)"
+              class="matches-v2__facet matches-v2__sort ui-press"
+              :aria-pressed="sortKey === entry.id"
+              :aria-label="sortAria(entry.id)"
+              @click="setSort(entry.id)"
             >
               <span>{{ entry.label }}</span>
-              <span class="matches-v2__facet-count">{{ entry.count }}</span>
+              <Icon
+                v-if="sortKey === entry.id"
+                :name="
+                  sortDir === 'desc' ? 'lucide:arrow-down' : 'lucide:arrow-up'
+                "
+                class="matches-v2__sort-dir"
+                aria-hidden="true"
+              />
             </button>
           </div>
-          <p
-            v-if="showingLabel"
-            class="matches-v2__showing"
-            role="status"
-            aria-atomic="true"
-          >
-            {{ showingLabel }}
-          </p>
         </div>
 
         <p v-if="!(rows && rows.length)" class="matches-v2__status">
@@ -346,11 +559,19 @@ const skeletonSlots = [0, 1, 2, 3]
             {{ t('matchesPage.clearFacet') }}
           </button>
         </div>
-        <ol v-else class="matches-v2__feed">
+        <ol
+          v-else
+          class="matches-v2__feed"
+          :class="{
+            'is-refreshing': isRefreshing,
+            'is-refreshed': refreshJustDone,
+          }"
+          :aria-busy="isRefreshing ? 'true' : undefined"
+        >
           <li
-            v-for="row in filtered"
+            v-for="row in sorted"
             :key="row.match_id"
-            v-memo="[row.match_id, facet]"
+            v-memo="[row.match_id, facet, sortKey, sortDir]"
           >
             <NuxtLink
               class="matches-v2__bout ui-press-row"
@@ -398,31 +619,12 @@ const skeletonSlots = [0, 1, 2, 3]
 
                 <div class="matches-v2__match">
                   <div class="matches-v2__draft">
-                    <div class="matches-v2__side">
-                      <span
-                        class="matches-v2__side-label"
-                        data-tone="radiant"
-                        >{{ t('matchesPage.colRadiant') }}</span
-                      >
-                      <div
-                        class="matches-v2__heroes"
-                        role="group"
-                        :aria-label="t('matchesPage.colRadiant')"
-                      >
-                        <img
-                          v-for="(id, idx) in heroIds(row.radiant_team)"
-                          :key="`r-${row.match_id}-${idx}-${id}`"
-                          :src="heroImg(id)"
-                          alt=""
-                          width="64"
-                          height="36"
-                          loading="lazy"
-                          decoding="async"
-                          aria-hidden="true"
-                          :title="heroName(id)"
-                        />
-                      </div>
-                    </div>
+                    <MatchPublicHeroStrip
+                      :team-ids="row.radiant_team"
+                      :label="t('matchesPage.colRadiant')"
+                      tone="radiant"
+                      :match-id="row.match_id"
+                    />
 
                     <div
                       class="matches-v2__spine"
@@ -436,29 +638,12 @@ const skeletonSlots = [0, 1, 2, 3]
                       }}</span>
                     </div>
 
-                    <div class="matches-v2__side matches-v2__side--dire">
-                      <span class="matches-v2__side-label" data-tone="dire">{{
-                        t('matchesPage.colDire')
-                      }}</span>
-                      <div
-                        class="matches-v2__heroes matches-v2__heroes--dire"
-                        role="group"
-                        :aria-label="t('matchesPage.colDire')"
-                      >
-                        <img
-                          v-for="(id, idx) in heroIds(row.dire_team)"
-                          :key="`d-${row.match_id}-${idx}-${id}`"
-                          :src="heroImg(id)"
-                          alt=""
-                          width="64"
-                          height="36"
-                          loading="lazy"
-                          decoding="async"
-                          aria-hidden="true"
-                          :title="heroName(id)"
-                        />
-                      </div>
-                    </div>
+                    <MatchPublicHeroStrip
+                      :team-ids="row.dire_team"
+                      :label="t('matchesPage.colDire')"
+                      tone="dire"
+                      :match-id="row.match_id"
+                    />
                   </div>
                 </div>
 

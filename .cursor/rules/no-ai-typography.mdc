@@ -1,0 +1,28 @@
+---
+description: Ban AI typography artifacts in product and agent-authored text
+alwaysApply: true
+---
+
+# No AI typography artifacts
+
+Do **not** use smart / AI-flavored punctuation in product UI copy, i18n strings, commit messages, PR text, rules, or other agent-authored prose.
+
+## Forbidden
+
+| Avoid | Use instead |
+| --- | --- |
+| Em dash (U+2014) | ASCII hyphen-minus `-`, comma, colon, or a new sentence |
+| En dash (U+2013) | ASCII `-` (including ranges: `1-25`, `18-28`) |
+| Curly double quotes (U+201C / U+201D) | Straight `"..."` |
+| Curly single quotes used as quotes (U+2018 / U+2019) | Straight `"..."` or ASCII apostrophe `'` |
+| Guillemets (U+00AB / U+00BB) | Straight `"..."` |
+
+Also avoid other LLM copy tells in UI strings: the ellipsis character (U+2026) when `...` is enough, decorative non-breaking spaces, and middle dots in sentences unless the surrounding UI already uses that pattern.
+
+## Allowed exception (product glyph only)
+
+A single em dash may appear **only** as the dedicated missing-value glyph behind the i18n key `format.emDash` (or an equivalent single-purpose key). Do not paste that character into surrounding sentence prose; explain it in words ("em dash glyph") or interpolate that key.
+
+## When editing existing copy
+
+Replace forbidden characters in any string you touch. Prefer fixing whole i18n keys you change, not leaving mixed styles in the same sentence.

@@ -39,3 +39,6 @@ blob-report
 __pycache__/
 *.py[cod]
 
+# Graphify knowledge-graph output (regenerate with /graphify .)
+graphify-out/
+

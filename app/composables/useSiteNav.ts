@@ -8,7 +8,7 @@ export function useSiteNav(options: { onSources: () => void }) {
   const { muted, toggleMute } = useScoreAudio()
 
   onMounted(() => {
-    store.loadSaved()
+    store.hydrateLocalLists()
   })
 
   const tree = computed((): SiteNavTreeNode[] => {

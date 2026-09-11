@@ -4,6 +4,7 @@ import type { SavedMatch } from '#shared/match/types'
 import { savedResultLabel } from '~/utils/matchFormat'
 
 const { t } = useI18n()
+const localePath = useLocalePath()
 const store = useMatchStore()
 const siteConfig = useSiteConfig()
 
@@ -52,9 +53,20 @@ function savedMeta(entry: SavedMatch) {
         </div>
       </header>
 
-      <p v-if="!store.saved.length" class="saved-page__empty">
-        {{ t('savedPage.empty') }}
-      </p>
+      <div
+        v-if="!store.saved.length"
+        class="saved-page__empty home-block-empty"
+        role="status"
+      >
+        <p class="home-block-empty__copy">{{ t('savedPage.empty') }}</p>
+        <NuxtLink
+          class="home-block-empty__action ui-press"
+          :to="localePath({ name: 'matches' })"
+        >
+          <Icon name="lucide:swords" aria-hidden="true" />
+          {{ t('savedPage.emptyAction') }}
+        </NuxtLink>
+      </div>
       <div v-else class="saved-page__list" role="list">
         <div
           v-for="entry in store.saved"
