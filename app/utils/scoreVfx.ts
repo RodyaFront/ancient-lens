@@ -123,13 +123,6 @@ export function createScoreVfx(canvas: HTMLCanvasElement): ScoreVfxHandle {
         color += (white * 1.35 + gold * 0.8) * slash * scanGate * band;
         color += win * trail * scanGate * 0.72;
 
-        vec2 shock = centered * vec2(2.02, 2.2);
-        float dist = length(shock);
-        float radius = mix(0.04, 1.18, uImpact);
-        float ring = abs(dist - radius);
-        float shockwave = exp(-ring * 16.0) * (1.0 - smoothstep(0.72, 1.0, uImpact));
-        color += (white * 1.05 + gold * 0.65 + win * 0.4) * shockwave * 1.55;
-
         float ang = atan(centered.y, centered.x * uAspect);
         float rays = pow(abs(sin(ang * 5.0)), 18.0);
         float rayGate = uImpact * (1.0 - uImpact) * 2.4;

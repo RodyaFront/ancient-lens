@@ -215,7 +215,14 @@ onBeforeUnmount(() => {
       </div>
     </div>
 
-    <div class="score-row" :class="{ 'is-mvp-open': mvpOpen && !!mvp }">
+    <div
+      class="score-row"
+      :class="{
+        'is-mvp-open': mvpOpen && !!mvp,
+        'mvp-from-radiant': mvpTeam === 'radiant',
+        'mvp-from-dire': mvpTeam === 'dire',
+      }"
+    >
       <div
         ref="card"
         class="score-card"

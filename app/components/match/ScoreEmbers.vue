@@ -61,6 +61,12 @@ function scheduleFire() {
   }, SCORE_EMBERS_INTRO_DELAY * 1000)
 }
 
+function disposeEmbers() {
+  embers?.dispose()
+  embers = null
+  init = null
+}
+
 async function ensure() {
   if (embers) {
     return embers
@@ -113,9 +119,7 @@ onBeforeUnmount(() => {
   clearFireTimer()
   unbindScrollVolume()
   audio.stopFire()
-  embers?.dispose()
-  embers = null
-  init = null
+  disposeEmbers()
 })
 </script>
 
