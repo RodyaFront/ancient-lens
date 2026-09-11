@@ -26,9 +26,21 @@ const OPENDOTA_PUBLIC_MATCHES = 'https://api.opendota.com/api/publicMatches'
 const MATCH_FETCH_MS = 8_000
 const PUBLIC_MATCHES_FETCH_MS = 10_000
 const CACHE_OK_SECONDS = 3_600
-const PUBLIC_MATCHES_CACHE_SECONDS = 90
+/** Edge TTL for a fresh successful list (stops OpenDota stampede). */
+const PUBLIC_MATCHES_CACHE_SECONDS = 300
+/** Keep last-good longer so 429/upstream blips still serve a feed. */
+const PUBLIC_MATCHES_LAST_GOOD_SECONDS = 3_600
+/** After OpenDota 429/error with no last-good, skip upstream briefly. */
+const PUBLIC_MATCHES_COOLDOWN_SECONDS = 30
+/** Browser may revalidate sooner; edge holds the longer TTLs above. */
+const PUBLIC_MATCHES_BROWSER_MAX_AGE = 60
 const PUBLIC_MATCHES_LIMIT = 40
 const SITE_ORIGIN_FALLBACK = 'https://ancientlens.info'
+
+/** @type {string | null} */
+let publicMatchesMemoryBody = null
+/** @type {Promise<Response> | null} */
+let publicMatchesInflight = null
 
 export default {
   async fetch(request, env, ctx) {
@@ -168,6 +180,7 @@ async function serveMatchDocument(request, env, ctx, url, matchRoute) {
 
 /**
  * Cached OpenDota publicMatches list for /matches page (avoids browser 429).
+ * Fresh edge cache + last-good fallback + isolate singleflight + short cooldown.
  * @param {Request} request
  * @param {ExecutionContext | undefined} ctx
  * @param {URL} url
@@ -178,19 +191,58 @@ async function servePublicMatches(request, ctx, url) {
   }
 
   const origin = siteOrigin(url)
-  const cacheKey = new Request(`${origin}/__api-cache/public-matches`, {
+  const freshKey = new Request(`${origin}/__api-cache/public-matches`, {
     method: 'GET',
   })
+  const lastGoodKey = new Request(
+    `${origin}/__api-cache/public-matches-last-good`,
+    { method: 'GET' },
+  )
+  const cooldownKey = new Request(
+    `${origin}/__api-cache/public-matches-cooldown`,
+    { method: 'GET' },
+  )
   const cache = typeof caches !== 'undefined' ? caches.default : null
+
   if (cache) {
-    const hit = await cache.match(cacheKey)
+    const hit = await cache.match(freshKey)
     if (hit) {
-      const headers = new Headers(hit.headers)
-      headers.set('X-Public-Matches-Cache', 'HIT')
-      return new Response(hit.body, { status: hit.status, headers })
+      return publicMatchesClientResponse(await hit.text(), 'HIT')
     }
   }
 
+  if (cache) {
+    const cooling = await cache.match(cooldownKey)
+    if (cooling) {
+      const stale = await resolvePublicMatchesLastGood(cache, lastGoodKey)
+      if (stale) {
+        return publicMatchesClientResponse(stale, 'STALE')
+      }
+      return publicMatchesErrorResponse(429, 'rate_limit')
+    }
+  }
+
+  if (publicMatchesInflight) {
+    return publicMatchesInflight.then((response) => response.clone())
+  }
+
+  publicMatchesInflight = loadPublicMatches(cache, ctx, {
+    freshKey,
+    lastGoodKey,
+    cooldownKey,
+  }).finally(() => {
+    publicMatchesInflight = null
+  })
+
+  return publicMatchesInflight.then((response) => response.clone())
+}
+
+/**
+ * @param {Cache | null} cache
+ * @param {ExecutionContext | undefined} ctx
+ * @param {{ freshKey: Request, lastGoodKey: Request, cooldownKey: Request }} keys
+ */
+async function loadPublicMatches(cache, ctx, keys) {
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), PUBLIC_MATCHES_FETCH_MS)
   try {
@@ -199,22 +251,12 @@ async function servePublicMatches(request, ctx, url) {
       headers: { Accept: 'application/json' },
     })
     if (!upstream.ok) {
-      if (cache) {
-        const stale = await cache.match(cacheKey)
-        if (stale) {
-          const headers = new Headers(stale.headers)
-          headers.set('X-Public-Matches-Cache', 'STALE')
-          return new Response(stale.body, { status: 200, headers })
-        }
-      }
-      return new Response(
-        JSON.stringify({
-          error: upstream.status === 429 ? 'rate_limit' : 'upstream_error',
-        }),
-        {
-          status: upstream.status === 429 ? 429 : 502,
-          headers: { 'Content-Type': 'application/json' },
-        },
+      return servePublicMatchesFallback(
+        cache,
+        ctx,
+        keys,
+        upstream.status === 429 ? 429 : 502,
+        upstream.status === 429 ? 'rate_limit' : 'upstream_error',
       )
     }
 
@@ -223,32 +265,144 @@ async function servePublicMatches(request, ctx, url) {
       ? list.filter(isUsablePublicMatchRow).slice(0, PUBLIC_MATCHES_LIMIT)
       : []
     const body = JSON.stringify(rows)
-    const headers = new Headers({
-      'Content-Type': 'application/json; charset=utf-8',
-      'Cache-Control': `public, max-age=${PUBLIC_MATCHES_CACHE_SECONDS}`,
-      'X-Public-Matches-Cache': 'MISS',
-    })
-    const response = new Response(body, { status: 200, headers })
-    if (cache && ctx?.waitUntil) {
-      ctx.waitUntil(cache.put(cacheKey, response.clone()))
-    }
-    return response
+    publicMatchesMemoryBody = body
+    await storePublicMatchesSuccess(cache, ctx, keys, body)
+    return publicMatchesClientResponse(body, 'MISS')
   } catch {
-    if (cache) {
-      const stale = await cache.match(cacheKey)
-      if (stale) {
-        const headers = new Headers(stale.headers)
-        headers.set('X-Public-Matches-Cache', 'STALE')
-        return new Response(stale.body, { status: 200, headers })
-      }
-    }
-    return new Response(JSON.stringify({ error: 'upstream_error' }), {
-      status: 502,
-      headers: { 'Content-Type': 'application/json' },
-    })
+    return servePublicMatchesFallback(cache, ctx, keys, 502, 'upstream_error')
   } finally {
     clearTimeout(timer)
   }
+}
+
+/**
+ * @param {Cache | null} cache
+ * @param {ExecutionContext | undefined} ctx
+ * @param {{ freshKey: Request, lastGoodKey: Request, cooldownKey: Request }} keys
+ * @param {number} status
+ * @param {string} error
+ */
+async function servePublicMatchesFallback(cache, ctx, keys, status, error) {
+  const stale = await resolvePublicMatchesLastGood(cache, keys.lastGoodKey)
+  await storePublicMatchesCooldown(cache, ctx, keys.cooldownKey, status, error)
+  if (stale) {
+    return publicMatchesClientResponse(stale, 'STALE')
+  }
+  return publicMatchesErrorResponse(status, error)
+}
+
+/**
+ * @param {Cache | null} cache
+ * @param {Request} lastGoodKey
+ */
+async function resolvePublicMatchesLastGood(cache, lastGoodKey) {
+  if (publicMatchesMemoryBody) {
+    return publicMatchesMemoryBody
+  }
+  if (!cache) {
+    return null
+  }
+  const hit = await cache.match(lastGoodKey)
+  if (!hit) {
+    return null
+  }
+  const body = await hit.text()
+  publicMatchesMemoryBody = body
+  return body
+}
+
+/**
+ * @param {Cache | null} cache
+ * @param {ExecutionContext | undefined} ctx
+ * @param {{ freshKey: Request, lastGoodKey: Request, cooldownKey: Request }} keys
+ * @param {string} body
+ */
+async function storePublicMatchesSuccess(cache, ctx, keys, body) {
+  if (!cache) {
+    return
+  }
+  const fresh = new Response(body, {
+    status: 200,
+    headers: {
+      'Content-Type': 'application/json; charset=utf-8',
+      'Cache-Control': `public, max-age=${PUBLIC_MATCHES_CACHE_SECONDS}`,
+    },
+  })
+  const lastGood = new Response(body, {
+    status: 200,
+    headers: {
+      'Content-Type': 'application/json; charset=utf-8',
+      'Cache-Control': `public, max-age=${PUBLIC_MATCHES_LAST_GOOD_SECONDS}`,
+    },
+  })
+  const write = Promise.all([
+    cache.put(keys.freshKey, fresh),
+    cache.put(keys.lastGoodKey, lastGood),
+    cache.delete(keys.cooldownKey),
+  ])
+  if (ctx?.waitUntil) {
+    ctx.waitUntil(write)
+  } else {
+    await write
+  }
+}
+
+/**
+ * @param {Cache | null} cache
+ * @param {ExecutionContext | undefined} ctx
+ * @param {Request} cooldownKey
+ * @param {number} status
+ * @param {string} error
+ */
+async function storePublicMatchesCooldown(
+  cache,
+  ctx,
+  cooldownKey,
+  status,
+  error,
+) {
+  if (!cache) {
+    return
+  }
+  const response = new Response(JSON.stringify({ error }), {
+    status,
+    headers: {
+      'Content-Type': 'application/json; charset=utf-8',
+      'Cache-Control': `public, max-age=${PUBLIC_MATCHES_COOLDOWN_SECONDS}`,
+    },
+  })
+  const write = cache.put(cooldownKey, response)
+  if (ctx?.waitUntil) {
+    ctx.waitUntil(write)
+  } else {
+    await write
+  }
+}
+
+/**
+ * @param {string} body
+ * @param {'HIT' | 'MISS' | 'STALE'} cacheState
+ */
+function publicMatchesClientResponse(body, cacheState) {
+  return new Response(body, {
+    status: 200,
+    headers: {
+      'Content-Type': 'application/json; charset=utf-8',
+      'Cache-Control': `public, max-age=${PUBLIC_MATCHES_BROWSER_MAX_AGE}`,
+      'X-Public-Matches-Cache': cacheState,
+    },
+  })
+}
+
+/**
+ * @param {number} status
+ * @param {string} error
+ */
+function publicMatchesErrorResponse(status, error) {
+  return new Response(JSON.stringify({ error }), {
+    status,
+    headers: { 'Content-Type': 'application/json' },
+  })
 }
 
 /**
