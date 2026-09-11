@@ -122,6 +122,23 @@
     "ringAria": "Loading item details",
     "tier": "Tier {n} Neutral"
   },
+  "abilityHover": {
+    "target": "Target",
+    "affects": "Affects",
+    "damageType": "Damage type",
+    "pierce": "Pierces debuff immunity",
+    "dispellable": "Dispellable",
+    "talent": "Talent",
+    "mana": "Mana cost",
+    "cooldown": "Cooldown",
+    "yes": "Yes",
+    "no": "No",
+    "dmg": {
+      "magical": "Magical",
+      "physical": "Physical",
+      "pure": "Pure"
+    }
+  },
   "heroHover": {
     "primary": {
       "str": "Strength",
@@ -244,6 +261,7 @@
     "overview": "Overview",
     "economy": "Economy",
     "combat": "Combat",
+    "skills": "Skills",
     "all": "All",
     "sortLabel": "Sort players within team",
     "sortSlot": "By slot",

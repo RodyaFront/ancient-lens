@@ -16,6 +16,58 @@ function isTalentName(name) {
   return name.startsWith('special_bonus_')
 }
 
+function asStringArray(value) {
+  if (value == null || value === false || value === '') {
+    return undefined
+  }
+  if (Array.isArray(value)) {
+    const list = value.map(String).filter((part) => part.trim().length > 0)
+    return list.length ? list : undefined
+  }
+  const text = String(value).trim()
+  return text ? [text] : undefined
+}
+
+/** Scalar or per-level list as strings for UI. */
+function asLevelValues(value) {
+  if (value == null || value === false || value === '') {
+    return undefined
+  }
+  if (Array.isArray(value)) {
+    const list = value.map(String).filter((part) => part.trim().length > 0)
+    return list.length ? list : undefined
+  }
+  const text = String(value).trim()
+  return text ? [text] : undefined
+}
+
+function normalizeAttrib(list) {
+  if (!Array.isArray(list)) {
+    return undefined
+  }
+  const attrib = list
+    .map((row) => {
+      if (!row || typeof row !== 'object') {
+        return null
+      }
+      const key = typeof row.key === 'string' ? row.key : undefined
+      const header = typeof row.header === 'string' ? row.header.trim() : ''
+      const values = asLevelValues(row.value)
+      const generated = row.generated === true
+      if (!header && !values) {
+        return null
+      }
+      return {
+        ...(key ? { key } : {}),
+        ...(header ? { header } : {}),
+        ...(values ? { value: values } : {}),
+        ...(generated ? { generated: true } : {}),
+      }
+    })
+    .filter(Boolean)
+  return attrib.length ? attrib : undefined
+}
+
 /**
  * @param {unknown} raw
  * @param {number} id
@@ -33,6 +85,21 @@ function normalizeAbility(raw, id, name) {
   const entry = /** @type {Record<string, unknown>} */ (raw)
   const dname = typeof entry.dname === 'string' ? entry.dname.trim() : ''
   const img = typeof entry.img === 'string' ? entry.img : undefined
+  const desc = typeof entry.desc === 'string' ? entry.desc.trim() : ''
+  const lore = typeof entry.lore === 'string' ? entry.lore.trim() : ''
+  const dmgType =
+    typeof entry.dmg_type === 'string' ? entry.dmg_type.trim() : ''
+  const bkbpierce =
+    typeof entry.bkbpierce === 'string' ? entry.bkbpierce.trim() : ''
+  const dispellable =
+    typeof entry.dispellable === 'string' ? entry.dispellable.trim() : ''
+  const targetTeam =
+    typeof entry.target_team === 'string' ? entry.target_team.trim() : ''
+  const behavior = asStringArray(entry.behavior)
+  const targetType = asStringArray(entry.target_type)
+  const attrib = normalizeAttrib(entry.attrib)
+  const mc = asLevelValues(entry.mc)
+  const cd = asLevelValues(entry.cd)
   const talent = isTalentName(name)
 
   return {
@@ -41,6 +108,17 @@ function normalizeAbility(raw, id, name) {
     ...(dname ? { dname } : {}),
     ...(img ? { img } : {}),
     ...(talent ? { isTalent: true } : {}),
+    ...(desc ? { desc } : {}),
+    ...(lore ? { lore } : {}),
+    ...(behavior ? { behavior } : {}),
+    ...(dmgType ? { dmg_type: dmgType } : {}),
+    ...(bkbpierce ? { bkbpierce } : {}),
+    ...(dispellable ? { dispellable } : {}),
+    ...(targetTeam ? { target_team: targetTeam } : {}),
+    ...(targetType ? { target_type: targetType } : {}),
+    ...(attrib ? { attrib } : {}),
+    ...(mc ? { mc } : {}),
+    ...(cd ? { cd } : {}),
   }
 }
 

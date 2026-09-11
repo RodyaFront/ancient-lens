@@ -175,6 +175,14 @@ export interface ItemEntry {
 }
 
 /** Static ability / talent dictionary (synced to public/data/abilities.json). */
+export interface AbilityAttrib {
+  key?: string
+  header?: string
+  /** One value, or one per ability level. */
+  value?: string[]
+  generated?: boolean
+}
+
 export interface AbilityEntry {
   id: number
   name: string
@@ -182,6 +190,17 @@ export interface AbilityEntry {
   img?: string
   /** True when OpenDota name starts with `special_bonus_`. */
   isTalent?: boolean
+  desc?: string
+  lore?: string
+  behavior?: string[]
+  dmg_type?: string
+  bkbpierce?: string
+  dispellable?: string
+  target_team?: string
+  target_type?: string[]
+  attrib?: AbilityAttrib[]
+  mc?: string[]
+  cd?: string[]
 }
 
 export interface SnapshotMeta {
@@ -213,7 +232,7 @@ export interface MatchSource {
   fetchedAt: string
 }
 
-export type ScoreboardView = 'overview' | 'economy' | 'combat'
+export type ScoreboardView = 'overview' | 'economy' | 'combat' | 'skills'
 export type TeamFilter = 'all' | 'radiant' | 'dire'
 export type PlayerSort = 'slot' | 'kills' | 'net_worth' | 'hero_damage' | 'kda'
 export type MatchLoadPhase = 'idle' | 'resolve' | 'fetch' | 'build'

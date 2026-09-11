@@ -47,7 +47,7 @@ Highest product gap vs Dotabuff: encyclopedia detail lives on hover.
 - [x] **Item hover card** — name, cost, stats, active/passive, lore (from OpenDota/item dictionary + CDN); armed hover (150ms + 300ms cursor ring = 450ms); click pins tip (sticky, Esc/outside/toggle); enter/leave rise motion; no item modal. Surface B depth. Content modules: [`docs/item-hover-patterns.md`](./item-hover-patterns.md). Notes/recipe (surface A) still open.
 - [x] **Hero portrait hover** — scorebook tip (not Dotabuff clone): portrait, name, primary attr glyphs, STR/AGI/INT + gain, MS/armor, roles, match level; pub meta when `/heroStats` loads. Same armed hover / pin / Esc as items.
 - [x] **Scoreboard header tooltips** — plain-language definitions for K/D/A, NET, LH/DN, GPM, XPM, DMG, HEAL, BLD, Items (i18n)
-- [ ] **Ability hover card** (needed once builds exist) — name, hotkey, description, key numbers
+- [x] **Ability hover card** — name, meta, description, key numbers, mana/cooldown; armed hover + pin like items. Talent tree board still open.
 - [ ] **Talent tree hover** (needed once builds exist) — 10/15/20/25 board, taken options highlighted
 
 ---
@@ -114,6 +114,7 @@ Do **not** treat as Ancient Lens parity goals unless product direction changes:
 | 2026-09-09 | **Layer 1 shipped:** hero catalog (`sync:heroes`, `buildHeroProfile`, meta via `/heroStats`). **Layer 2 UI removed** for redesign (no Dotabuff visual clone).                                                                                                                    |
 | 2026-09-09 | **Hero portrait hover (Layer 2):** scorebook tip + attr icons; pin/armed hover parity with items; meta fail-soft via `useHeroMeta`.                                                                                                                                              |
 | 2026-09-10 | **P0 hover layer mostly done** (item + hero + header tips). Remaining P0: ability/talent hovers (blocked on builds). **Next resume:** P1 draft strip. Unrelated later work (MVP panel, Steam CDN proxy, SEO hubs) is **not** Dotabuff parity — do not confuse with this backlog. |
-| 2026-09-11 | **P1 ability builds preview (in-table):** scoreboard columns after Items (gutter + level headers) from `ability_upgrades_arr`; `sync:abilities` + `abilities.json`. Ability/talent hover cards still open. |
+| 2026-09-11 | **P1 ability builds preview (in-table):** scoreboard columns after Items (level headers) from `ability_upgrades_arr`; `sync:abilities` + `abilities.json`. Skills tab default on.                                                                                                |
+| 2026-09-11 | **P0 ability hover card:** armed hover + pin on skill columns; rich `abilities.json` (desc/attrib/mc/cd). Talent tree board still open.                                                                                                                                          |
 
 Update this table when a chunk of work merges or is clearly done.

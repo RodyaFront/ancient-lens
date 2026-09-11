@@ -9,6 +9,7 @@ import {
   matchStatExtreme,
   radiant,
   skillColumnCount,
+  skillRankAtLevel,
   total,
   upgradeAtLevel,
 } from '#shared/match'
@@ -106,6 +107,12 @@ const views = computed(() => [
     icon: 'lucide:swords',
     tone: 'combat' as const,
   },
+  {
+    id: 'skills' as ScoreboardView,
+    label: t('scoreboard.skills'),
+    icon: 'lucide:list-ordered',
+    tone: 'skills' as const,
+  },
 ])
 
 const filters = computed(() => [
@@ -129,6 +136,8 @@ function setSort(value: string) {
   }
 }
 
+type MetricView = 'overview' | 'economy' | 'combat'
+
 type MetricColId =
   | 'net_worth'
   | 'gpm'
@@ -143,10 +152,12 @@ type HeadCol = {
   id: MetricColId
   label: string
   tip: string
-  tone: 'overview' | 'economy' | 'combat'
+  tone: MetricView
 }
 
-const SET_COLUMNS: Record<ScoreboardView, MetricColId[]> = {
+const METRIC_VIEWS: MetricView[] = ['overview', 'economy', 'combat']
+
+const SET_COLUMNS: Record<MetricView, MetricColId[]> = {
   overview: ['net_worth', 'gpm', 'lh_dn', 'damage'],
   economy: ['net_worth', 'gpm', 'xpm', 'lh_dn'],
   combat: ['damage', 'buildings', 'healing', 'participation'],
@@ -222,7 +233,7 @@ function columnTone(
   sets: Record<ScoreboardView, boolean>,
 ): HeadCol['tone'] {
   let tone: HeadCol['tone'] = 'overview'
-  for (const viewId of ['overview', 'economy', 'combat'] as ScoreboardView[]) {
+  for (const viewId of METRIC_VIEWS) {
     if (sets[viewId] && SET_COLUMNS[viewId].includes(id)) {
       tone = viewId
     }
@@ -233,7 +244,7 @@ function columnTone(
 const heads = computed((): HeadCol[] => {
   const sets = store.columnSets
   const enabled = new Set<MetricColId>()
-  for (const viewId of ['overview', 'economy', 'combat'] as ScoreboardView[]) {
+  for (const viewId of METRIC_VIEWS) {
     if (!sets[viewId]) {
       continue
     }
@@ -248,6 +259,9 @@ const heads = computed((): HeadCol[] => {
 })
 
 const skillLevels = computed(() => {
+  if (!store.columnSets.skills) {
+    return []
+  }
   const count = skillColumnCount(store.match?.players ?? [])
   return count > 0 ? Array.from({ length: count }, (_, index) => index + 1) : []
 })
@@ -257,13 +271,12 @@ const skillTableExtra = computed(() => {
   if (!count) {
     return '0rem'
   }
-  // Gutter 0.75rem + N skill columns at 2rem each.
-  return `calc(0.75rem + ${count} * 2rem)`
+  // N skill columns at 2rem + trailing inset on the last column.
+  return `calc(${count} * 2rem + var(--space-4))`
 })
 
 const tableColspan = computed(() => {
-  const skillExtra = skillLevels.value.length ? 1 + skillLevels.value.length : 0
-  return 3 + heads.value.length + skillExtra
+  return 3 + heads.value.length + skillLevels.value.length
 })
 
 const teamKillTotals = computed(() => {
@@ -536,7 +549,6 @@ function onSetKey(event: KeyboardEvent, id: ScoreboardView) {
               </AppTooltip>
             </th>
             <template v-if="skillLevels.length">
-              <th scope="col" class="skill-gutter" aria-hidden="true" />
               <th
                 v-for="level in skillLevels"
                 :key="`skill-h-${level}`"
@@ -727,13 +739,15 @@ function onSetKey(event: KeyboardEvent, id: ScoreboardView) {
               </div>
             </td>
             <template v-if="skillLevels.length">
-              <td class="skill-gutter" aria-hidden="true" />
               <td
                 v-for="level in skillLevels"
                 :key="`${playerIndex(player)}-skill-${level}`"
                 class="skill-cell"
               >
-                <MatchAbilitySlot :ability-id="upgradeAtLevel(player, level)" />
+                <MatchAbilitySlot
+                  :ability-id="upgradeAtLevel(player, level)"
+                  :skill-rank="skillRankAtLevel(player, level)"
+                />
               </td>
             </template>
           </tr>

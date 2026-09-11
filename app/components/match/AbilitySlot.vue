@@ -4,11 +4,15 @@ import { initials, steamAssetUrl } from '~/utils/matchFormat'
 
 const props = defineProps<{
   abilityId: number | undefined
+  /** 1-based how many times this ability was taken up to this column. */
+  skillRank?: number | null
 }>()
 
 const { t } = useI18n()
 const store = useMatchStore()
+const preview = useAbilityPreview()
 const failed = ref(false)
+const root = ref<HTMLElement | null>(null)
 
 const entry = computed(() =>
   typeof props.abilityId === 'number'
@@ -35,8 +39,55 @@ const imageUrl = computed(() => {
   return steamAssetUrl(entry.value?.img)
 })
 
+const pinnedHere = computed(
+  () => isNum(props.abilityId) && preview.isPinned(props.abilityId),
+)
+
+const rank = computed(() => props.skillRank ?? null)
+
 watch(imageUrl, () => {
   failed.value = false
+})
+
+function handleClick() {
+  if (!isNum(props.abilityId) || !root.value) {
+    return
+  }
+  preview.togglePin(props.abilityId, root.value, rank.value)
+}
+
+function onPointerEnter(event: PointerEvent) {
+  if (!isNum(props.abilityId) || !root.value) {
+    return
+  }
+  preview.start(
+    props.abilityId,
+    root.value,
+    event.clientX,
+    event.clientY,
+    rank.value,
+  )
+}
+
+function onPointerMove(event: PointerEvent) {
+  if (!isNum(props.abilityId)) {
+    return
+  }
+  preview.move(event.clientX, event.clientY)
+}
+
+function onPointerLeave() {
+  if (!isNum(props.abilityId)) {
+    return
+  }
+  preview.leave(props.abilityId)
+}
+
+onBeforeUnmount(() => {
+  if (!isNum(props.abilityId)) {
+    return
+  }
+  preview.dismiss(props.abilityId)
 })
 </script>
 
@@ -47,12 +98,20 @@ watch(imageUrl, () => {
     :title="title"
     :aria-label="title"
   />
-  <span
+  <button
     v-else
-    class="ability-slot"
-    :class="{ 'is-talent': entry?.isTalent }"
-    :title="title"
+    ref="root"
+    class="ability-slot ui-press"
+    :class="{ 'is-talent': entry?.isTalent, 'is-pinned': pinnedHere }"
+    type="button"
+    data-ability-preview-trigger
     :aria-label="title"
+    :aria-expanded="pinnedHere ? 'true' : undefined"
+    @click="handleClick"
+    @pointerenter="onPointerEnter"
+    @pointermove="onPointerMove"
+    @pointerleave="onPointerLeave"
+    @pointercancel="onPointerLeave"
   >
     <img
       v-if="imageUrl && !failed"
@@ -62,5 +121,5 @@ watch(imageUrl, () => {
       @error="failed = true"
     />
     <span v-else>{{ initials(title, 2) }}</span>
-  </span>
+  </button>
 </template>

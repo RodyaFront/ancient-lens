@@ -41,3 +41,24 @@ export function upgradeAtLevel(
   const id = list[level - 1]
   return typeof id === 'number' && Number.isFinite(id) ? id : undefined
 }
+
+/**
+ * How many times this ability was skilled from level 1 through `level`
+ * (1-based ability rank for tooltip value highlighting).
+ */
+export function skillRankAtLevel(
+  player: Pick<MatchPlayer, 'ability_upgrades_arr'>,
+  level: number,
+): number | undefined {
+  const id = upgradeAtLevel(player, level)
+  if (id === undefined) {
+    return undefined
+  }
+  let rank = 0
+  for (let step = 1; step <= level; step += 1) {
+    if (upgradeAtLevel(player, step) === id) {
+      rank += 1
+    }
+  }
+  return rank > 0 ? rank : undefined
+}

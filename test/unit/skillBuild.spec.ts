@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   MAX_SKILL_COLUMNS,
   skillColumnCount,
+  skillRankAtLevel,
   upgradeAtLevel,
 } from '../../shared/match/skillBuild'
 
@@ -44,5 +45,23 @@ describe('upgradeAtLevel', () => {
     expect(upgradeAtLevel({}, 1)).toBeUndefined()
     expect(upgradeAtLevel(player, 0)).toBeUndefined()
     expect(upgradeAtLevel(player, 1.5)).toBeUndefined()
+  })
+})
+
+describe('skillRankAtLevel', () => {
+  const ranked = {
+    ability_upgrades_arr: [10, 20, 10, 20, 10, 30],
+  }
+
+  it('counts prior picks of the same ability', () => {
+    expect(skillRankAtLevel(ranked, 1)).toBe(1)
+    expect(skillRankAtLevel(ranked, 3)).toBe(2)
+    expect(skillRankAtLevel(ranked, 5)).toBe(3)
+    expect(skillRankAtLevel(ranked, 6)).toBe(1)
+  })
+
+  it('returns undefined when the level has no upgrade', () => {
+    expect(skillRankAtLevel(ranked, 7)).toBeUndefined()
+    expect(skillRankAtLevel({}, 1)).toBeUndefined()
   })
 })

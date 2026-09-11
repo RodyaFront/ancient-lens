@@ -52,6 +52,7 @@ export const useMatchStore = defineStore('match', () => {
     overview: true,
     economy: false,
     combat: false,
+    skills: true,
   })
   const filter = ref<TeamFilter>('all')
   const sort = ref<PlayerSort>('slot')
@@ -709,6 +710,7 @@ export const useMatchStore = defineStore('match', () => {
       overview: true,
       economy: false,
       combat: false,
+      skills: true,
     }
   }
 
