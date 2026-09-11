@@ -152,7 +152,8 @@
     "popularity": "Популярність",
     "winRate": "Перемоги",
     "meta": "{rank}-е місце · {rate} перемог",
-    "winRateOnly": "{rate} перемог"
+    "winRateOnly": "{rate} перемог",
+    "metaLoading": "Завантаження популярності та перемог"
   },
   "parse": {
     "generic": "Вставте числовий ID або посилання на матч Dotabuff / OpenDota.",

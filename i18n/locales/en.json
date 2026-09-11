@@ -152,7 +152,8 @@
     "popularity": "Pub popularity",
     "winRate": "Win rate",
     "meta": "{rank} most popular · {rate} win rate",
-    "winRateOnly": "{rate} win rate"
+    "winRateOnly": "{rate} win rate",
+    "metaLoading": "Loading popularity and win rate"
   },
   "parse": {
     "generic": "Enter a numeric ID or a Dotabuff / OpenDota match link.",

@@ -6,6 +6,7 @@ import {
 } from '#shared/match'
 
 const META_STATE_KEY = 'ancient-lens-hero-meta'
+const META_PENDING_KEY = 'ancient-lens-hero-meta-pending'
 let metaLoad: Promise<HeroMetaSnapshot | null> | null = null
 
 /**
@@ -14,6 +15,7 @@ let metaLoad: Promise<HeroMetaSnapshot | null> | null = null
  */
 export function useHeroMeta() {
   const snapshot = useState<HeroMetaSnapshot | null>(META_STATE_KEY, () => null)
+  const pending = useState(META_PENDING_KEY, () => false)
 
   function metaById(id: number | undefined): HeroMetaEntry | undefined {
     if (id == null || !snapshot.value) {
@@ -27,11 +29,14 @@ export function useHeroMeta() {
       return null
     }
     if (snapshot.value) {
+      pending.value = false
       return snapshot.value
     }
     if (metaLoad) {
+      pending.value = true
       return metaLoad
     }
+    pending.value = true
     metaLoad = fetch(`${OPENDOTA_API}/heroStats`)
       .then(async (response) => {
         if (!response.ok) {
@@ -49,11 +54,15 @@ export function useHeroMeta() {
         metaLoad = null
         return null
       })
+      .finally(() => {
+        pending.value = false
+      })
     return metaLoad
   }
 
   return {
     snapshot,
+    pending,
     metaById,
     ensureHeroMeta,
   }
