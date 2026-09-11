@@ -18,6 +18,10 @@ import {
   lobbyTone,
   gameModeTone,
 } from '~/utils/matchFormat'
+import {
+  fetchPublicMatchesFeed,
+  publicMatchesErrorKind,
+} from '~/utils/publicMatchesFeed'
 
 const FACET_IDS: PublicMatchFacet[] = [
   'all',
@@ -148,24 +152,9 @@ const {
     loadError.value = null
     refreshFailed.value = null
     try {
-      const list = await $fetch<PublicMatchSummary[]>('/api/public-matches', {
-        timeout: 12_000,
-      })
-      return Array.isArray(list) ? list : []
+      return await fetchPublicMatchesFeed({ timeout: 12_000 })
     } catch (err: unknown) {
-      const statusCode =
-        typeof err === 'object' &&
-        err &&
-        'statusCode' in err &&
-        typeof (err as { statusCode?: unknown }).statusCode === 'number'
-          ? (err as { statusCode: number }).statusCode
-          : typeof err === 'object' &&
-              err &&
-              'status' in err &&
-              typeof (err as { status?: unknown }).status === 'number'
-            ? (err as { status: number }).status
-            : 0
-      const kind = statusCode === 429 ? ('rate' as const) : ('generic' as const)
+      const kind = publicMatchesErrorKind(err)
       // Keep the current feed on refresh failure (stale-while-revalidate).
       if ((rows.value?.length ?? 0) > 0) {
         refreshFailed.value = kind
