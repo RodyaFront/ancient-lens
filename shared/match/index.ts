@@ -58,6 +58,8 @@ export type {
   ValidateMatchErrorCode,
 } from './stats'
 export type {
+  AbilityAttrib,
+  AbilityEntry,
   HeroEntry,
   HeroMetaEntry,
   HeroMetaSnapshot,
@@ -77,6 +79,11 @@ export type {
   MatchLoadPhase,
 } from './types'
 export { HEROES_BY_ID } from './heroesData'
+export {
+  skillColumnCount,
+  skillRankAtLevel,
+  upgradeAtLevel,
+} from './skillBuild'
 export {
   CLUSTER_REGION,
   clusterRegionId,

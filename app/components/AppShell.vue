@@ -29,6 +29,7 @@ function openPlayer(index: number) {
     <MatchDialog v-model="dialog" />
     <MatchItemHoverLayer />
     <MatchHeroHoverLayer />
+    <MatchAbilityHoverLayer />
     <AppToast />
   </div>
 </template>

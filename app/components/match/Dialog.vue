@@ -17,6 +17,7 @@ const root = ref<HTMLDialogElement | null>(null)
 const dialogOpen = useMatchDialogOpen()
 const itemPreview = useItemPreview()
 const heroPreview = useHeroPreview()
+const abilityPreview = useAbilityPreview()
 
 const dateLocale = computed(() => (locale.value === 'uk' ? 'uk-UA' : 'en-US'))
 
@@ -84,6 +85,7 @@ function onDialogClose() {
   dialogOpen.value = false
   itemPreview.dismiss()
   heroPreview.dismiss()
+  abilityPreview.dismiss()
   dialog.value = null
 }
 

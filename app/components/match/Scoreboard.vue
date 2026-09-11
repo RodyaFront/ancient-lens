@@ -8,7 +8,10 @@ import {
   matchParticipationExtreme,
   matchStatExtreme,
   radiant,
+  skillColumnCount,
+  skillRankAtLevel,
   total,
+  upgradeAtLevel,
 } from '#shared/match'
 import type { BestStatKey, PartyMark } from '#shared/match'
 import type { MatchPlayer, ScoreboardView } from '#shared/match/types'
@@ -104,6 +107,12 @@ const views = computed(() => [
     icon: 'lucide:swords',
     tone: 'combat' as const,
   },
+  {
+    id: 'skills' as ScoreboardView,
+    label: t('scoreboard.skills'),
+    icon: 'lucide:list-ordered',
+    tone: 'skills' as const,
+  },
 ])
 
 const filters = computed(() => [
@@ -127,6 +136,8 @@ function setSort(value: string) {
   }
 }
 
+type MetricView = 'overview' | 'economy' | 'combat'
+
 type MetricColId =
   | 'net_worth'
   | 'gpm'
@@ -141,10 +152,12 @@ type HeadCol = {
   id: MetricColId
   label: string
   tip: string
-  tone: 'overview' | 'economy' | 'combat'
+  tone: MetricView
 }
 
-const SET_COLUMNS: Record<ScoreboardView, MetricColId[]> = {
+const METRIC_VIEWS: MetricView[] = ['overview', 'economy', 'combat']
+
+const SET_COLUMNS: Record<MetricView, MetricColId[]> = {
   overview: ['net_worth', 'gpm', 'lh_dn', 'damage'],
   economy: ['net_worth', 'gpm', 'xpm', 'lh_dn'],
   combat: ['damage', 'buildings', 'healing', 'participation'],
@@ -220,7 +233,7 @@ function columnTone(
   sets: Record<ScoreboardView, boolean>,
 ): HeadCol['tone'] {
   let tone: HeadCol['tone'] = 'overview'
-  for (const viewId of ['overview', 'economy', 'combat'] as ScoreboardView[]) {
+  for (const viewId of METRIC_VIEWS) {
     if (sets[viewId] && SET_COLUMNS[viewId].includes(id)) {
       tone = viewId
     }
@@ -231,7 +244,7 @@ function columnTone(
 const heads = computed((): HeadCol[] => {
   const sets = store.columnSets
   const enabled = new Set<MetricColId>()
-  for (const viewId of ['overview', 'economy', 'combat'] as ScoreboardView[]) {
+  for (const viewId of METRIC_VIEWS) {
     if (!sets[viewId]) {
       continue
     }
@@ -245,7 +258,26 @@ const heads = computed((): HeadCol[] => {
   }))
 })
 
-const tableColspan = computed(() => 3 + heads.value.length)
+const skillLevels = computed(() => {
+  if (!store.columnSets.skills) {
+    return []
+  }
+  const count = skillColumnCount(store.match?.players ?? [])
+  return count > 0 ? Array.from({ length: count }, (_, index) => index + 1) : []
+})
+
+const skillTableExtra = computed(() => {
+  const count = skillLevels.value.length
+  if (!count) {
+    return '0rem'
+  }
+  // N skill columns at 2rem + trailing inset on the last column.
+  return `calc(${count} * 2rem + var(--space-4))`
+})
+
+const tableColspan = computed(() => {
+  return 3 + heads.value.length + skillLevels.value.length
+})
 
 const teamKillTotals = computed(() => {
   if (!store.match) {
@@ -468,7 +500,10 @@ function onSetKey(event: KeyboardEvent, id: ScoreboardView) {
       :class="{ 'is-entering': tableClipOverflow }"
       tabindex="0"
     >
-      <table :aria-label="t('scoreboard.tableAria')">
+      <table
+        :aria-label="t('scoreboard.tableAria')"
+        :style="{ '--skill-table-extra': skillTableExtra }"
+      >
         <thead>
           <tr>
             <th scope="col">
@@ -513,6 +548,21 @@ function onSetKey(event: KeyboardEvent, id: ScoreboardView) {
                 {{ t('scoreboard.colItems') }}
               </AppTooltip>
             </th>
+            <template v-if="skillLevels.length">
+              <th
+                v-for="level in skillLevels"
+                :key="`skill-h-${level}`"
+                scope="col"
+                class="skill-col"
+              >
+                <AppTooltip
+                  :text="t('scoreboard.tipSkillLevel', { level })"
+                  :label="t('scoreboard.tipSkillLevel', { level })"
+                >
+                  {{ level }}
+                </AppTooltip>
+              </th>
+            </template>
           </tr>
         </thead>
         <tbody v-for="group in groups" :key="String(group.radiant)">
@@ -688,6 +738,18 @@ function onSetKey(event: KeyboardEvent, id: ScoreboardView) {
                 </button>
               </div>
             </td>
+            <template v-if="skillLevels.length">
+              <td
+                v-for="level in skillLevels"
+                :key="`${playerIndex(player)}-skill-${level}`"
+                class="skill-cell"
+              >
+                <MatchAbilitySlot
+                  :ability-id="upgradeAtLevel(player, level)"
+                  :skill-rank="skillRankAtLevel(player, level)"
+                />
+              </td>
+            </template>
           </tr>
         </tbody>
       </table>

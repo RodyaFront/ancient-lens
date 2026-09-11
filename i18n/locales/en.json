@@ -92,6 +92,7 @@
     "no": "no",
     "heroFallback": "Hero #{id}",
     "itemFallback": "Item #{id}",
+    "abilityFallback": "Ability #{id}",
     "emptySlot": "Empty slot",
     "slotUnknown": "Slot data not provided",
     "rankTierStars": "{medal} {stars}★",
@@ -120,6 +121,23 @@
     "cooldown": "Cooldown {n}",
     "ringAria": "Loading item details",
     "tier": "Tier {n} Neutral"
+  },
+  "abilityHover": {
+    "target": "Target",
+    "affects": "Affects",
+    "damageType": "Damage type",
+    "pierce": "Pierces debuff immunity",
+    "dispellable": "Dispellable",
+    "talent": "Talent",
+    "mana": "Mana cost",
+    "cooldown": "Cooldown",
+    "yes": "Yes",
+    "no": "No",
+    "dmg": {
+      "magical": "Magical",
+      "physical": "Physical",
+      "pure": "Pure"
+    }
   },
   "heroHover": {
     "primary": {
@@ -151,7 +169,8 @@
     "popularity": "Pub popularity",
     "winRate": "Win rate",
     "meta": "{rank} most popular · {rate} win rate",
-    "winRateOnly": "{rate} win rate"
+    "winRateOnly": "{rate} win rate",
+    "metaLoading": "Loading popularity and win rate"
   },
   "parse": {
     "generic": "Enter a numeric ID or a Dotabuff / OpenDota match link.",
@@ -242,6 +261,7 @@
     "overview": "Overview",
     "economy": "Economy",
     "combat": "Combat",
+    "skills": "Skills",
     "all": "All",
     "sortLabel": "Sort players within team",
     "sortSlot": "By slot",
@@ -271,6 +291,8 @@
     "tipHealing": "Healing provided to allied heroes",
     "tipParticipation": "Share of team kills involving the player",
     "tipItems": "Final inventory, backpack, neutral item, enchantment, and Aghanims",
+    "tipSkillLevel": "Skill chosen at hero level {level}",
+    "skillEmpty": "No skill at this level",
     "openStats": "Open stats: {name}",
     "details": "Details for {name}",
     "playersKills": "{count} players · {kills} kills",

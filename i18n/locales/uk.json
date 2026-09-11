@@ -92,6 +92,7 @@
     "no": "ні",
     "heroFallback": "Герой #{id}",
     "itemFallback": "Предмет #{id}",
+    "abilityFallback": "Здібність #{id}",
     "emptySlot": "Порожній слот",
     "slotUnknown": "Дані слота не надано",
     "rankTierStars": "{medal} {stars}★",
@@ -120,6 +121,23 @@
     "cooldown": "Перезарядка {n}",
     "ringAria": "Завантаження деталей предмета",
     "tier": "Артефакт {n}-го розряду"
+  },
+  "abilityHover": {
+    "target": "Ціль",
+    "affects": "Діє",
+    "damageType": "Тип шкоди",
+    "pierce": "Пробиває імунітет до дебафів",
+    "dispellable": "Знімається",
+    "talent": "Талант",
+    "mana": "Мана",
+    "cooldown": "Перезарядка",
+    "yes": "Так",
+    "no": "Ні",
+    "dmg": {
+      "magical": "Магічна",
+      "physical": "Фізична",
+      "pure": "Чиста"
+    }
   },
   "heroHover": {
     "primary": {
@@ -151,7 +169,8 @@
     "popularity": "Популярність",
     "winRate": "Перемоги",
     "meta": "{rank}-е місце · {rate} перемог",
-    "winRateOnly": "{rate} перемог"
+    "winRateOnly": "{rate} перемог",
+    "metaLoading": "Завантаження популярності та перемог"
   },
   "parse": {
     "generic": "Вставте числовий ID або посилання на матч Dotabuff / OpenDota.",
@@ -242,6 +261,7 @@
     "overview": "Огляд",
     "economy": "Економіка",
     "combat": "Бій",
+    "skills": "Скіли",
     "all": "Усі",
     "sortLabel": "Сортування гравців у команді",
     "sortSlot": "За слотом",
@@ -271,6 +291,8 @@
     "tipHealing": "Лікування союзних героїв",
     "tipParticipation": "Частка командних вбивств за участю гравця",
     "tipItems": "Фінальний інвентар, рюкзак, лісовий предмет, зачарування та Aghanim",
+    "tipSkillLevel": "Навичка, взята на рівні {level}",
+    "skillEmpty": "Немає навички на цьому рівні",
     "openStats": "Відкрити статистику: {name}",
     "details": "Деталі {name}",
     "playersKills": "{count} гравців · {kills} вбивств",

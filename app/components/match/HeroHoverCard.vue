@@ -20,13 +20,13 @@ const props = defineProps<{
 const { t, locale } = useI18n()
 const store = useMatchStore()
 const preview = useHeroPreview()
-const { ensureHeroMeta, snapshot } = useHeroMeta()
+const { ensureHeroMeta, snapshot, pending } = useHeroMeta()
 
 const failed = ref(false)
 
-onMounted(() => {
+if (import.meta.client) {
   void ensureHeroMeta()
-})
+}
 
 const profile = computed(() => {
   void snapshot.value
@@ -150,6 +150,8 @@ const rolesLine = computed(() => {
   return parts.join(' · ')
 })
 
+const metaPending = computed(() => pending.value && !snapshot.value)
+
 const metaStats = computed(() => {
   const meta = profile.value?.meta
   if (!meta || meta.winRate == null) {
@@ -169,6 +171,21 @@ const metaStats = computed(() => {
     rate: formatWinRatePercent(winRate),
     tone,
   }
+})
+
+const metaAria = computed(() => {
+  if (metaPending.value) {
+    return t('heroHover.metaLoading')
+  }
+  if (!metaStats.value) {
+    return undefined
+  }
+  return metaStats.value.rank
+    ? t('heroHover.meta', {
+        rank: metaStats.value.rank,
+        rate: metaStats.value.rate,
+      })
+    : t('heroHover.winRateOnly', { rate: metaStats.value.rate })
 })
 
 watch(imageUrl, () => {
@@ -312,32 +329,36 @@ watch(imageUrl, () => {
       <p v-if="rolesLine" class="hero-hover-card__roles">{{ rolesLine }}</p>
 
       <div
-        v-if="metaStats"
         class="hero-hover-card__meta"
-        :aria-label="
-          metaStats.rank
-            ? t('heroHover.meta', {
-                rank: metaStats.rank,
-                rate: metaStats.rate,
-              })
-            : t('heroHover.winRateOnly', { rate: metaStats.rate })
-        "
+        :aria-busy="metaPending"
+        :aria-label="metaAria"
       >
-        <div v-if="metaStats.rank" class="hero-hover-card__meta-item">
-          <strong class="hero-hover-card__meta-value">{{
-            metaStats.rank
-          }}</strong>
+        <div class="hero-hover-card__meta-item">
+          <strong v-if="!metaPending" class="hero-hover-card__meta-value">
+            {{ metaStats?.rank || t('format.emDash') }}
+          </strong>
+          <span
+            v-else
+            class="hero-hover-card__meta-value is-skeleton skeleton-shimmer"
+            aria-hidden="true"
+          />
           <span class="hero-hover-card__meta-label">{{
             t('heroHover.popularity')
           }}</span>
         </div>
         <div class="hero-hover-card__meta-item">
           <strong
+            v-if="!metaPending"
             class="hero-hover-card__meta-value"
-            :data-tone="metaStats.tone"
+            :data-tone="metaStats?.tone"
           >
-            {{ metaStats.rate }}
+            {{ metaStats?.rate || t('format.emDash') }}
           </strong>
+          <span
+            v-else
+            class="hero-hover-card__meta-value is-skeleton skeleton-shimmer"
+            aria-hidden="true"
+          />
           <span class="hero-hover-card__meta-label">{{
             t('heroHover.winRate')
           }}</span>
