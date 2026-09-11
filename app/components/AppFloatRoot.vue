@@ -14,6 +14,7 @@ const props = withDefaults(
     gap?: number
     padX?: number
     padY?: number
+    align?: 'center' | 'start' | 'end'
     /** Sets `--ui-float-z` on the shell. */
     zIndex?: number | string
     interactive?: boolean
@@ -25,6 +26,7 @@ const props = withDefaults(
     gap: 8,
     padX: 12,
     padY: 12,
+    align: 'center',
     interactive: false,
     zIndex: undefined,
     surfaceClass: undefined,
@@ -43,6 +45,7 @@ function placementOptions(): FloatPlacementOptions {
     preferAboveMin: props.preferAboveMin,
     padX: props.padX,
     padY: props.padY,
+    align: props.align,
   }
 }
 
@@ -142,6 +145,7 @@ watch(
       props.preferAboveMin,
       props.padX,
       props.padY,
+      props.align,
       props.zIndex,
     ] as const,
   () => {

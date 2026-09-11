@@ -52,4 +52,34 @@ describe('computeFloatPlacement', () => {
     expect(style['--ui-float-ox']).toBeUndefined()
     expect(style['--ui-float-oy']).toBeUndefined()
   })
+
+  it('aligns start to the trigger left edge', () => {
+    const style = computeFloatPlacement(
+      { top: 200, bottom: 228, left: 300, width: 80 },
+      { width: 800, height: 600 },
+      { width: 200, height: 120 },
+      { align: 'start', preferAboveMin: 40, gap: 8, padX: 12, padY: 12 },
+    )
+
+    expect(style.top).toBe('72px')
+    expect(style.left).toBe('300px')
+  })
+
+  it('aligns end to the trigger right edge and prefers below', () => {
+    const style = computeFloatPlacement(
+      { top: 20, bottom: 48, left: 500, width: 80 },
+      { width: 800, height: 600 },
+      { width: 200, height: 100 },
+      {
+        align: 'end',
+        preferAboveMin: 10000,
+        gap: 4,
+        padX: 12,
+        padY: 12,
+      },
+    )
+
+    expect(style.top).toBe('52px')
+    expect(style.left).toBe('380px')
+  })
 })

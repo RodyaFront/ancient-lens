@@ -112,6 +112,21 @@ const filters = computed(() => [
   { id: 'dire' as const, label: 'Dire' },
 ])
 
+const sortOptions = computed(() => [
+  { value: 'slot' as const, label: t('scoreboard.sortSlot') },
+  { value: 'kills' as const, label: t('scoreboard.sortKills') },
+  { value: 'net_worth' as const, label: t('scoreboard.sortNetWorth') },
+  { value: 'hero_damage' as const, label: t('scoreboard.sortDamage') },
+  { value: 'kda' as const, label: t('scoreboard.sortKda') },
+])
+
+function setSort(value: string) {
+  const next = sortOptions.value.find((option) => option.value === value)
+  if (next) {
+    store.sort = next.value
+  }
+}
+
 type MetricColId =
   | 'net_worth'
   | 'gpm'
@@ -439,16 +454,12 @@ function onSetKey(event: KeyboardEvent, id: ScoreboardView) {
             {{ entry.label }}
           </button>
         </div>
-        <label class="sr-only" for="sort">{{
-          t('scoreboard.sortLabel')
-        }}</label>
-        <select id="sort" v-model="store.sort" class="sort-select">
-          <option value="slot">{{ t('scoreboard.sortSlot') }}</option>
-          <option value="kills">{{ t('scoreboard.sortKills') }}</option>
-          <option value="net_worth">{{ t('scoreboard.sortNetWorth') }}</option>
-          <option value="hero_damage">{{ t('scoreboard.sortDamage') }}</option>
-          <option value="kda">{{ t('scoreboard.sortKda') }}</option>
-        </select>
+        <AppListbox
+          :model-value="store.sort"
+          :options="sortOptions"
+          :label="t('scoreboard.sortLabel')"
+          @update:model-value="setSort"
+        />
       </div>
     </div>
     <div
