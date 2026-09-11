@@ -13,12 +13,22 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'Invalid Steam path' })
   }
 
-  const upstream = await fetch(`${STEAM_CDN}${steamPath}`, {
-    headers: {
-      Accept: getHeader(event, 'accept') || 'image/*,*/*',
-      'User-Agent': getHeader(event, 'user-agent') || 'AncientLens',
-    },
+  const upstreamHeaders = {
+    Accept: getHeader(event, 'accept') || 'image/*,*/*;q=0.8',
+    'User-Agent':
+      getHeader(event, 'user-agent') ||
+      'Mozilla/5.0 (compatible; AncientLens/1.0; +https://ancientlens.info)',
+    Referer: 'https://www.dota2.com/',
+  }
+
+  let upstream = await fetch(`${STEAM_CDN}${steamPath}`, {
+    headers: upstreamHeaders,
   })
+  if (upstream.status === 403) {
+    upstream = await fetch(`https://cdn.akamai.steamstatic.com${steamPath}`, {
+      headers: upstreamHeaders,
+    })
+  }
 
   if (!upstream.ok) {
     throw createError({

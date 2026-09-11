@@ -5,6 +5,7 @@ import {
   formatNumber,
   playerDisplayName,
   steamAssetUrl,
+  steamHeroRenderProxyUrl,
   steamHeroRenderUrl,
 } from '~/utils/matchFormat'
 
@@ -20,10 +21,25 @@ const displayName = computed(() => playerDisplayName(props.player))
 const heroLabel = computed(() => store.heroName(props.player))
 const heroEntry = computed(() => store.heroById(props.player.hero_id))
 const portraitUrl = computed(() => steamAssetUrl(heroEntry.value?.img))
-const renderUrl = computed(() => steamHeroRenderUrl(heroEntry.value?.name))
+const renderDirectUrl = computed(() =>
+  steamHeroRenderUrl(heroEntry.value?.name),
+)
+const renderProxyUrl = computed(() =>
+  steamHeroRenderProxyUrl(heroEntry.value?.name),
+)
 const fallback = computed(() => initials(heroLabel.value))
 const portraitFailed = ref(false)
+/** Prefer Steam CDN (visitor IP); fall back to same-origin proxy once. */
+const renderSource = ref<'direct' | 'proxy'>('direct')
 const renderFailed = ref(false)
+const renderSrc = computed(() => {
+  if (renderFailed.value) {
+    return null
+  }
+  return renderSource.value === 'direct'
+    ? renderDirectUrl.value
+    : renderProxyUrl.value
+})
 const ariaLabel = computed(() =>
   t('score.mvpAria', { player: displayName.value, hero: heroLabel.value }),
 )
@@ -39,7 +55,8 @@ watch(portraitUrl, () => {
   portraitFailed.value = false
 })
 
-watch(renderUrl, () => {
+watch([renderDirectUrl, renderProxyUrl], () => {
+  renderSource.value = 'direct'
   renderFailed.value = false
 })
 
@@ -48,6 +65,10 @@ function onPortraitError() {
 }
 
 function onRenderError() {
+  if (renderSource.value === 'direct' && renderProxyUrl.value) {
+    renderSource.value = 'proxy'
+    return
+  }
   renderFailed.value = true
 }
 </script>
@@ -70,9 +91,9 @@ function onRenderError() {
       <div class="mvp-wash" aria-hidden="true" />
 
       <img
-        v-if="renderUrl && !renderFailed"
+        v-if="renderSrc"
         class="mvp-art mvp-art-render"
-        :src="renderUrl"
+        :src="renderSrc"
         alt=""
         aria-hidden="true"
         loading="lazy"

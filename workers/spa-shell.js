@@ -47,7 +47,7 @@ export default {
     const url = new URL(request.url)
 
     if (url.pathname.startsWith('/cdn/steam/')) {
-      return proxySteamAsset(url, request)
+      return proxySteamAsset(url, request, ctx)
     }
 
     if (
@@ -540,20 +540,44 @@ function siteOrigin(url) {
 /**
  * @param {URL} url
  * @param {Request} request
+ * @param {ExecutionContext | undefined} ctx
  */
-async function proxySteamAsset(url, request) {
+async function proxySteamAsset(url, request, ctx) {
   const steamPath = url.pathname.slice('/cdn/steam'.length)
   if (!steamPath.startsWith('/apps/dota2/') || steamPath.includes('..')) {
     return new Response('Bad Request', { status: 400 })
   }
 
-  const upstreamUrl = `${STEAM_CDN}${steamPath}`
-  const upstream = await fetch(upstreamUrl, {
-    headers: {
-      Accept: request.headers.get('Accept') || 'image/*,*/*',
-      'User-Agent': request.headers.get('User-Agent') || 'AncientLens',
-    },
+  const origin = siteOrigin(url)
+  const cacheKey = new Request(`${origin}/__steam-cache${steamPath}`, {
+    method: 'GET',
   })
+  const cache = typeof caches !== 'undefined' ? caches.default : null
+  if (cache) {
+    const hit = await cache.match(cacheKey)
+    if (hit) {
+      return hit
+    }
+  }
+
+  const upstreamHeaders = {
+    Accept: request.headers.get('Accept') || 'image/*,*/*;q=0.8',
+    'User-Agent':
+      request.headers.get('User-Agent') ||
+      'Mozilla/5.0 (compatible; AncientLens/1.0; +https://ancientlens.info)',
+    Referer: 'https://www.dota2.com/',
+  }
+
+  let upstream = await fetch(`${STEAM_CDN}${steamPath}`, {
+    headers: upstreamHeaders,
+  })
+  // Steam/Akamai occasionally 403s Worker egress on large HD renders; one
+  // alternate host retry recovers many of those without failing the MVP art.
+  if (upstream.status === 403) {
+    upstream = await fetch(`https://cdn.akamai.steamstatic.com${steamPath}`, {
+      headers: upstreamHeaders,
+    })
+  }
 
   if (!upstream.ok) {
     return new Response('Upstream error', { status: upstream.status })
@@ -567,7 +591,11 @@ async function proxySteamAsset(url, request) {
   headers.set('Cache-Control', 'public, max-age=86400')
   headers.set('X-Content-Type-Options', 'nosniff')
 
-  return new Response(upstream.body, { status: 200, headers })
+  const response = new Response(upstream.body, { status: 200, headers })
+  if (cache && ctx?.waitUntil) {
+    ctx.waitUntil(cache.put(cacheKey, response.clone()))
+  }
+  return response
 }
 
 /** @param {Request} request */
