@@ -130,6 +130,9 @@ export function buildPublicMatchBatchLens(
 export type PublicMatchFacet =
   'all' | 'ranked' | 'unranked' | 'turbo' | 'allPick' | 'long'
 
+export type PublicMatchSortKey = 'time' | 'rank'
+export type PublicMatchSortDir = 'asc' | 'desc'
+
 export function matchPassesFacet(
   row: PublicMatchSummary,
   facet: PublicMatchFacet,
@@ -150,4 +153,45 @@ export function matchPassesFacet(
     default:
       return true
   }
+}
+
+function sortMetric(
+  row: PublicMatchSummary,
+  key: PublicMatchSortKey,
+): number | null {
+  if (key === 'time') {
+    return typeof row.start_time === 'number' && Number.isFinite(row.start_time)
+      ? row.start_time
+      : null
+  }
+  return typeof row.avg_rank_tier === 'number' &&
+    Number.isFinite(row.avg_rank_tier)
+    ? row.avg_rank_tier
+    : null
+}
+
+/** Stable sort for the public matches feed (null metrics sink to the end). */
+export function sortPublicMatches(
+  rows: PublicMatchSummary[],
+  key: PublicMatchSortKey,
+  dir: PublicMatchSortDir,
+): PublicMatchSummary[] {
+  const sign = dir === 'asc' ? 1 : -1
+  return [...rows].sort((a, b) => {
+    const av = sortMetric(a, key)
+    const bv = sortMetric(b, key)
+    if (av == null && bv == null) {
+      return a.match_id - b.match_id
+    }
+    if (av == null) {
+      return 1
+    }
+    if (bv == null) {
+      return -1
+    }
+    if (av !== bv) {
+      return (av - bv) * sign
+    }
+    return a.match_id - b.match_id
+  })
 }

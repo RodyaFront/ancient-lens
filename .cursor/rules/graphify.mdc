@@ -1,0 +1,14 @@
+---
+description: Prefer graphify knowledge graph for architecture / cross-file questions when graphify-out/ exists
+alwaysApply: false
+---
+
+When `graphify-out/graph.json` exists and the question is about architecture, file relationships, or “how does X connect to Y”:
+
+- Prefer `graphify query "<question>"`, `graphify path "<A>" "<B>"`, or `graphify explain "<concept>"` before broad Grep/Glob sweeps
+- Read `graphify-out/GRAPH_REPORT.md` for high-level orientation
+- After substantial code changes, run `graphify update .` (AST-only) to refresh the graph
+
+If `graphify-out/graph.json` does not exist yet, do not block on graphify — explore normally, or build with `/graphify .` when the user asks.
+
+CLI note (Windows): if `graphify` is not on PATH, use the user Scripts install, e.g. `%APPDATA%\Python\Python313\Scripts\graphify.exe`.

@@ -13,6 +13,10 @@ import {
   radiant,
   total,
   upsertRecentMatch,
+  upsertSavedMatch,
+  refreshSavedMatchMeta,
+  sanitizeRecentMatches,
+  sanitizeSavedMatches,
   validateMatch,
   ValidateMatchError,
   buildPartyMarks,
@@ -89,6 +93,108 @@ describe('upsertRecentMatch', () => {
   it('ignores invalid ids', () => {
     expect(upsertRecentMatch([{ id: '1' }], { id: 'abc' }, 8)).toEqual([
       { id: '1' },
+    ])
+  })
+})
+
+describe('sanitizeSavedMatches', () => {
+  it('normalizes ids, drops junk, and caps', () => {
+    expect(
+      sanitizeSavedMatches(
+        [
+          {
+            id: 123,
+            radiant_win: true,
+            duration: 100,
+            start_time: 1,
+            extra: 9,
+          },
+          null,
+          { id: 'abc' },
+          { id: '456', radiant_win: false },
+          { id: '789' },
+        ],
+        2,
+      ),
+    ).toEqual([
+      { id: '123', radiant_win: true, duration: 100, start_time: 1 },
+      {
+        id: '456',
+        radiant_win: false,
+        duration: undefined,
+        start_time: undefined,
+      },
+    ])
+  })
+})
+
+describe('sanitizeRecentMatches', () => {
+  it('requires openedAt and normalizes ids', () => {
+    expect(
+      sanitizeRecentMatches(
+        [
+          { id: 1, openedAt: 10, radiant_win: true, duration: 20 },
+          { id: '2', openedAt: 'bad' },
+          { id: '3' },
+        ],
+        8,
+      ),
+    ).toEqual([
+      {
+        id: '1',
+        openedAt: 10,
+        radiant_win: true,
+        duration: 20,
+      },
+    ])
+  })
+})
+
+describe('upsertSavedMatch', () => {
+  it('prepends, dedupes, and reports eviction at cap', () => {
+    const a = { id: '1' }
+    const b = { id: '2' }
+    const c = { id: '3' }
+
+    expect(upsertSavedMatch([a], b, 2)).toEqual({
+      next: [b, a],
+      evicted: false,
+    })
+    expect(upsertSavedMatch([b, a], c, 2)).toEqual({
+      next: [c, b],
+      evicted: true,
+    })
+    expect(upsertSavedMatch([b, a], { id: '1', duration: 9 }, 2)).toEqual({
+      next: [{ id: '1', duration: 9 }, b],
+      evicted: false,
+    })
+  })
+})
+
+describe('refreshSavedMatchMeta', () => {
+  it('updates only the matching id when meta changes', () => {
+    const list = [
+      { id: '1', radiant_win: true, duration: 10, start_time: 1 },
+      { id: '2', radiant_win: false, duration: 20, start_time: 2 },
+    ]
+
+    expect(refreshSavedMatchMeta(list, '9', { radiant_win: true })).toBeNull()
+    expect(
+      refreshSavedMatchMeta(list, '1', {
+        radiant_win: true,
+        duration: 10,
+        start_time: 1,
+      }),
+    ).toBeNull()
+    expect(
+      refreshSavedMatchMeta(list, '1', {
+        radiant_win: false,
+        duration: 11,
+        start_time: 3,
+      }),
+    ).toEqual([
+      { id: '1', radiant_win: false, duration: 11, start_time: 3 },
+      { id: '2', radiant_win: false, duration: 20, start_time: 2 },
     ])
   })
 })

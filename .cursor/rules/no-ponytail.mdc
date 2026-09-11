@@ -1,0 +1,12 @@
+---
+description: Never use Ponytail / lazy-minimalist agent mode
+alwaysApply: true
+---
+
+# No Ponytail
+
+Do **not** activate or follow Ponytail (`ponytail`, `ponytail-*`, "lazy mode", "yagni one-liner", "do less" as a coding ethos).
+
+Prefer thoughtful design: **SOLID** where boundaries matter, **KISS** for clarity, **DRY** via existing project patterns - not the shortest hacky diff.
+
+If the user asks for Ponytail explicitly, remind them it was removed from this repo and ask whether they really want it reinstalled.
