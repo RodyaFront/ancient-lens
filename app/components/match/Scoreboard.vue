@@ -8,7 +8,9 @@ import {
   matchParticipationExtreme,
   matchStatExtreme,
   radiant,
+  skillColumnCount,
   total,
+  upgradeAtLevel,
 } from '#shared/match'
 import type { BestStatKey, PartyMark } from '#shared/match'
 import type { MatchPlayer, ScoreboardView } from '#shared/match/types'
@@ -245,7 +247,24 @@ const heads = computed((): HeadCol[] => {
   }))
 })
 
-const tableColspan = computed(() => 3 + heads.value.length)
+const skillLevels = computed(() => {
+  const count = skillColumnCount(store.match?.players ?? [])
+  return count > 0 ? Array.from({ length: count }, (_, index) => index + 1) : []
+})
+
+const skillTableExtra = computed(() => {
+  const count = skillLevels.value.length
+  if (!count) {
+    return '0rem'
+  }
+  // Gutter 0.75rem + N skill columns at 2rem each.
+  return `calc(0.75rem + ${count} * 2rem)`
+})
+
+const tableColspan = computed(() => {
+  const skillExtra = skillLevels.value.length ? 1 + skillLevels.value.length : 0
+  return 3 + heads.value.length + skillExtra
+})
 
 const teamKillTotals = computed(() => {
   if (!store.match) {
@@ -468,7 +487,10 @@ function onSetKey(event: KeyboardEvent, id: ScoreboardView) {
       :class="{ 'is-entering': tableClipOverflow }"
       tabindex="0"
     >
-      <table :aria-label="t('scoreboard.tableAria')">
+      <table
+        :aria-label="t('scoreboard.tableAria')"
+        :style="{ '--skill-table-extra': skillTableExtra }"
+      >
         <thead>
           <tr>
             <th scope="col">
@@ -513,6 +535,22 @@ function onSetKey(event: KeyboardEvent, id: ScoreboardView) {
                 {{ t('scoreboard.colItems') }}
               </AppTooltip>
             </th>
+            <template v-if="skillLevels.length">
+              <th scope="col" class="skill-gutter" aria-hidden="true" />
+              <th
+                v-for="level in skillLevels"
+                :key="`skill-h-${level}`"
+                scope="col"
+                class="skill-col"
+              >
+                <AppTooltip
+                  :text="t('scoreboard.tipSkillLevel', { level })"
+                  :label="t('scoreboard.tipSkillLevel', { level })"
+                >
+                  {{ level }}
+                </AppTooltip>
+              </th>
+            </template>
           </tr>
         </thead>
         <tbody v-for="group in groups" :key="String(group.radiant)">
@@ -688,6 +726,16 @@ function onSetKey(event: KeyboardEvent, id: ScoreboardView) {
                 </button>
               </div>
             </td>
+            <template v-if="skillLevels.length">
+              <td class="skill-gutter" aria-hidden="true" />
+              <td
+                v-for="level in skillLevels"
+                :key="`${playerIndex(player)}-skill-${level}`"
+                class="skill-cell"
+              >
+                <MatchAbilitySlot :ability-id="upgradeAtLevel(player, level)" />
+              </td>
+            </template>
           </tr>
         </tbody>
       </table>

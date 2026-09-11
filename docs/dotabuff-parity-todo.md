@@ -56,7 +56,7 @@ Highest product gap vs Dotabuff: encyclopedia detail lives on hover.
 
 - [ ] **Draft strip** — ordered picks/bans with PICK/BAN markers + hero icons
 - [ ] **Team totals row** on scoreboard (aggregate K/D/A, NET, farm, damage…)
-- [ ] **Ability builds preview** on match page (skill order 1–25 + talents)
+- [x] **Ability builds preview** on match page (skill order columns on scoreboard after Items)
 - [ ] **Build Details** surface (tab or section) — per-player ability timeline
 - [ ] **Team advantage chart** — XP (and Gold when data exists) over time; toggle Team Adv / Per Minute if data allows
 - [ ] **Towers & barracks** map / structure status
@@ -114,5 +114,6 @@ Do **not** treat as Ancient Lens parity goals unless product direction changes:
 | 2026-09-09 | **Layer 1 shipped:** hero catalog (`sync:heroes`, `buildHeroProfile`, meta via `/heroStats`). **Layer 2 UI removed** for redesign (no Dotabuff visual clone).                                                                                                                    |
 | 2026-09-09 | **Hero portrait hover (Layer 2):** scorebook tip + attr icons; pin/armed hover parity with items; meta fail-soft via `useHeroMeta`.                                                                                                                                              |
 | 2026-09-10 | **P0 hover layer mostly done** (item + hero + header tips). Remaining P0: ability/talent hovers (blocked on builds). **Next resume:** P1 draft strip. Unrelated later work (MVP panel, Steam CDN proxy, SEO hubs) is **not** Dotabuff parity — do not confuse with this backlog. |
+| 2026-09-11 | **P1 ability builds preview (in-table):** scoreboard columns after Items (gutter + level headers) from `ability_upgrades_arr`; `sync:abilities` + `abilities.json`. Ability/talent hover cards still open. |
 
 Update this table when a chunk of work merges or is clearly done.

@@ -18,6 +18,7 @@ import {
 } from '#shared/match/localLists'
 import { radiant, validateMatch, ValidateMatchError } from '#shared/match/stats'
 import type {
+  AbilityEntry,
   HeroEntry,
   ItemEntry,
   MatchData,
@@ -67,6 +68,7 @@ export const useMatchStore = defineStore('match', () => {
   const inputInvalid = ref(false)
   const heroes = ref<Record<string, HeroEntry>>({})
   const items = ref<Record<string, ItemEntry>>({})
+  const abilities = ref<Record<string, AbilityEntry>>({})
   const snapshotMeta = ref<SnapshotMeta | null>(null)
   const saved = ref<SavedMatch[]>([])
   const recent = ref<RecentMatch[]>([])
@@ -83,6 +85,14 @@ export const useMatchStore = defineStore('match', () => {
     const map: Record<number, ItemEntry> = {}
     for (const item of Object.values(items.value)) {
       map[item.id] = item
+    }
+    return map
+  })
+
+  const abilityMap = computed(() => {
+    const map: Record<number, AbilityEntry> = {}
+    for (const ability of Object.values(abilities.value)) {
+      map[ability.id] = ability
     }
     return map
   })
@@ -228,6 +238,10 @@ export const useMatchStore = defineStore('match', () => {
     return id == null ? undefined : itemMap.value[id]
   }
 
+  function abilityById(id: number | undefined) {
+    return id == null ? undefined : abilityMap.value[id]
+  }
+
   function heroName(player: MatchPlayer) {
     return (
       heroById(player.hero_id)?.localized_name ||
@@ -364,22 +378,27 @@ export const useMatchStore = defineStore('match', () => {
 
   async function loadLookups() {
     const lookups = await Promise.allSettled(
-      (['heroes', 'items', 'snapshot-meta'] as const).map(async (name) => {
-        const response = await fetch(`/data/${name}.json`)
-        if (!response.ok) {
-          throw new Error(name)
-        }
-        return response.json()
-      }),
+      (['heroes', 'items', 'abilities', 'snapshot-meta'] as const).map(
+        async (name) => {
+          const response = await fetch(`/data/${name}.json`)
+          if (!response.ok) {
+            throw new Error(name)
+          }
+          return response.json()
+        },
+      ),
     )
 
-    const [heroesLookup, itemsLookup, metaLookup] = lookups
+    const [heroesLookup, itemsLookup, abilitiesLookup, metaLookup] = lookups
 
     if (heroesLookup?.status === 'fulfilled') {
       heroes.value = heroesLookup.value
     }
     if (itemsLookup?.status === 'fulfilled') {
       items.value = itemsLookup.value
+    }
+    if (abilitiesLookup?.status === 'fulfilled') {
+      abilities.value = abilitiesLookup.value
     }
     if (metaLookup?.status === 'fulfilled') {
       snapshotMeta.value = metaLookup.value
@@ -718,6 +737,7 @@ export const useMatchStore = defineStore('match', () => {
     snapshotMeta,
     heroById,
     itemById,
+    abilityById,
     heroName,
     heroProfile,
     showToast,

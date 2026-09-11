@@ -36,6 +36,8 @@ export interface MatchPlayer {
   aghanims_shard?: number
   party_id?: number
   party_size?: number
+  /** Ability IDs in level-up order (index 0 = level 1). Talents included. */
+  ability_upgrades_arr?: number[]
   [key: string]: unknown
 }
 
@@ -170,6 +172,16 @@ export interface ItemEntry {
   notes?: string
   hint?: string[]
   components?: string[]
+}
+
+/** Static ability / talent dictionary (synced to public/data/abilities.json). */
+export interface AbilityEntry {
+  id: number
+  name: string
+  dname?: string
+  img?: string
+  /** True when OpenDota name starts with `special_bonus_`. */
+  isTalent?: boolean
 }
 
 export interface SnapshotMeta {
