@@ -7,6 +7,7 @@ import {
 
 const props = defineProps<{
   winner: ScoreEmbersWinner | null
+  overlay?: boolean
 }>()
 
 const audio = useScoreAudio()
@@ -27,7 +28,7 @@ function onScrollOrResize() {
 }
 
 function bindScrollVolume() {
-  if (!import.meta.client) {
+  if (!import.meta.client || props.overlay) {
     return
   }
   audio.syncFireScrollFromWindow(canvas.value)
@@ -45,7 +46,12 @@ function unbindScrollVolume() {
 
 function scheduleFire() {
   clearFireTimer()
-  if (!import.meta.client || !props.winner || audio.reducedMotion()) {
+  if (
+    !import.meta.client ||
+    !props.winner ||
+    audio.reducedMotion() ||
+    props.overlay
+  ) {
     return
   }
   audio.setFireSide(props.winner)
@@ -84,7 +90,9 @@ async function ensure() {
       if (!el.isConnected || !winner) {
         return null
       }
-      embers = createScoreEmbers(el, winner)
+      embers = createScoreEmbers(el, winner, {
+        skipHearthGlow: props.overlay,
+      })
       scheduleFire()
       return embers
     })
@@ -102,13 +110,17 @@ watch(
   (winner) => {
     if (!winner) {
       clearFireTimer()
-      audio.stopFire()
+      if (!props.overlay) {
+        audio.stopFire()
+      }
       return
     }
     if (embers) {
       embers.setWinner(winner)
-      audio.setFireSide(winner)
-      audio.syncFireSpatialFromElement(canvas.value)
+      if (!props.overlay) {
+        audio.setFireSide(winner)
+        audio.syncFireSpatialFromElement(canvas.value)
+      }
       return
     }
     void ensure()
@@ -118,7 +130,9 @@ watch(
 onBeforeUnmount(() => {
   clearFireTimer()
   unbindScrollVolume()
-  audio.stopFire()
+  if (!props.overlay) {
+    audio.stopFire()
+  }
   disposeEmbers()
 })
 </script>

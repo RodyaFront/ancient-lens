@@ -17,7 +17,11 @@ const homePath = computed(() => localePath({ name: 'index' }))
 <template>
   <header class="site-header">
     <div class="header-inner">
-      <NuxtLink class="brand" :to="homePath" :aria-label="t('nav.homeAria')">
+      <NuxtLink
+        class="brand ui-press"
+        :to="homePath"
+        :aria-label="t('nav.homeAria')"
+      >
         ANCIENT <span>LENS</span>
       </NuxtLink>
       <p class="brand-context">

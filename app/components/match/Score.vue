@@ -231,6 +231,7 @@ onBeforeUnmount(() => {
         @animationend="onAnimationEnd"
       >
         <MatchScoreSteam :winner="winner" />
+        <MatchScoreEmbers :winner="winner" overlay />
         <div class="score-fx" aria-hidden="true">
           <MatchScoreVfx ref="vfx" :winner="winner" />
           <div v-if="winner" class="fx-verdict">

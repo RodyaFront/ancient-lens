@@ -19,6 +19,12 @@ export interface ScoreEmbersHandle {
   dispose: () => void
 }
 
+export type ScoreEmbersOptions = {
+  /** Skip the pulsing hearth-bed glow; keep coal / flame / spark / corner plume. */
+  skipHearthGlow?: boolean
+  skipIntro?: boolean
+}
+
 /** Particle kind: 0 coal, 1 flame, 2 spark, 3 corner plume (~85° from winner corner). */
 export type ScoreEmbersKind = 0 | 1 | 2 | 3
 
@@ -180,7 +186,10 @@ export function scoreEmbersVelocityAngleDeg(vx: number, vy: number) {
 export function createScoreEmbers(
   canvas: HTMLCanvasElement,
   winner: ScoreEmbersWinner,
+  options: ScoreEmbersOptions = {},
 ): ScoreEmbersHandle {
+  const skipHearthGlow = Boolean(options.skipHearthGlow)
+  const skipIntro = Boolean(options.skipIntro)
   const renderer = new THREE.WebGLRenderer({
     canvas,
     alpha: true,
@@ -196,29 +205,32 @@ export function createScoreEmbers(
   camera.position.z = 1
 
   // Soft radiance at CP0 - like a child "glow" system under the particle bed.
-  const hearthUniforms = {
-    uTime: { value: 0 },
-    uFade: { value: 0 },
-    uWinner: { value: scoreEmbersWinnerUniform(winner) },
-    uAspect: { value: 1 },
-    uOrigin: { value: new THREE.Vector2(0, 0) },
-    uScale: { value: 4 },
-  }
+  const hearthUniforms = skipHearthGlow
+    ? null
+    : {
+        uTime: { value: 0 },
+        uFade: { value: 0 },
+        uWinner: { value: scoreEmbersWinnerUniform(winner) },
+        uAspect: { value: 1 },
+        uOrigin: { value: new THREE.Vector2(0, 0) },
+        uScale: { value: 4 },
+      }
 
-  const hearthMaterial = new THREE.ShaderMaterial({
-    transparent: true,
-    depthTest: false,
-    depthWrite: false,
-    blending: THREE.AdditiveBlending,
-    uniforms: hearthUniforms,
-    vertexShader: `
+  const hearthMaterial = hearthUniforms
+    ? new THREE.ShaderMaterial({
+        transparent: true,
+        depthTest: false,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+        uniforms: hearthUniforms,
+        vertexShader: `
       varying vec2 vUv;
       void main() {
         vUv = uv;
         gl_Position = vec4(position.xy, 0.0, 1.0);
       }
     `,
-    fragmentShader: `
+        fragmentShader: `
       uniform float uTime;
       uniform float uFade;
       uniform float uWinner;
@@ -274,11 +286,16 @@ export function createScoreEmbers(
         gl_FragColor = vec4(color, min(1.0, length(color) * 1.55));
       }
     `,
-  })
+      })
+    : null
 
-  const hearth = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), hearthMaterial)
-  hearth.frustumCulled = false
-  scene.add(hearth)
+  const hearth = hearthMaterial
+    ? new THREE.Mesh(new THREE.PlaneGeometry(2, 2), hearthMaterial)
+    : null
+  if (hearth) {
+    hearth.frustumCulled = false
+    scene.add(hearth)
+  }
 
   const count =
     SCORE_EMBERS_COAL_COUNT +
@@ -519,6 +536,9 @@ export function createScoreEmbers(
   const startedAt = performance.now()
 
   function syncHearthParams() {
+    if (!hearthUniforms) {
+      return
+    }
     const style = getComputedStyle(canvas)
     const x = Number.parseFloat(style.getPropertyValue('--hearth-x')) || 0
     const y = Number.parseFloat(style.getPropertyValue('--hearth-y')) || 0
@@ -536,7 +556,9 @@ export function createScoreEmbers(
     camera.left = -aspect
     camera.right = aspect
     camera.updateProjectionMatrix()
-    hearthUniforms.uAspect.value = aspect
+    if (hearthUniforms) {
+      hearthUniforms.uAspect.value = aspect
+    }
     emberUniforms.uAspect.value = aspect
     emberUniforms.uResolution.value.set(width, height)
     syncHearthParams()
@@ -555,10 +577,12 @@ export function createScoreEmbers(
       return
     }
     const elapsed = (now - startedAt) / 1000
-    const fade = scoreEmbersIntroFade(elapsed)
-    syncHearthParams()
-    hearthUniforms.uTime.value = elapsed
-    hearthUniforms.uFade.value = fade
+    const fade = skipIntro ? 1 : scoreEmbersIntroFade(elapsed)
+    if (hearthUniforms) {
+      syncHearthParams()
+      hearthUniforms.uTime.value = elapsed
+      hearthUniforms.uFade.value = fade
+    }
     emberUniforms.uTime.value = elapsed
     emberUniforms.uFade.value = fade
     renderer.render(scene, camera)
@@ -574,7 +598,9 @@ export function createScoreEmbers(
 
   function setWinner(next: ScoreEmbersWinner) {
     const value = scoreEmbersWinnerUniform(next)
-    hearthUniforms.uWinner.value = value
+    if (hearthUniforms) {
+      hearthUniforms.uWinner.value = value
+    }
     emberUniforms.uWinner.value = value
   }
 
@@ -588,8 +614,10 @@ export function createScoreEmbers(
     }
     document.removeEventListener('visibilitychange', onVisibility)
     observer.disconnect()
-    hearth.geometry.dispose()
-    hearthMaterial.dispose()
+    if (hearth) {
+      hearth.geometry.dispose()
+    }
+    hearthMaterial?.dispose()
     geometry.dispose()
     emberMaterial.dispose()
     renderer.dispose()

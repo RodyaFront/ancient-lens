@@ -40,7 +40,7 @@ const groupClass = computed(() => {
 
   <NuxtLink
     v-else-if="node.kind === 'link'"
-    class="site-nav__item"
+    class="site-nav__item ui-press"
     :class="{ 'is-active': linkActive }"
     :to="node.to"
     :aria-current="linkActive ? 'page' : undefined"
@@ -51,7 +51,7 @@ const groupClass = computed(() => {
   <button
     v-else-if="node.kind === 'action'"
     :id="`${node.id}-nav`"
-    class="site-nav__item"
+    class="site-nav__item ui-press"
     type="button"
     @click="node.onSelect()"
   >
@@ -61,7 +61,7 @@ const groupClass = computed(() => {
   <NuxtLink
     v-else-if="node.kind === 'icon-link'"
     :id="`${node.id}-nav`"
-    class="site-nav__item site-nav__item--icon"
+    class="site-nav__item site-nav__item--icon ui-press"
     :class="{ 'is-active': linkActive }"
     :to="node.to"
     :aria-current="linkActive ? 'page' : undefined"
@@ -83,7 +83,7 @@ const groupClass = computed(() => {
   <button
     v-else-if="node.kind === 'icon-toggle'"
     :id="`${node.id}-nav`"
-    class="site-nav__item site-nav__item--icon"
+    class="site-nav__item site-nav__item--icon ui-press"
     :class="{ 'is-active': node.pressed }"
     type="button"
     :aria-pressed="node.pressed"
@@ -105,7 +105,7 @@ const groupClass = computed(() => {
     <NuxtLink
       v-for="option in node.options"
       :key="option.code"
-      class="site-nav__item site-nav__item--locale"
+      class="site-nav__item site-nav__item--locale ui-press"
       :class="{ 'is-active': option.active }"
       :to="option.href"
       :aria-current="option.active ? 'true' : undefined"

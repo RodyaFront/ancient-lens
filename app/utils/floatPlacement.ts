@@ -3,6 +3,8 @@ export type FloatPlacementOptions = {
   preferAboveMin?: number
   padX?: number
   padY?: number
+  /** Horizontal align to the trigger. Default centers. */
+  align?: 'center' | 'start' | 'end'
 }
 
 export type FloatRect = Pick<DOMRect, 'top' | 'bottom' | 'left' | 'width'>
@@ -68,7 +70,14 @@ export function computeFloatPlacement(
   const centerX = rect.left + rect.width / 2
   let left: number
   if (tipWidth > 0) {
-    left = centerX - tipWidth / 2
+    const align = options.align ?? 'center'
+    if (align === 'start') {
+      left = rect.left
+    } else if (align === 'end') {
+      left = rect.left + rect.width - tipWidth
+    } else {
+      left = centerX - tipWidth / 2
+    }
     left = Math.min(
       Math.max(left, padX),
       Math.max(padX, viewportWidth - tipWidth - padX),

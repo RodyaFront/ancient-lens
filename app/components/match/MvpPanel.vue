@@ -21,16 +21,9 @@ const heroLabel = computed(() => store.heroName(props.player))
 const heroEntry = computed(() => store.heroById(props.player.hero_id))
 const portraitUrl = computed(() => steamAssetUrl(heroEntry.value?.img))
 const renderUrl = computed(() => steamHeroRenderUrl(heroEntry.value?.name))
-/** Prefer HD render; fall back to scoreboard portrait if CDN 404. */
-const useHdRender = ref(true)
-const imageUrl = computed(() => {
-  if (useHdRender.value && renderUrl.value) {
-    return renderUrl.value
-  }
-  return portraitUrl.value
-})
 const fallback = computed(() => initials(heroLabel.value))
-const failed = ref(false)
+const portraitFailed = ref(false)
+const renderFailed = ref(false)
 const ariaLabel = computed(() =>
   t('score.mvpAria', { player: displayName.value, hero: heroLabel.value }),
 )
@@ -42,17 +35,20 @@ const kdaAria = computed(() =>
   }),
 )
 
-watch([renderUrl, portraitUrl], () => {
-  useHdRender.value = true
-  failed.value = false
+watch(portraitUrl, () => {
+  portraitFailed.value = false
 })
 
-function onArtError() {
-  if (useHdRender.value && renderUrl.value && portraitUrl.value) {
-    useHdRender.value = false
-    return
-  }
-  failed.value = true
+watch(renderUrl, () => {
+  renderFailed.value = false
+})
+
+function onPortraitError() {
+  portraitFailed.value = true
+}
+
+function onRenderError() {
+  renderFailed.value = true
 }
 </script>
 
@@ -60,19 +56,28 @@ function onArtError() {
   <aside class="mvp-panel" :class="team" :aria-label="ariaLabel">
     <div class="mvp-poster">
       <img
-        v-if="imageUrl && !failed"
-        class="mvp-art"
-        :class="{ 'is-render': useHdRender && !!renderUrl }"
-        :src="imageUrl"
+        v-if="portraitUrl && !portraitFailed"
+        class="mvp-art mvp-art-splash"
+        :src="portraitUrl"
         :alt="heroLabel"
         loading="lazy"
-        @error="onArtError"
+        @error="onPortraitError"
       />
       <div v-else class="mvp-art mvp-art-fallback" aria-hidden="true">
         {{ fallback }}
       </div>
 
       <div class="mvp-wash" aria-hidden="true" />
+
+      <img
+        v-if="renderUrl && !renderFailed"
+        class="mvp-art mvp-art-render"
+        :src="renderUrl"
+        alt=""
+        aria-hidden="true"
+        loading="lazy"
+        @error="onRenderError"
+      />
 
       <!-- Stage is the art band above the plate — stamp centers here, not full card -->
       <div class="mvp-stage" aria-hidden="true">

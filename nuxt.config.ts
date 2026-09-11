@@ -34,6 +34,8 @@ export default defineNuxtConfig({
         'lucide:bookmark',
         'lucide:volume-2',
         'lucide:volume-x',
+        'lucide:chevron-down',
+        'lucide:check',
       ],
     },
   },
@@ -166,6 +168,8 @@ export default defineNuxtConfig({
   },
 
   security: {
+    // Dev HMR can burn the default 150 req / 5 min budget and 429 GET /.
+    ...(process.env.NODE_ENV === 'development' ? { rateLimiter: false } : {}),
     headers: {
       crossOriginEmbedderPolicy: 'unsafe-none',
       contentSecurityPolicy: {
