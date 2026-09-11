@@ -1,5 +1,10 @@
 import { isNum, kda } from '#shared/match'
-import { GAME_MODES, LOBBY_LABELS, REGIONS } from '#shared/match/constants'
+import {
+  GAME_MODES,
+  LOBBY_LABELS,
+  REGIONS,
+  STEAM_CDN,
+} from '#shared/match/constants'
 import { clusterRegionId } from '#shared/match/publicMatches'
 import {
   parseRankTier,
@@ -209,17 +214,31 @@ export function heroSteamSlug(name: string | undefined): string | null {
 }
 
 /**
- * Official HD hero render (dota2.com), ~1440² transparent PNG.
+ * Official HD hero render path (dota2.com), ~1440² transparent PNG.
  * Falls back to null when the hero internal name is missing.
  */
-export function steamHeroRenderUrl(name: string | undefined): string | null {
+export function steamHeroRenderPath(name: string | undefined): string | null {
   const slug = heroSteamSlug(name)
   if (!slug) {
     return null
   }
-  return steamAssetUrl(
-    `/apps/dota2/videos/dota_react/heroes/renders/${slug}.png`,
-  )
+  return `/apps/dota2/videos/dota_react/heroes/renders/${slug}.png`
+}
+
+/**
+ * HD render URL for the browser. Uses Steam CDN directly: Worker egress is
+ * intermittently 403'd by Steam/Akamai on these large PNGs.
+ */
+export function steamHeroRenderUrl(name: string | undefined): string | null {
+  const path = steamHeroRenderPath(name)
+  return path ? `${STEAM_CDN}${path}` : null
+}
+
+/** Same-origin proxy URL for HD renders (fallback when direct Steam fails). */
+export function steamHeroRenderProxyUrl(
+  name: string | undefined,
+): string | null {
+  return steamAssetUrl(steamHeroRenderPath(name) ?? undefined)
 }
 
 export function initials(text: string, length = 2): string {
