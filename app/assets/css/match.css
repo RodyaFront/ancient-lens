@@ -747,6 +747,24 @@ h1 {
   grid-template-columns: minmax(0, 1fr) 21rem;
   gap: var(--space-4);
 }
+/* MVP expands from the winning side: Radiant left, Dire right.
+   Use order (not grid-column) so the panel occupies the side track —
+   grid-column swap left an empty cell and pushed the panel to the next row. */
+.score-row.mvp-from-radiant .mvp-panel {
+  order: -1;
+}
+.score-row.mvp-from-radiant {
+  grid-template-columns: 0fr minmax(0, 1fr);
+}
+.score-row.mvp-from-radiant.is-mvp-open {
+  grid-template-columns: 21rem minmax(0, 1fr);
+}
+.score-row.mvp-from-dire {
+  grid-template-columns: minmax(0, 1fr) 0fr;
+}
+.score-row.mvp-from-dire.is-mvp-open {
+  grid-template-columns: minmax(0, 1fr) 21rem;
+}
 .score-card {
   --verdict-delay: 0.14s;
   --verdict-duration: 1.18s;
@@ -806,13 +824,19 @@ h1 {
   object-fit: cover;
   object-position: center 22%;
   opacity: 0;
-  transform: scale(1.06);
+  transform: scale(1.06) translateX(var(--mvp-enter-x, 0));
 }
 /* Official square HD renders — scale past letterboxing into the frame */
 .mvp-art.is-render {
   object-fit: contain;
   object-position: center 70%;
-  transform: scale(1.38);
+  transform: scale(1.38) translateX(var(--mvp-enter-x, 0));
+}
+.mvp-panel.radiant {
+  --mvp-enter-x: -12%;
+}
+.mvp-panel.dire {
+  --mvp-enter-x: 12%;
 }
 .mvp-art-fallback {
   display: grid;
@@ -969,13 +993,13 @@ h1 {
 }
 .score-row.is-mvp-open .mvp-art {
   opacity: 1;
-  transform: scale(1);
+  transform: scale(1) translateX(0);
   transition:
     opacity var(--mvp-art-duration) var(--mvp-drama-ease) var(--mvp-art-delay),
     transform var(--mvp-art-duration) var(--mvp-drama-ease) var(--mvp-art-delay);
 }
 .score-row.is-mvp-open .mvp-art.is-render {
-  transform: scale(1.32);
+  transform: scale(1.32) translateX(0);
 }
 .score-row.is-mvp-open .mvp-stamp {
   opacity: 1;
@@ -3278,11 +3302,18 @@ dialog::backdrop {
     font-size: 2rem;
   }
   .score-row,
-  .score-row.is-mvp-open {
+  .score-row.is-mvp-open,
+  .score-row.mvp-from-radiant,
+  .score-row.mvp-from-radiant.is-mvp-open,
+  .score-row.mvp-from-dire,
+  .score-row.mvp-from-dire.is-mvp-open {
     grid-template-columns: minmax(0, 1fr);
   }
   .score-row.is-mvp-open {
     gap: var(--space-4);
+  }
+  .score-row.mvp-from-radiant .mvp-panel {
+    order: 0;
   }
   .score-row.is-mvp-open .mvp-panel {
     width: 100%;

@@ -13,7 +13,7 @@ describe('score reveal punch', () => {
     expect(scoreVfxWinnerUniform('dire')).toBe(1)
   })
 
-  it('hits in beats: flash, slash, then a linear shockwave', () => {
+  it('hits in beats: flash, slash, then impact rays', () => {
     const atFlash = scoreVfxPunch(0.12)
     const afterFlash = scoreVfxPunch(0.4)
     expect(atFlash.flash).toBeGreaterThan(afterFlash.flash)

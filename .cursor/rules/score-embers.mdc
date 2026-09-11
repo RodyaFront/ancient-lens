@@ -1,0 +1,62 @@
+# Score card embers (required)
+
+Canon also: [`DESIGN.md`](../../DESIGN.md) (match open ritual).
+
+## Required visual
+
+On `/match/[id]`, the score card **must** keep winner-side smolder / embers:
+
+- Component: `app/components/match/ScoreEmbers.vue`
+- Engine: `app/utils/scoreEmbers.ts` (Source-2-style particle model in WebGL)
+- Mount: `<MatchScoreEmbers>` inside the score card in `Score.vue`
+- Styles: `.score-embers-canvas` in `app/assets/css/match.css`
+
+This is a **product feature**, not optional polish and not "decorative glow" to delete under the general no-sparkle rule. It is the **allowed** score-card hearth exception.
+
+## Locked look (do not retune without a product ask)
+
+| Layer | Role |
+| --- | --- |
+| Hearth bed | Coal / flame / spark via `fillHearth` - wide winner-column smolder + soft radial glow |
+| Corner plume (kind 3) | Extra emitter across the same hearth column; team/gold color (no debug tint) |
+
+Corner plume canon (as of 2026-09-11):
+
+- Count: `SCORE_EMBERS_CORNER_COUNT` (**64**)
+- Heading: Radiant **85°**, Dire **95°** (`SCORE_EMBERS_CORNER_ANGLE_DEG`, screen `atan2`, 90 = up)
+- Travel: ~2x prior speed; spark-like turbulence + per-particle angle jitter
+- Alpha: invisible until mid-path (~42-58% of life), then fade out
+- No DEV toggles / angle sliders in the UI
+
+Do **not** strip the corner plume or merge it away into bed-only sparks without an explicit product decision.
+
+## Tech model (Dota-like, browser)
+
+Valve uses Panorama + `.vpcf` particle scenes. Ancient Lens cannot load those files.
+`scoreEmbers.ts` mirrors the same roles:
+
+| Source 2 | Here |
+| --- | --- |
+| Control Point 0 | Winner-side hearth box + `--hearth-*` CSS |
+| Emitters | Coal / flame / spark (`fillHearth`) + corner plume (`fillCornerPlume`) |
+| Operators | Lifetime loop, lift, noise, alpha + radius curves |
+| Sprite / `.vtex` | Procedural additive soft sprites in the fragment shader |
+
+## Why (do not "simplify" away)
+
+1. **Ritual identity** - part of the match-open climax with draft faces and score reveal.
+2. **Navigation UX** - glow sits on the **winning side** so Danylo / Ira can tell Radiant vs Dire win at a glance while skimming the header and scrolling the scorebook.
+
+## Audio is separate
+
+Reveal audio may change (stamp, mute, silence). **Never** remove or disable ScoreEmbers because ambient fire / whoosh / stamp audio changed.
+
+| Safe | Forbidden without an explicit product decision |
+| --- | --- |
+| Swap or remove fire/stamp audio assets | Delete `ScoreEmbers.vue` / `scoreEmbers.ts` |
+| Slim `useScoreAudio` (no fire loop) | Unmount `<MatchScoreEmbers>` "while cleaning sound" |
+| `prefers-reduced-motion` skips embers | Treat embers as cargo-cult of deleted audio |
+
+## Reduced motion
+
+Respect `prefers-reduced-motion: reduce` (no WebGL embers). That is accessibility, not permission to delete the feature for everyone else.
