@@ -18,10 +18,7 @@ import {
   lobbyTone,
   gameModeTone,
 } from '~/utils/matchFormat'
-import {
-  fetchPublicMatchesFeed,
-  publicMatchesErrorKind,
-} from '~/utils/publicMatchesFeed'
+import { fetchPublicMatchesFeed } from '~/utils/publicMatchesFeed'
 
 const FACET_IDS: PublicMatchFacet[] = [
   'all',
@@ -62,8 +59,8 @@ useSeoMeta({
   twitterImage: () => ogImage.value,
 })
 
-const loadError = ref<'rate' | 'generic' | null>(null)
-const refreshFailed = ref<'rate' | 'generic' | null>(null)
+const loadError = ref(false)
+const refreshFailed = ref(false)
 
 function parseFacetQuery(raw: unknown): PublicMatchFacet {
   const value = Array.isArray(raw) ? raw[0] : raw
@@ -149,20 +146,19 @@ const {
 } = await useAsyncData(
   'public-matches',
   async () => {
-    loadError.value = null
-    refreshFailed.value = null
+    loadError.value = false
+    refreshFailed.value = false
     try {
       return await fetchPublicMatchesFeed({ timeout: 12_000 })
     } catch (err: unknown) {
-      const kind = publicMatchesErrorKind(err)
       // Keep the current feed on refresh failure (stale-while-revalidate).
       if ((rows.value?.length ?? 0) > 0) {
-        refreshFailed.value = kind
+        refreshFailed.value = true
         throw err instanceof Error
           ? err
           : new Error('public-matches fetch failed')
       }
-      loadError.value = kind
+      loadError.value = true
       return []
     }
   },
@@ -194,7 +190,7 @@ async function onRefresh() {
   if (showInitialLoading.value || refreshBusy.value) {
     return
   }
-  refreshFailed.value = null
+  refreshFailed.value = false
   refreshJustDone.value = false
   if (refreshDoneTimer) {
     clearTimeout(refreshDoneTimer)
@@ -228,20 +224,15 @@ onBeforeUnmount(() => {
   }
 })
 
-const errorMessage = computed(() => {
-  const kind = loadError.value || refreshFailed.value
-  if (kind === 'rate') {
-    return t('errors.rateLimitBody', { when: t('errors.rateLimitSoon') })
-  }
-  if (kind === 'generic') {
-    return t('matchesPage.error')
-  }
-  return ''
-})
-
 const errorTitle = computed(() =>
-  loadError.value === 'rate' ? t('errors.rateLimitTitle') : '',
+  loadError.value ? t('matchesPage.sourceUnavailableTitle') : '',
 )
+
+const errorMessage = computed(() =>
+  loadError.value ? t('matchesPage.sourceUnavailableBody') : '',
+)
+
+const showEmptySourceAlert = computed(() => loadError.value && !hasRows.value)
 
 const filtered = computed(() =>
   (rows.value || []).filter((row) => matchPassesFacet(row, facet.value)),
@@ -411,13 +402,6 @@ const heroSkelSlots = [0, 1, 2, 3, 4]
                 : t('matchesPage.refresh')
             }}
           </button>
-          <p
-            v-if="refreshFailed"
-            class="matches-v2__refresh-fail"
-            role="status"
-          >
-            {{ errorMessage }}
-          </p>
         </div>
       </header>
 
@@ -471,17 +455,36 @@ const heroSkelSlots = [0, 1, 2, 3, 4]
         </div>
       </div>
       <div
-        v-else-if="loadError && !hasRows"
-        class="matches-v2__status"
+        v-else-if="showEmptySourceAlert"
+        class="error-box matches-v2__source-alert"
         role="alert"
       >
-        <p v-if="errorTitle">
-          <strong>{{ errorTitle }}</strong>
-        </p>
+        <div class="matches-v2__source-alert-meta">
+          <Icon
+            name="lucide:cloud-off"
+            class="matches-v2__source-alert-icon"
+            aria-hidden="true"
+          />
+          <span class="matches-v2__source-alert-tag">{{
+            t('matchesPage.sourceUnavailableTag')
+          }}</span>
+          <span class="matches-v2__source-alert-source">OpenDota</span>
+        </div>
+        <strong>{{ errorTitle }}</strong>
         <p>{{ errorMessage }}</p>
-        <button type="button" class="text-button" @click="refresh()">
-          {{ t('matchesPage.retry') }}
-        </button>
+        <div class="error-actions">
+          <button type="button" class="ui-press" @click="refresh()">
+            {{ t('matchesPage.retry') }}
+          </button>
+          <a
+            class="ui-press"
+            href="https://www.opendota.com"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {{ t('matchesPage.sourceOpen') }}
+          </a>
+        </div>
       </div>
       <template v-else>
         <div class="matches-v2__toolbar">

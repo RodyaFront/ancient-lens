@@ -61,7 +61,3 @@ export async function fetchPublicMatchesFeed(options?: {
     return normalizeList(list)
   }
 }
-
-export function publicMatchesErrorKind(err: unknown): 'rate' | 'generic' {
-  return statusFromFetchError(err) === 429 ? 'rate' : 'generic'
-}

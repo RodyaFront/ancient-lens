@@ -4546,23 +4546,44 @@ dialog::backdrop {
 .matches-v2__refresh-icon.is-spinning {
   animation: spin 0.85s linear infinite;
 }
-.matches-v2__refresh-fail {
-  margin: 0;
-  max-width: 16rem;
+.matches-v2__source-alert {
+  margin: 0 0 var(--space-6);
+  border-left-width: 0.1875rem;
+}
+.search-section .matches-v2__source-alert {
+  margin-top: 1rem;
+}
+.matches-v2__source-alert-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+.matches-v2__source-alert-icon {
+  width: 1.125rem;
+  height: 1.125rem;
+  color: var(--red);
+  flex-shrink: 0;
+}
+.matches-v2__source-alert-tag {
+  font-size: 0.6875rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, #e1b8a9 78%, var(--muted));
+}
+.matches-v2__source-alert-source {
   font-size: 0.75rem;
-  line-height: 1.35;
-  color: var(--muted);
-  text-align: right;
+  font-weight: 600;
+  color: #fff0e8;
+}
+.matches-v2__source-alert p {
+  margin: 0;
 }
 @media (prefers-reduced-motion: reduce) {
   .matches-v2__refresh-icon.is-spinning {
     animation: none;
   }
-}
-.matches-v2__status {
-  margin: var(--space-6) 0;
-  font-size: 0.9375rem;
-  color: var(--muted);
 }
 .matches-v2__skeleton {
   display: flex;

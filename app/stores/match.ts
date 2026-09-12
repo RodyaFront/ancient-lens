@@ -507,44 +507,32 @@ export const useMatchStore = defineStore('match', () => {
         return
       }
 
-      let title = t('errors.fetchFailed')
-      let body = t('errors.fetchFailedBody')
+      let title = t('errors.sourceUnavailableTitle')
+      let body = t('errors.sourceUnavailableBody')
 
-      if (timedOut) {
-        title = t('errors.timeoutTitle')
-        body = t('errors.timeoutBody')
-      } else if (err.status === 429) {
-        title = t('errors.rateLimitTitle')
-        const retry = Number(err.retry)
-        body = t('errors.rateLimitBody', {
-          when:
-            Number.isFinite(retry) && retry > 0
-              ? t('errors.rateLimitSeconds', { n: retry })
-              : t('errors.rateLimitSoon'),
-        })
-      } else if (err.status === 404) {
+      if (err.status === 404) {
         title = t('errors.notFoundTitle')
         body = t('errors.notFoundBody')
-      } else if (err.status === 403 || err.status === 401) {
-        title = t('errors.rejectedTitle')
-        body = t('errors.rejectedBody')
-      } else if (err.status && err.status >= 500) {
-        title = t('errors.tempTitle')
-        body = t('errors.tempBody')
       } else if (errorValue instanceof ValidateMatchError) {
+        title = t('errors.fetchFailed')
         body = t(`errors.validate.${errorValue.code}`)
       } else if (
+        !timedOut &&
+        err.status !== 429 &&
+        !(err.status && err.status >= 500) &&
         err.message !== 'Failed to fetch' &&
         err.message !== 'Load failed' &&
         err.message !== 'HTTP' &&
-        err.name !== 'TypeError'
+        err.name !== 'TypeError' &&
+        err.name !== 'AbortError'
       ) {
+        title = t('errors.fetchFailed')
         body = err.message
       }
 
       match.value = null
       source.value = null
-      showError(`${title} · #${id}`, body, id)
+      showError(`${title}`, body, id)
     } finally {
       clearTimeout(timer)
       if (no === requestNo.value) {

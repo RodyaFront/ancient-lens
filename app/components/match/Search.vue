@@ -80,25 +80,47 @@ async function submit() {
     <div
       v-if="store.error"
       id="match-input-error"
-      class="error-box"
+      class="error-box matches-v2__source-alert"
       role="alert"
     >
+      <div class="matches-v2__source-alert-meta">
+        <Icon
+          name="lucide:cloud-off"
+          class="matches-v2__source-alert-icon"
+          aria-hidden="true"
+        />
+        <span class="matches-v2__source-alert-tag">{{
+          t('errors.sourceUnavailableTag')
+        }}</span>
+        <span class="matches-v2__source-alert-source">OpenDota</span>
+      </div>
       <strong ref="errorTitle" tabindex="-1">{{ store.error.title }}</strong>
       <p>{{ store.error.body }}</p>
       <div v-if="store.error.actions" class="error-actions">
         <button
           type="button"
+          class="ui-press"
           @click="store.openMatchInput(store.error.id || input)"
         >
           {{ t('search.retry') }}
         </button>
         <a
           v-if="store.error.id"
+          class="ui-press"
           :href="`https://www.opendota.com/matches/${store.error.id}`"
           target="_blank"
           rel="noopener noreferrer"
         >
           {{ t('search.openInSource') }}
+        </a>
+        <a
+          v-else
+          class="ui-press"
+          href="https://www.opendota.com"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {{ t('matchesPage.sourceOpen') }}
         </a>
       </div>
     </div>
